@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /outils/
+Disallow: /api/
+Disallow: /serveur/
+Disallow: /gestion/
+
+Sitemap: https://ainrecycling.com/sitemap.xml

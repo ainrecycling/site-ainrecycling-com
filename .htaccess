@@ -1,0 +1,22 @@
+# Site Ain Recycling chez OVH (Apache). L'espace client, la page des demandes de Malik et l'adresse privée de l'appli
+# sont servis par les scripts PHP du dossier serveur/ (mêmes adresses /api/… que sur Vercel : site.js ne change pas).
+Options -Indexes
+DirectoryIndex index.html index.php
+ErrorDocument 404 /404.html
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+# Fichiers et dossiers cachés jamais servis (.git déposé par le déploiement GitHub d'OVH, .ovhconfig…),
+# sauf /.well-known/ (validation du certificat HTTPS).
+RewriteRule (^|/)\.(?!well-known/) - [R=404,L]
+RewriteRule ^api/espace/(.*)$ serveur/espace.php?chemin=$1 [QSA,L]
+RewriteRule ^api/gestion/(.*)$ serveur/gestion.php?chemin=$1 [QSA,L]
+RewriteRule ^api/appli/(.*)$ serveur/appli.php?chemin=$1 [QSA,L]
+RewriteRule ^api/installation/?$ serveur/installation.php [QSA,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+Header always set X-Content-Type-Options "nosniff"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+Header always set X-Frame-Options "SAMEORIGIN"
+</IfModule>

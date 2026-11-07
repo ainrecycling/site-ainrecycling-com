@@ -1,0 +1,2 @@
+# Bibliothèque du serveur : jamais appelée directement depuis le navigateur.
+Require all denied

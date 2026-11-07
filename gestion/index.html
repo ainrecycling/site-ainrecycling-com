@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <title>Demandes du site – Ain Recycling</title>
+  <link rel="icon" href="/favicon.png">
+  <link rel="stylesheet" href="gestion.css">
+</head>
+<body>
+  <!-- Page réservée à Malik : les demandes d'envoi par colis faites dans l'espace client du site, avec la pièce
+       d'identité et le RIB (lus par serveur/gestion.php, connexion par un code envoyé à son adresse seulement). -->
+  <header class="tete">
+    <a href="/" class="logo"><img src="/logo.png" alt="Ain Recycling" width="152" height="32"></a>
+    <span class="tete-titre">Demandes du site</span>
+    <button type="button" class="lien" data-deconnexion hidden>Se déconnecter</button>
+  </header>
+
+  <main>
+    <form id="connexion" class="carte connexion" novalidate>
+      <h1>Demandes du site</h1>
+      <p class="aide">Réservé à Ain Recycling. Un code arrive sur ton adresse e-mail.</p>
+      <div class="pot" aria-hidden="true"><label>Site web <input name="site" tabindex="-1" autocomplete="off"></label></div>
+      <div data-etape="email">
+        <label for="g-email">Ton adresse e-mail</label>
+        <input id="g-email" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" required>
+        <button type="submit" class="bouton">Recevoir un code</button>
+      </div>
+      <div data-etape="code" hidden>
+        <label for="g-code">Code reçu sur <span data-email></span></label>
+        <input id="g-code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="123 456" required>
+        <button type="submit" class="bouton">Se connecter</button>
+        <button type="button" class="lien" data-autre>Autre adresse</button>
+      </div>
+      <p class="msg" role="alert" hidden></p>
+    </form>
+
+    <section id="liste" hidden>
+      <div class="barre">
+        <div class="filtres" role="group" aria-label="Demandes à afficher">
+          <button type="button" class="filtre actif" data-etat="a_traiter" aria-pressed="true">À traiter</button>
+          <button type="button" class="filtre" data-etat="toutes" aria-pressed="false">Toutes</button>
+        </div>
+        <button type="button" class="bouton fantome" data-actualiser>Actualiser</button>
+      </div>
+      <p class="msg" role="alert" hidden></p>
+      <p class="vide" data-vide hidden>Aucune demande à traiter.</p>
+      <p class="chargement" data-chargement>Chargement…</p>
+      <ul class="demandes" data-demandes></ul>
+    </section>
+  </main>
+
+  <dialog id="visionneuse" aria-label="Pièce d'identité">
+    <img alt="">
+    <button type="button" class="bouton" data-fermer>Fermer</button>
+  </dialog>
+
+  <template id="modele-demande">
+    <li class="carte demande">
+      <div class="demande-tete"><b class="ref" data-ref></b><span class="etat" data-etat-demande></span></div>
+      <p class="quand" data-quand></p>
+      <h2 data-nom></h2>
+      <ul class="colis" data-colis></ul>
+      <p class="total" data-total></p>
+      <p class="message-client" data-message hidden></p>
+      <dl class="infos">
+        <dt>Adresse</dt><dd><span data-adresse></span>
+          <div class="mini-rangee"><button type="button" class="mini" data-copier-adresse>Copier l'adresse</button></div></dd>
+        <dt>Contact</dt><dd><a data-tel hidden></a><a data-mail></a></dd>
+        <dt data-piece-titre>Pièce</dt><dd data-piece-ligne><span data-piece></span>
+          <div class="mini-rangee boutons-piece"><button type="button" class="mini" data-voir="recto">Voir le recto</button>
+          <button type="button" class="mini" data-voir="verso">Voir le verso</button></div></dd>
+        <dt data-rib-titre>RIB</dt><dd data-rib-ligne><span data-rib></span>
+          <div class="mini-rangee"><button type="button" class="mini" data-afficher-iban>Afficher</button>
+          <button type="button" class="mini" data-copier-iban>Copier l'IBAN</button></div></dd>
+      </dl>
+      <div class="actions">
+        <button type="button" class="bouton" data-traite>✓ Étiquette envoyée</button>
+        <button type="button" class="bouton fantome" data-remettre hidden>Annuler : remettre à traiter</button>
+      </div>
+    </li>
+  </template>
+
+  <script src="gestion.js"></script>
+</body>
+</html>
