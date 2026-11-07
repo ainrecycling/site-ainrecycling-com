@@ -6,6 +6,14 @@ ErrorDocument 404 /404.html
 
 <IfModule mod_rewrite.c>
 RewriteEngine On
+# Une seule adresse : https://ainrecycling.com (sans www). Pour Google (pas de pages en double) et pour l'espace client,
+# qui ne marche qu'en https (cookie « Secure », origine vérifiée). /.well-known/ n'est jamais redirigé (certificat) ;
+# l'adresse technique d'OVH (…cluster129.hosting.ovh.net, sans https) non plus.
+RewriteCond %{REQUEST_URI} !^/\.well-known/
+RewriteCond %{HTTP_HOST} ^www\.ainrecycling\.com$ [NC,OR]
+RewriteCond %{SERVER_PORT} ^80$
+RewriteCond %{HTTP_HOST} (^|\.)ainrecycling\.com$ [NC]
+RewriteRule ^(.*)$ https://ainrecycling.com/$1 [R=301,L]
 # Fichiers et dossiers cachés jamais servis (.git déposé par le déploiement GitHub d'OVH, .ovhconfig…),
 # sauf /.well-known/ (validation du certificat HTTPS).
 RewriteRule (^|/)\.(?!well-known/) - [R=404,L]
