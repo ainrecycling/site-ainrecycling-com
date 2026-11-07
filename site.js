@@ -2,23 +2,43 @@
 (function () {
   // Textes affichés par le script, dans la langue de la page
   var TEXTES = {
-    fr: { ouvrir: 'Ouvrir le menu', fermer: 'Fermer le menu', bonjour: 'Bonjour,', souhait: 'Je souhaite une estimation pour du carbure de tungstène.',
+    fr: { entreprise: 'Entreprise', siret: 'SIRET', volume: 'Quantité par mois', enlevement: 'Enlèvement sur place',
+      devisSouhait: 'Je souhaite un devis pour la reprise de notre carbure.', quantite: 'Quantité à enlever', contenant: 'Contenants',
+      acces: 'Accès pour le camion', lieu: 'Lieu', contact: 'Contact', telephone: 'Téléphone', semaine: 'Semaine souhaitée',
+      sujetDevis: 'Demande de devis carbure – ', semaineDu: 'Semaine du {date}',
+      ouvrir: 'Ouvrir le menu', fermer: 'Fermer le menu', bonjour: 'Bonjour,', souhait: 'Je souhaite une estimation pour du carbure de tungstène.',
       nom: 'Nom', profil: 'Profil', matiere: 'Matière', poids: 'Poids estimé', nonPrecise: 'non précisé', facon: 'Façon de vendre',
       photos: '(Photos jointes)', sujet: 'Demande d\'estimation carbure – ', locale: 'fr-FR',
       element: 'élément {n} sur {t}' },
-    de: { ouvrir: 'Menü öffnen', fermer: 'Menü schließen', bonjour: 'Guten Tag,', souhait: 'ich bitte um eine Schätzung für Wolframkarbid.',
+    de: { entreprise: 'Unternehmen', siret: 'SIRET', volume: 'Menge pro Monat', enlevement: 'Abholung vor Ort',
+      devisSouhait: 'ich bitte um ein Angebot für die Rücknahme unseres Hartmetalls.', quantite: 'Abzuholende Menge', contenant: 'Behälter',
+      acces: 'Zufahrt für den Lkw', lieu: 'Standort', contact: 'Ansprechpartner', telephone: 'Telefon', semaine: 'Gewünschte Woche',
+      sujetDevis: 'Angebotsanfrage Hartmetall – ', semaineDu: 'Woche vom {date}',
+      ouvrir: 'Menü öffnen', fermer: 'Menü schließen', bonjour: 'Guten Tag,', souhait: 'ich bitte um eine Schätzung für Wolframkarbid.',
       nom: 'Name', profil: 'Profil', matiere: 'Material', poids: 'Geschätztes Gewicht', nonPrecise: 'nicht angegeben', facon: 'Verkaufsart',
       photos: '(Fotos im Anhang)', sujet: 'Anfrage Hartmetall-Schätzung – ', locale: 'de-DE',
       element: 'Element {n} von {t}' },
-    en: { ouvrir: 'Open menu', fermer: 'Close menu', bonjour: 'Hello,', souhait: 'I would like a quote for tungsten carbide.',
+    en: { entreprise: 'Company', siret: 'SIRET', volume: 'Quantity per month', enlevement: 'Collection on site',
+      devisSouhait: 'I would like a quote for taking back our carbide.', quantite: 'Quantity to collect', contenant: 'Containers',
+      acces: 'Truck access', lieu: 'Location', contact: 'Contact', telephone: 'Phone', semaine: 'Preferred week',
+      sujetDevis: 'Carbide quote request – ', semaineDu: 'Week of {date}',
+      ouvrir: 'Open menu', fermer: 'Close menu', bonjour: 'Hello,', souhait: 'I would like a quote for tungsten carbide.',
       nom: 'Name', profil: 'Profile', matiere: 'Material', poids: 'Estimated weight', nonPrecise: 'not specified', facon: 'How I want to sell',
       photos: '(Photos attached)', sujet: 'Carbide quote request – ', locale: 'en-GB',
       element: 'item {n} of {t}' },
-    it: { ouvrir: 'Apri il menu', fermer: 'Chiudi il menu', bonjour: 'Buongiorno,', souhait: 'desidero una stima per del carburo di tungsteno.',
+    it: { entreprise: 'Azienda', siret: 'SIRET', volume: 'Quantità al mese', enlevement: 'Ritiro in sede',
+      devisSouhait: 'desidero un preventivo per il ritiro del nostro metallo duro.', quantite: 'Quantità da ritirare', contenant: 'Contenitori',
+      acces: 'Accesso per il camion', lieu: 'Luogo', contact: 'Referente', telephone: 'Telefono', semaine: 'Settimana desiderata',
+      sujetDevis: 'Richiesta di preventivo metallo duro – ', semaineDu: 'Settimana del {date}',
+      ouvrir: 'Apri il menu', fermer: 'Chiudi il menu', bonjour: 'Buongiorno,', souhait: 'desidero una stima per del carburo di tungsteno.',
       nom: 'Nome', profil: 'Profilo', matiere: 'Materiale', poids: 'Peso stimato', nonPrecise: 'non indicato', facon: 'Modalità di vendita',
       photos: '(Foto allegate)', sujet: 'Richiesta di stima carburo – ', locale: 'it-IT',
       element: 'elemento {n} di {t}' },
-    es: { ouvrir: 'Abrir el menú', fermer: 'Cerrar el menú', bonjour: 'Buenos días:', souhait: 'Quisiera una estimación para carburo de tungsteno.',
+    es: { entreprise: 'Empresa', siret: 'SIRET', volume: 'Cantidad al mes', enlevement: 'Recogida in situ',
+      devisSouhait: 'Quisiera un presupuesto para la recogida de nuestro carburo.', quantite: 'Cantidad a recoger', contenant: 'Recipientes',
+      acces: 'Acceso para el camión', lieu: 'Lugar', contact: 'Contacto', telephone: 'Teléfono', semaine: 'Semana deseada',
+      sujetDevis: 'Solicitud de presupuesto de carburo – ', semaineDu: 'Semana del {date}',
+      ouvrir: 'Abrir el menú', fermer: 'Cerrar el menú', bonjour: 'Buenos días:', souhait: 'Quisiera una estimación para carburo de tungsteno.',
       nom: 'Nombre', profil: 'Perfil', matiere: 'Material', poids: 'Peso estimado', nonPrecise: 'no indicado', facon: 'Forma de venta',
       photos: '(Fotos adjuntas)', sujet: 'Solicitud de estimación de carburo – ', locale: 'es-ES',
       element: 'elemento {n} de {t}' }
@@ -301,7 +321,7 @@
   var barreMobile = document.getElementById('barre-mobile');
   if (barreMobile) {
     document.body.classList.add('avec-barre-mobile');
-    var contact = document.getElementById('contact') || document.getElementById('demande');
+    var contact = document.getElementById('contact') || document.getElementById('demande') || document.getElementById('devis');
     var contactVisible = false;
     if (contact && 'IntersectionObserver' in window) {
       new IntersectionObserver(function (en) { contactVisible = en[0].isIntersecting; majBarre(); }, { threshold: .15 }).observe(contact);
@@ -370,6 +390,14 @@
         T.poids + sep + (poids ? poids + ' kg' : T.nonPrecise),
         T.facon + sep + f.get('facon'),
       ];
+      // proposition 26 : un professionnel dit son entreprise, son volume et s'il veut un enlèvement
+      if (profil && profil.value === 'Professionnel') {
+        var coche = function (n) { var c = form.querySelector('input[name="' + n + '"]:checked'); return c ? c.nextElementSibling.textContent : ''; };
+        [['entreprise', f.get('entreprise')], ['siret', f.get('siret')], ['volume', coche('volume')], ['enlevement', coche('enlevement')]].forEach(function (l) {
+          var v = String(l[1] || '').trim();
+          if (v) lignes.splice(lignes.length - 3, 0, T[l[0]] + sep + v);
+        });
+      }
       var message = String(f.get('message') || '').trim();
       if (message) lignes.push('', message);
       lignes.push('', T.photos, '');
@@ -383,6 +411,110 @@
   var faconChamp = document.getElementById('f-facon');
   var faconVoulue = { depot: 0, colis: 1, tournee: 2 }[new URLSearchParams(location.search).get('facon')];
   if (faconChamp && faconVoulue !== undefined) faconChamp.selectedIndex = faconVoulue;
+
+  // Contact : les questions des professionnels n'apparaissent que si « Professionnel » est choisi (proposition 26)
+  var champsPro = document.getElementById('champs-pro');
+  if (form && champsPro) {
+    var majPro = function () { var p = form.querySelector('input[name="profil"]:checked'); champsPro.hidden = !(p && p.value === 'Professionnel'); };
+    form.querySelectorAll('input[name="profil"]').forEach(function (r) { r.addEventListener('change', majPro); });
+    majPro();
+  }
+
+  // Prix du jour daté sur le ticket du haut (proposition 5) : la date du jour, dans la langue de la page
+  document.querySelectorAll('[data-prix-du-jour]').forEach(function (el) {
+    el.textContent = '· ' + new Date().toLocaleDateString(T.locale, { weekday: 'long', day: 'numeric', month: 'long' });
+  });
+
+  // Demande de devis ou d'enlèvement des professionnels (proposition 27) : un e-mail ou un message WhatsApp déjà rédigé
+  var devis = document.getElementById('form-devis');
+  if (devis) {
+    var dEntreprise = devis.querySelector('#d-entreprise');
+    var dErreur = devis.querySelector('#d-entreprise-erreur');
+    var dVia = 'mail';
+    devis.querySelectorAll('button[type="submit"]').forEach(function (b) { b.addEventListener('click', function () { dVia = b.value; }); });
+    dEntreprise.addEventListener('input', function () {
+      if (dEntreprise.value.trim()) { dEntreprise.removeAttribute('aria-invalid'); dErreur.hidden = true; }
+    });
+    devis.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!dEntreprise.value.trim()) {
+        dEntreprise.setAttribute('aria-invalid', 'true');
+        dEntreprise.setAttribute('aria-describedby', 'd-entreprise-erreur');
+        dErreur.hidden = false;
+        dEntreprise.focus();
+        return;
+      }
+      var via = (e.submitter && e.submitter.value) || dVia;
+      var f = new FormData(devis);
+      var sep = document.documentElement.lang === 'fr' ? ' : ' : ': ';
+      var choix = function (n) {
+        return [].map.call(devis.querySelectorAll('input[name="' + n + '"]:checked'), function (c) { return c.nextElementSibling.textContent; }).join(', ');
+      };
+      var lignes = [T.bonjour, '', T.devisSouhait, ''];
+      [['entreprise', f.get('entreprise')], ['siret', f.get('siret')], ['lieu', f.get('lieu')], ['quantite', choix('quantite')],
+        ['contenant', choix('contenant')], ['acces', choix('acces')], ['semaine', f.get('semaine')], ['contact', f.get('contact')],
+        ['telephone', f.get('telephone')]].forEach(function (l) {
+        var v = String(l[1] || '').trim();
+        if (v) lignes.push(T[l[0]] + sep + v);
+      });
+      var message = String(f.get('message') || '').trim();
+      if (message) lignes.push('', message);
+      var texte = lignes.join('\n');
+      if (via === 'whatsapp') window.location.href = 'https://wa.me/33761119523?text=' + encodeURIComponent(texte);
+      else window.location.href = 'mailto:contact@ainrecycling.com?subject=' + encodeURIComponent(T.sujetDevis + f.get('entreprise')) +
+        '&body=' + encodeURIComponent(texte + '\n');
+    });
+  }
+
+  // Questions : recherche et catégories (proposition 28). Sans script, toutes les questions restent affichées.
+  var faqOutils = document.querySelector('[data-faq-outils]');
+  if (faqOutils) {
+    var faqItems = [].slice.call(document.querySelectorAll('#faq .faq-item'));
+    var faqVide = document.querySelector('[data-faq-vide]');
+    var faqChamp = document.getElementById('faq-cherche');
+    var faqBoutons = [].slice.call(faqOutils.querySelectorAll('[data-cat]'));
+    var faqCat = '';
+    var simple = function (t) { return String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); };
+    var faqTextes = faqItems.map(function (it) { return simple(it.textContent); });
+    var filtrer = function () {
+      var mots = simple(faqChamp.value).split(/\s+/).filter(Boolean), vus = 0;
+      faqItems.forEach(function (it, i) {
+        var ok = (!faqCat || (' ' + it.getAttribute('data-cat') + ' ').indexOf(' ' + faqCat + ' ') >= 0) &&
+          mots.every(function (m) { return faqTextes[i].indexOf(m) >= 0; });
+        it.hidden = !ok;
+        if (ok) vus++;
+      });
+      faqVide.hidden = vus > 0;
+    };
+    faqBoutons.forEach(function (b) {
+      b.addEventListener('click', function () {
+        faqCat = b.getAttribute('data-cat');
+        faqBoutons.forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        filtrer();
+      });
+    });
+    faqChamp.addEventListener('input', filtrer);
+    faqOutils.hidden = false;
+  }
+
+  // Prochaine tournée sous la carte (proposition 38) : villes et semaine lues dans /tournees.json
+  // ({"tournees": [{"villes": "Lyon · Grenoble", "semaine": "2026-11-23"}]}, la semaine = son lundi). Sans tournée à venir, le texte de la page reste.
+  var tournee = document.querySelector('[data-tournee]');
+  if (tournee && window.fetch) {
+    fetch('/tournees.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+      if (!d || !d.tournees) return;
+      var aujourdhui = new Date(); aujourdhui.setHours(0, 0, 0, 0);
+      var prochaine = d.tournees.filter(function (t) {
+        var fin = new Date(t.semaine + 'T00:00:00'); fin.setDate(fin.getDate() + 6);
+        return t.villes && fin >= aujourdhui;
+      }).sort(function (a, b) { return a.semaine < b.semaine ? -1 : 1; })[0];
+      if (!prochaine) return;
+      tournee.querySelector('[data-tournee-villes]').textContent = prochaine.villes;
+      var date = tournee.querySelector('[data-tournee-date]');
+      date.textContent = T.semaineDu.replace('{date}', new Date(prochaine.semaine + 'T00:00:00').toLocaleDateString(T.locale, { day: 'numeric', month: 'long' }));
+      date.hidden = false;
+    }).catch(function () {});
+  }
 
   // Espace client : connexion par un code reçu par e-mail, puis le compte (coordonnées, pièce d'identité, RIB) et les
   // demandes d'envoi par colis. Le serveur est celui du site chez OVH (serveur/espace.php, en PHP, joint par l'adresse
