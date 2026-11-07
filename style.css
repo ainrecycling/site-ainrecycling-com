@@ -861,11 +861,37 @@ ul, ol { margin: 0; padding: 0; }
 .lecture { position: fixed; top: 0; left: 0; right: 0; z-index: 70; height: 4px; pointer-events: none; }
 .lecture span { display: block; height: 100%; border-radius: 0 4px 4px 0; background: linear-gradient(90deg, var(--vert), var(--vert-vif)); transform: scaleX(0); transform-origin: 0 50%; }
 
-/* Menu : une pastille verte suit la partie de la page qu'on lit (« Tubelight Navbar ») */
-@media (min-width: 1181px) { .menu { position: relative; isolation: isolate; } }
-.menu-curseur { position: absolute; left: 0; top: 50%; z-index: -1; width: 0; height: 40px; margin-top: -20px; border-radius: 9px; background: var(--vert-50); box-shadow: inset 0 0 0 1px var(--vert-100); opacity: 0; pointer-events: none; transition: transform .5s var(--ease), width .5s var(--ease), opacity .3s; }
-.menu-curseur.pret { opacity: 1; }
-.menu a.ici:not(.btn) { color: var(--marine); }
+/* Menu : le composant « Tubelight Navbar » (ayushmxxn, 21st.dev, récupéré le 07/11/2026 ; code d'origine dans
+   21st-composants/ayushmxxn__tubelight-navbar), refait sans bibliothèque (site.js pose .menu-lampe derrière les liens).
+   Comme le composant : fond pâle tout arrondi sous le lien, petit tube de 32 × 4 px arrondi en haut, posé 8 px au-dessus,
+   et trois halos à 20 % (48 × 24 et 32 × 24 floutés de 12 px, 16 × 16 flouté de 4 px) ; il glisse sur son ressort
+   (raideur 300, amortissement 30, masse 1 : 0,5 s, recopié point par point dans linear() ; courbe proche pour les vieux
+   navigateurs). Vert du site au lieu de sa couleur principale ; le trait vert sous les liens lui laisse la place. */
+.menu-lampe {
+  display: none; position: absolute; left: 0; top: 0; z-index: -1; width: 0; height: 0; border-radius: 999px;
+  background: var(--vert-50); opacity: 0; pointer-events: none;
+  transition: transform .5s var(--ease), width .5s var(--ease), opacity .25s ease;
+  transition-timing-function:
+    linear(0, .073 5%, .228 10%, .401 15%, .561 20%, .693 25%, .796 30%, .871 35%, .923 40%, .98 50%, 1 60%, 1.004 70%, 1.004 80%, 1),
+    linear(0, .073 5%, .228 10%, .401 15%, .561 20%, .693 25%, .796 30%, .871 35%, .923 40%, .98 50%, 1 60%, 1.004 70%, 1.004 80%, 1),
+    ease;
+}
+@media (min-width: 1181px) {
+  .menu { position: relative; isolation: isolate; }
+  .menu.a-lampe a:not(.btn)::after { display: none; }
+  .menu-lampe { display: block; }
+}
+.menu-lampe.allumee { opacity: 1; }
+.menu-lampe-tube { position: absolute; top: -8px; left: 50%; width: 32px; height: 4px; margin-left: -16px; border-radius: 999px 999px 0 0; background: var(--vert); }
+.menu-lampe-tube span { position: absolute; border-radius: 999px; background: rgba(24, 122, 78, .2); filter: blur(12px); }
+.menu-lampe-tube span:nth-child(1) { top: -8px; left: -8px; width: 48px; height: 24px; }
+.menu-lampe-tube span:nth-child(2) { top: -4px; left: 0; width: 32px; height: 24px; }
+.menu-lampe-tube span:nth-child(3) { top: 0; left: 8px; width: 16px; height: 16px; filter: blur(4px); }
+.menu a.sous-lampe:not(.btn) { color: var(--marine); }
+@media (forced-colors: active) and (min-width: 1181px) {
+  .menu-lampe { display: none !important; }
+  .menu.a-lampe a:not(.btn)::after { display: block; }
+}
 
 /* Surligneur : le composant « Text Highlighter » (danielpetho, 21st.dev, récupéré le 30/10/2026 ; code d'origine dans
    21st-composants/danielpetho__text-highlighter), refait sans bibliothèque (site.js pose .surligne-vu). Un aplat passe
@@ -1107,8 +1133,7 @@ ul, ol { margin: 0; padding: 0; }
 }
 
 @media (max-width: 1180px) {
-  .menu-curseur { display: none; }
-  .menu a.ici:not(.btn) { background: var(--vert-50); box-shadow: inset 3px 0 0 var(--vert); }
+  .menu a[aria-current="page"]:not(.btn) { background: var(--vert-50); box-shadow: inset 3px 0 0 var(--vert); }
 }
 @media (max-width: 860px) {
   .flottants { display: none; }

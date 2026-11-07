@@ -779,38 +779,50 @@
   window.addEventListener('pageshow', function () { majLecture(true); });
   majLecture(true);
 
-  // Menu : une pastille verte suit la partie de la page qu'on lit (« Tubelight Navbar »)
-  var liensMenu = menu ? [].slice.call(menu.querySelectorAll('a[href^="#"]:not(.btn)')) : [];
-  var parties = liensMenu.map(function (a) { return document.querySelector(a.getAttribute('href')); });
-  if (liensMenu.length && 'IntersectionObserver' in window) {
-    var curseurMenu = document.createElement('span');
-    curseurMenu.className = 'menu-curseur';
-    curseurMenu.setAttribute('aria-hidden', 'true');
-    menu.insertBefore(curseurMenu, menu.firstChild);
-    var lienIci = null, partiesVues = new Map();
-    var placerCurseur = function () {
-      if (!lienIci) { curseurMenu.classList.remove('pret'); return; }
-      // la première fois, la pastille apparaît sur place au lieu d'arriver du bord du menu
-      if (!curseurMenu.classList.contains('pret')) curseurMenu.style.transition = 'none';
-      curseurMenu.style.transform = 'translateX(' + lienIci.offsetLeft + 'px)';
-      curseurMenu.style.width = lienIci.offsetWidth + 'px';
-      curseurMenu.getBoundingClientRect();
-      curseurMenu.style.transition = '';
-      curseurMenu.classList.add('pret');
+  // Menu : le composant « Tubelight Navbar » d'ayushmxxn (21st.dev, récupéré le 07/11/2026 ; code d'origine dans
+  // 21st-composants/ayushmxxn__tubelight-navbar), refait sans bibliothèque. Une « lampe » (fond pâle tout arrondi, petit
+  // tube vert et son halo au-dessus) marque la page affichée ; elle glisse sur le ressort du composant (dans style.css)
+  // vers le lien survolé ou pris au clavier, et revient sur la page affichée quand on quitte le menu. Le composant change
+  // d'onglet au clic ; ici un clic ouvre une autre page, d'où le survol. Menu en ligne (ordinateur) seulement ; avec
+  // « moins d'animations », elle saute directement.
+  var liensMenu = menu ? [].slice.call(menu.querySelectorAll('a:not(.btn)')) : [];
+  if (liensMenu.length && window.matchMedia) {
+    var menuEnLigne = window.matchMedia('(min-width: 1181px)');
+    var lampe = document.createElement('span');
+    lampe.className = 'menu-lampe';
+    lampe.setAttribute('aria-hidden', 'true');
+    lampe.innerHTML = '<span class="menu-lampe-tube"><span></span><span></span><span></span></span>';
+    menu.insertBefore(lampe, menu.firstChild);
+    menu.classList.add('a-lampe');
+    var lienPage = menu.querySelector('a[aria-current="page"]:not(.btn)');
+    var lienLampe = null;
+    var poserLampe = function (lien, sansGlisser) {
+      if (lienLampe && lienLampe !== lien) lienLampe.classList.remove('sous-lampe');
+      if (!lien || !menuEnLigne.matches) { lampe.classList.remove('allumee'); lienLampe = null; return; }
+      // éteinte (première fois, page hors du menu), elle s'allume sur place au lieu d'arriver du bord du menu
+      if (sansGlisser || !lampe.classList.contains('allumee')) lampe.style.transition = 'none';
+      lampe.style.width = lien.offsetWidth + 'px';
+      lampe.style.height = lien.offsetHeight + 'px';
+      lampe.style.transform = 'translate(' + lien.offsetLeft + 'px, ' + lien.offsetTop + 'px)';
+      if (lampe.style.transition) { lampe.getBoundingClientRect(); lampe.style.transition = ''; }
+      lampe.classList.add('allumee');
+      lien.classList.add('sous-lampe');
+      lienLampe = lien;
     };
-    var obsParties = new IntersectionObserver(function (en) {
-      en.forEach(function (e) { partiesVues.set(e.target, e.isIntersecting); });
-      var lien = null;
-      parties.forEach(function (p, i) { if (p && partiesVues.get(p)) lien = liensMenu[i]; });
-      if (lien === lienIci) return;
-      if (lienIci) lienIci.classList.remove('ici');
-      lienIci = lien;
-      if (lien) lien.classList.add('ici');
-      placerCurseur();
-    }, { rootMargin: '-45% 0px -54% 0px' });
-    parties.forEach(function (p) { if (p) obsParties.observe(p); });
-    window.addEventListener('resize', placerCurseur);
-    if (document.fonts) document.fonts.ready.then(placerCurseur);
+    liensMenu.forEach(function (a) {
+      a.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') poserLampe(a); });
+      a.addEventListener('focus', function () {
+        try { if (!a.matches(':focus-visible')) return; } catch (x) { /* navigateur sans :focus-visible */ }
+        poserLampe(a);
+      });
+    });
+    menu.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse') poserLampe(lienPage); });
+    menu.addEventListener('focusout', function (e) { if (!menu.contains(e.relatedTarget)) poserLampe(lienPage); });
+    var replacerLampe = function () { poserLampe(lienPage, true); };
+    window.addEventListener('resize', aChaqueImage(replacerLampe));
+    window.addEventListener('pageshow', replacerLampe);
+    if (document.fonts) document.fonts.ready.then(replacerLampe);
+    replacerLampe();
   }
 
   // Surligneur : le composant « Text Highlighter » de danielpetho (21st.dev, récupéré le 30/10/2026), refait sans
