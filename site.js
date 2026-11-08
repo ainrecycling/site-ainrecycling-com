@@ -1742,6 +1742,65 @@
     }
   }
 
+  // Page colis, « Ce que vous recevez, étape par étape » : les messages arrivent un par un, le plus récent en haut. Le vrai
+  // composant « Animated List » de Dillion Verma (Magic UI ; 21st.dev, id de démo 869, licence MIT, récupéré le 08/11/2026,
+  // https://21st.dev/@dillionverma/components/animated-list ; code d'origine dans 21st-composants/dillionverma__animated-list),
+  // refait sans React ni bibliothèque. Comme le composant : toutes les secondes (« delay » 1000), un message de plus arrive
+  // en haut de la liste et grandit depuis son bord du haut (échelle et opacité de 0 à 1, « originY » 0) pendant que les
+  // autres glissent vers le bas (« layout »), tous sur le même ressort (raideur 350, amortissement 40, masse 1 : sans
+  // rebond). Adapté : la liste garde sa hauteur finale (la page ne saute pas) et les messages pas encore arrivés sont
+  // seulement transparents (les lecteurs d'écran lisent toute la liste) ; une seule passe de 3 s quand la liste arrive à
+  // l'écran, rejouée si on revient après l'avoir quittée, au lieu de tourner sans fin ; rien avec « moins d'animations ».
+  var listeMessages = document.querySelector('.messages');
+  if (listeMessages && !calme && 'IntersectionObserver' in window) {
+    var messages = [].slice.call(listeMessages.children).map(function (el) {
+      return { el: el, y: 0, vy: 0, cy: 0, s: 0, vs: 0, cs: 0 };
+    });
+    var arrives = 0, minuteurMsg = 0, imageMsg = 0, avantMsg = 0;
+    var poserMsg = function (m) {
+      var s = Math.max(0, m.s);
+      m.el.style.transform = 'translate3d(0, ' + m.y.toFixed(2) + 'px, 0) scale(' + s.toFixed(4) + ')';
+      m.el.style.opacity = Math.min(1, s).toFixed(3);
+    };
+    var ressortMsg = function (t) {
+      var dt = avantMsg ? Math.min(.05, (t - avantMsg) / 1000) : 1 / 60;
+      avantMsg = t;
+      var encore = false;
+      messages.forEach(function (m) {
+        // petits pas de 4 ms au plus pour que le ressort reste juste, même à 30 images par seconde
+        for (var k = 0, n = Math.ceil(dt / .004), h = dt / n; k < n; k++) {
+          m.vy += (-350 * (m.y - m.cy) - 40 * m.vy) * h; m.y += m.vy * h;
+          m.vs += (-350 * (m.s - m.cs) - 40 * m.vs) * h; m.s += m.vs * h;
+        }
+        if (Math.abs(m.y - m.cy) < .1 && Math.abs(m.vy) < .5 && Math.abs(m.s - m.cs) < .001 && Math.abs(m.vs) < .01) { m.y = m.cy; m.vy = 0; m.s = m.cs; m.vs = 0; }
+        else encore = true;
+        poserMsg(m);
+      });
+      imageMsg = encore ? requestAnimationFrame(ressortMsg) : 0;
+    };
+    // Le message suivant arrive tout en haut : ceux déjà là se placent sous lui, plus haut que leur place finale de la
+    // hauteur des messages qui ne sont pas encore arrivés (offsetTop ne tient pas compte des déplacements en cours).
+    var arriverMsg = function () {
+      var m = messages[arrives], haut = -m.el.offsetTop;
+      for (var i = 0; i <= arrives; i++) messages[i].cy = haut;
+      m.y = haut; m.vy = 0; m.cs = 1;
+      arrives++;
+      if (!imageMsg) { avantMsg = 0; imageMsg = requestAnimationFrame(ressortMsg); }
+      if (arrives < messages.length) minuteurMsg = setTimeout(arriverMsg, 1000);
+    };
+    var remettreMsg = function () {
+      clearTimeout(minuteurMsg);
+      if (imageMsg) cancelAnimationFrame(imageMsg);
+      imageMsg = 0; arrives = 0;
+      messages.forEach(function (m) { m.y = m.cy = m.vy = 0; m.s = m.cs = m.vs = 0; poserMsg(m); });
+    };
+    remettreMsg();
+    new IntersectionObserver(function (es) {
+      if (es[0].isIntersecting && es[0].intersectionRatio >= .35) { if (!arrives) arriverMsg(); }
+      else if (!es[0].isIntersecting) remettreMsg();
+    }, { threshold: [0, .35] }).observe(listeMessages);
+  }
+
   // Texte qui s'éclaire mot à mot pendant qu'on le lit : le composant « Reading Text Reveal » de waleedkibhen (21st.dev,
   // récupéré le 31/10/2026, https://21st.dev/@waleedkibhen/components/reading-text-reveal), refait sans React. Une ligne
   // de lecture à 62 % de la hauteur de l'écran : les mots s'allument dans l'ordre à mesure que le texte la passe, et
