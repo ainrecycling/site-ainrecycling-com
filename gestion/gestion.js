@@ -1,6 +1,8 @@
 // Page des demandes (réservée à Malik) : connexion par un code reçu par e-mail, puis les demandes d'envoi par colis de
 // l'espace client, avec la pièce d'identité (visionneuse) et le RIB, et « ✓ Étiquette envoyée ». Serveur : /api/gestion/…
 // (serveur/gestion.php). Tout ce qu'a écrit un client est affiché en texte (textContent), jamais en HTML.
+// Depuis le 8 nov. 2026 : 4 cases en haut pour piloter le site (prix, annonce, visites, sauvegarde), le prix garanti de
+// chaque demande, et l'adresse /gestion/#COL-… (QR code du bordereau) qui ouvre directement la demande.
 (function () {
   'use strict';
   var ERREURS = {
@@ -10,10 +12,16 @@
     code_faux: 'Ce code n\'est pas le bon : vérifie-le.', code_expire: 'Ce code n\'est plus valable : demandes-en un nouveau.',
     bloque: 'Trop d\'essais : demande un nouveau code.', code6: 'Le code a 6 chiffres.',
     connexion: 'Tu n\'es plus connecté : reconnecte-toi.', introuvable: 'Demande introuvable : actualise la liste.',
-    absente: 'Photo introuvable.', copie: 'Copie impossible : sélectionne le texte à la main.'
+    absente: 'Photo introuvable.', copie: 'Copie impossible : sélectionne le texte à la main.',
+    prix: 'Écris un prix entre 5 et 300 €/kg (par exemple 47 ou 47,5).', meme_prix: 'C\'est déjà le prix du site.',
+    type: 'Choisis la sorte d\'annonce.', dates: 'Indique la date de début (et la date de fin, si elle est différente).',
+    passee: 'Cette date de fin est déjà passée.', longue: 'Une annonce dure deux mois au plus.', villes: 'Indique les villes de la tournée.',
+    mot_de_passe: 'Le mot de passe doit avoir au moins 10 caractères.', mdp_differents: 'Les deux mots de passe ne sont pas pareils.'
   };
-  var ouverture = Date.now(), etat = 'a_traiter';
+  var ouverture = Date.now(), etat = 'a_traiter', reglages = null, cible = null;
   var kg = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 });
+  var euros = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 });
+  var entier = new Intl.NumberFormat('fr-FR');
   var $ = function (sel, dans) { return (dans || document).querySelector(sel); };
 
   var api = function (methode, chemin, corps) {
@@ -33,6 +41,17 @@
     el.classList.toggle('ok', !!ok);
   };
   var occupe = function (el, oui) { el.querySelectorAll('button').forEach(function (b) { b.disabled = oui; }); };
+
+  // ---------- dates (le site compte en heure de Paris) ----------
+  var MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  var aujourdhui = function () { return new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' }); };
+  var dateLongue = function (ymd) {
+    var p = String(ymd || '').split('-');
+    if (p.length !== 3) return ymd || '';
+    var j = Number(p[2]);
+    return (j === 1 ? '1er' : j) + ' ' + MOIS[Number(p[1]) - 1];
+  };
+  var dateIso = function (iso) { return iso ? new Date(iso).toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' }) : ''; };
 
   // ---------- connexion ----------
   var cx = $('#connexion'), liste = $('#liste'), msgCx = $('.msg', cx), msgListe = $('.msg', liste);
@@ -71,7 +90,7 @@
   $('[data-autre]', cx).addEventListener('click', function () { etapeCode.hidden = true; etapeEmail.hidden = false; dire(msgCx, ''); email.focus(); });
   deco.addEventListener('click', function () { api('DELETE', 'connexion').then(montrerConnexion); });
 
-  // ---------- liste ----------
+  // ---------- liste des demandes ----------
   var ul = $('[data-demandes]'), modele = $('#modele-demande');
   var jourHeure = function (iso) {
     var d = new Date(iso);
@@ -97,6 +116,7 @@
     var li = modele.content.firstElementChild.cloneNode(true), c = e.client;
     var personne = c.nom.toUpperCase() + ' ' + c.prenom;
     var badge = $('[data-etat-demande]', li);
+    li.id = 'demande-' + e.reference;
     $('[data-ref]', li).textContent = e.reference;
     if (e.bon_numero) { badge.textContent = 'Bon ' + e.bon_numero + ' fait'; badge.classList.add('bon'); }
     else if (e.traite_le) { badge.textContent = 'Étiquette envoyée le ' + jourCourt(e.traite_le); badge.classList.add('envoyee'); }
@@ -112,6 +132,14 @@
     });
     $('[data-total]', li).textContent = kg.format(e.total) + ' kg environ · ' + e.colis.length + ' colis · ' + (e.paiement === 'Chèque' ? 'chèque' : 'virement');
     if (e.message) { $('[data-message]', li).textContent = e.message; $('[data-message]', li).hidden = false; }
+    // prix garanti de la demande (gardé avec elle depuis le 8 nov. 2026) : à payer si le colis est déposé au plus tard ce jour-là
+    if (e.prix_kg && e.garanti_jusqu) {
+      var g = $('[data-garantie]', li), fini = e.garanti_jusqu < aujourdhui();
+      g.textContent = (fini ? 'Garantie finie le ' + dateLongue(e.garanti_jusqu) + ' : ' : 'Prix garanti : ') + euros.format(e.prix_kg) + ' €/kg'
+        + (fini ? ' (pour un colis déposé avant cette date)' : ' jusqu\'au ' + dateLongue(e.garanti_jusqu) + ' (colis déposé au plus tard ce jour-là)');
+      g.classList.toggle('finie', fini);
+      g.hidden = false;
+    }
 
     var adresse = [c.profil === 'professionnel' ? c.entreprise : '', personne, c.adresse, c.cp + ' ' + c.ville].filter(Boolean);
     $('[data-adresse]', li).textContent = c.adresse + ', ' + c.cp + ' ' + c.ville;
@@ -166,12 +194,42 @@
     return li;
   }
 
+  function choisirFiltre(nouveau) {
+    etat = nouveau;
+    liste.querySelectorAll('.filtre').forEach(function (x) {
+      var oui = x.getAttribute('data-etat') === nouveau;
+      x.classList.toggle('actif', oui);
+      x.setAttribute('aria-pressed', String(oui));
+    });
+  }
+
+  // QR code du bordereau : /gestion/#COL-261108-K7Q2 ouvre cette demande (cherchée dans « Toutes » si besoin)
+  function lireCible() {
+    var m = /^#(COL-\d{6}-[2-9A-HJ-NP-Z]{4})$/.exec(location.hash);
+    cible = m ? m[1] : null;
+  }
+  function montrerCible(envois) {
+    if (!cible) return;
+    var ref = cible, li = document.getElementById('demande-' + ref);
+    if (!li && etat !== 'toutes') { choisirFiltre('toutes'); charger(); return; }
+    cible = null;
+    history.replaceState(null, '', location.pathname);
+    if (!li) { dire(msgListe, 'Demande ' + ref + ' introuvable (supprimée avec son compte ?).'); return; }
+    li.classList.add('ciblee');
+    li.scrollIntoView({ block: 'start' });
+    li.tabIndex = -1;
+    li.focus({ preventScroll: true });
+    dire(msgListe, 'Demande ' + ref + ' : la voici.', true);
+    setTimeout(function () { li.classList.remove('ciblee'); }, 6000);
+  }
+
   function charger() {
     $('[data-chargement]').hidden = false;
     api('GET', 'demandes?etat=' + etat).then(function (r) {
       $('[data-chargement]').hidden = true;
       if (r.status === 401) return montrerConnexion();
       cx.hidden = true; liste.hidden = false; deco.hidden = false;
+      if (!reglages) chargerReglages();
       if (r.erreur) return dire(msgListe, r.erreur);
       dire(msgListe, '');
       ul.textContent = '';
@@ -180,16 +238,14 @@
       vide.textContent = etat === 'a_traiter' ? 'Aucune demande à traiter.' : 'Aucune demande pour le moment.';
       vide.hidden = (r.envois || []).length > 0;
       if (etat === 'a_traiter') $('[data-etat="a_traiter"]').textContent = 'À traiter (' + (r.envois || []).length + ')';
+      montrerCible(r.envois || []);
     });
   }
   liste.querySelectorAll('.filtre').forEach(function (b) {
-    b.addEventListener('click', function () {
-      etat = b.getAttribute('data-etat');
-      liste.querySelectorAll('.filtre').forEach(function (x) { x.classList.toggle('actif', x === b); x.setAttribute('aria-pressed', String(x === b)); });
-      charger();
-    });
+    b.addEventListener('click', function () { choisirFiltre(b.getAttribute('data-etat')); charger(); });
   });
-  $('[data-actualiser]').addEventListener('click', charger);
+  $('[data-actualiser]').addEventListener('click', function () { charger(); chargerReglages(); });
+  window.addEventListener('hashchange', function () { lireCible(); if (cible && !liste.hidden) charger(); });
 
   // ---------- visionneuse de la pièce (photo chargée à la demande, jamais gardée) ----------
   var dlg = $('#visionneuse'), img = $('img', dlg);
@@ -209,5 +265,249 @@
   $('[data-fermer]', dlg).addEventListener('click', function () { dlg.close(); });
   dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
 
+  // ---------- les 4 cases du haut et leurs feuilles ----------
+  document.querySelectorAll('[data-ouvrir]').forEach(function (b) {
+    b.addEventListener('click', function () { $('#' + b.getAttribute('data-ouvrir')).showModal(); });
+  });
+  document.querySelectorAll('dialog.feuille').forEach(function (d) {
+    d.addEventListener('click', function (e) { if (e.target === d) d.close(); }); // appui à côté : on ferme
+  });
+
+  var lirePrix = function (v) { var n = parseFloat(String(v).replace(/\s/g, '').replace(',', '.').replace('€', '')); return isFinite(n) ? n : NaN; };
+
+  function chargerReglages() {
+    api('GET', 'reglages').then(function (r) {
+      if (r.status === 401 || r.erreur) return;
+      reglages = r;
+      remplirReglages();
+    });
+  }
+
+  var NOMS_ANNONCE = { conges: 'Congés', fermeture: 'Fermeture exceptionnelle', tournee: 'Tournée' };
+  // le texte que verront les visiteurs (le même que site.js, en français)
+  function texteAnnonce(a) {
+    var meme = a.debut.slice(0, 7) === a.fin.slice(0, 7), j = Number(a.debut.slice(8));
+    var du = meme ? (j === 1 ? '1er' : String(j)) : dateLongue(a.debut), au = dateLongue(a.fin), un = a.debut === a.fin;
+    if (un) du = dateLongue(a.debut);
+    if (a.type === 'tournee') return 'Tournée ' + a.villes + (un ? ' le ' + du : ' du ' + du + ' au ' + au) + ' : réservez votre passage.';
+    var debut = a.type === 'conges' ? 'Fermé' : 'Fermé exceptionnellement';
+    return debut + (un ? ' le ' + du : ' du ' + du + ' au ' + au) + '. Vos demandes seront traitées dès le ' + dateLongue(reprise(a.fin)) + '.';
+  }
+  // jour ouvré après la fin (ni samedi, ni dimanche, ni jour férié)
+  function feries(an) {
+    var a = an % 19, b = Math.floor(an / 100), c = an % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25),
+      g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4,
+      l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451),
+      mois = Math.floor((h + l - 7 * m + 114) / 31), jour = ((h + l - 7 * m + 114) % 31) + 1;
+    var paques = Date.UTC(an, mois - 1, jour), j = 86400000;
+    var liste = ['01-01', '05-01', '05-08', '07-14', '08-15', '11-01', '11-11', '12-25'].map(function (x) { return an + '-' + x; });
+    [1, 39, 50].forEach(function (n) { liste.push(new Date(paques + n * j).toISOString().slice(0, 10)); });
+    return liste;
+  }
+  function reprise(fin) {
+    var d = new Date(fin + 'T12:00:00Z');
+    for (var n = 0; n < 15; n++) {
+      d = new Date(d.getTime() + 86400000);
+      var ymd = d.toISOString().slice(0, 10), jour = d.getUTCDay();
+      if (jour !== 0 && jour !== 6 && feries(d.getUTCFullYear()).indexOf(ymd) < 0) return ymd;
+    }
+    return fin;
+  }
+
+  function remplirReglages() {
+    var r = reglages, p = r.prix;
+    // case Prix
+    $('[data-t-prix]').textContent = euros.format(p.kg) + ' €/kg';
+    $('[data-t-prix-detail]').textContent = 'garanti jusqu\'au ' + dateLongue(r.garanti_jusqu) + ' pour une demande du jour';
+    $('[data-prix-actuel]').textContent = euros.format(p.kg);
+    $('[data-prix-depuis]').textContent = (p.le ? 'Depuis le ' + dateLongue(dateIso(p.le)) + '. ' : 'C\'est le prix écrit dans les pages du site. ')
+      + 'Une demande faite aujourd\'hui garde ce prix jusqu\'au ' + dateLongue(r.garanti_jusqu) + ' (7 jours, jamais après la fin du mois).';
+    $('[data-prevenir-texte]').textContent = r.abonnes === 1 ? 'Prévenir l’abonné à l’alerte prix (seulement s’il monte)'
+      : 'Prévenir les ' + entier.format(r.abonnes) + ' abonnés à l’alerte prix (seulement s’il monte)';
+    $('[data-prevenir-ligne]').hidden = !r.abonnes;
+    var h = $('[data-historique]');
+    h.textContent = '';
+    (p.historique || []).forEach(function (x) {
+      var li = document.createElement('li');
+      li.textContent = dateLongue(dateIso(x.le)) + ' : ' + euros.format(x.avant) + ' → ' + euros.format(x.kg) + ' €/kg';
+      h.appendChild(li);
+    });
+    if (!(p.historique || []).length) { var li0 = document.createElement('li'); li0.textContent = 'Pas encore de changement.'; h.appendChild(li0); }
+
+    // case Annonce
+    var a = r.annonces || [];
+    $('[data-t-annonce]').textContent = a.length ? NOMS_ANNONCE[a[0].type] : 'Aucune';
+    var periode = function (x) {
+      if (x.debut === x.fin) return 'le ' + dateLongue(x.debut);
+      var j = Number(x.debut.slice(8));
+      return 'du ' + (x.debut.slice(0, 7) === x.fin.slice(0, 7) ? (j === 1 ? '1er' : j) : dateLongue(x.debut)) + ' au ' + dateLongue(x.fin);
+    };
+    $('[data-t-annonce-detail]').textContent = a.length ? periode(a[0]) + (a.length > 1 ? ' (+' + (a.length - 1) + ')' : '') : 'congés, fermeture, tournée';
+    var ula = $('[data-annonces]');
+    ula.textContent = '';
+    a.forEach(function (x) {
+      var li = document.createElement('li'), t = document.createElement('p'), b = document.createElement('button');
+      t.textContent = texteAnnonce(x);
+      b.type = 'button'; b.className = 'mini'; b.textContent = 'Retirer';
+      b.addEventListener('click', function () {
+        occupe(ula, true);
+        api('POST', 'annonces', { action: 'retirer', id: x.id }).then(function (rr) {
+          occupe(ula, false);
+          if (!rr.erreur) { reglages = rr; remplirReglages(); }
+        });
+      });
+      li.appendChild(t); li.appendChild(b); ula.appendChild(li);
+    });
+    $('[data-aucune-annonce]').hidden = a.length > 0;
+
+    // case Visites
+    var v = r.visites, ce = v.ce_mois, avant = v.mois_dernier;
+    var arrivees = function (m) { return m.total - (m.sources['dans le site'] || 0); };
+    $('[data-t-visites]').textContent = entier.format(ce.total);
+    $('[data-t-visites-detail]').textContent = 'pages vues ce mois-ci · Google : ' + entier.format(ce.sources.google || 0);
+    var ch = $('[data-chiffres]');
+    ch.textContent = '';
+    [['Pages vues ce mois-ci', ce.total, avant.total], ['Arrivées sur le site', arrivees(ce), arrivees(avant)], ['Venus de Google', ce.sources.google || 0, avant.sources.google || 0],
+      ['Demandes d\'envoi', v.demandes_ce_mois, v.demandes_mois_dernier], ['Abonnés à l\'alerte prix', r.abonnes, null]].forEach(function (x) {
+      var d = document.createElement('div'), b = document.createElement('b'), s = document.createElement('span'), m = document.createElement('small');
+      b.textContent = entier.format(x[1]); s.textContent = x[0];
+      if (x[2] !== null) m.textContent = 'le mois dernier : ' + entier.format(x[2]);
+      d.appendChild(b); d.appendChild(s); if (x[2] !== null) d.appendChild(m);
+      ch.appendChild(d);
+    });
+    var barres = $('[data-barres]'), maxi = 1, jours = [];
+    barres.textContent = '';
+    for (var i = 29; i >= 0; i--) {
+      var dj = new Date(Date.now() - i * 86400000).toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' });
+      jours.push([dj, v.entrees_par_jour[dj] || 0]);
+    }
+    jours.forEach(function (x) { maxi = Math.max(maxi, x[1]); });
+    jours.forEach(function (x) {
+      var s = document.createElement('span');
+      s.style.height = Math.max(2, Math.round(x[1] / maxi * 100)) + '%';
+      s.title = dateLongue(x[0]) + ' : ' + x[1];
+      barres.appendChild(s);
+    });
+    var total30 = jours.reduce(function (t, x) { return t + x[1]; }, 0);
+    $('[data-barres-texte]').textContent = entier.format(total30) + ' arrivées en 30 jours (le jour le plus fort : ' + entier.format(maxi === 1 && !total30 ? 0 : maxi) + ').';
+    var NOMS_SOURCE = { google: 'Google', bing: 'Bing', direct: 'Adresse tapée ou lien direct', 'dans le site': 'Pages suivantes (dans le site)', autre: 'Autres sites',
+      'qr-bac': 'QR code de l\'étiquette de bac', 'qr-bordereau': 'QR code du bordereau', 'qr-prospectus': 'QR code du prospectus', duckduckgo: 'DuckDuckGo', qwant: 'Qwant', ecosia: 'Ecosia',
+      yahoo: 'Yahoo', facebook: 'Facebook', whatsapp: 'WhatsApp', leboncoin: 'Leboncoin', chatgpt: 'ChatGPT' };
+    var remplirListe = function (el, objet, nommer) {
+      el.textContent = '';
+      var cles = Object.keys(objet);
+      if (!cles.length) { var li = document.createElement('li'); li.textContent = 'Rien encore ce mois-ci.'; el.appendChild(li); return; }
+      cles.forEach(function (k) {
+        var li = document.createElement('li'), n = document.createElement('span'), b = document.createElement('b');
+        n.textContent = nommer(k); b.textContent = entier.format(objet[k]);
+        li.appendChild(n); li.appendChild(b); el.appendChild(li);
+      });
+    };
+    remplirListe($('[data-sources]'), ce.sources, function (k) { return NOMS_SOURCE[k] || k; });
+    remplirListe($('[data-pages]'), ce.pages, function (k) { return k === '/' ? 'Accueil' : k.replace(/^\/(de|en|it|es)\//, '$1 · ').replace(/^\//, '').replace(/\.html$/, '').replace(/^(de|en|it|es) · $/, '$1 · accueil'); });
+
+    // case Sauvegarde
+    var s = r.sauvegarde, le = s && s.le ? dateIso(s.le) : '';
+    var vieille = !le || (Date.now() - new Date(s.le).getTime()) > 31 * 86400000;
+    $('[data-t-sauvegarde]').textContent = le ? 'Le ' + dateLongue(le) : 'Jamais faite';
+    $('[data-t-sauvegarde-detail]').textContent = vieille ? 'à faire' : 'à refaire dans un mois';
+    $('.tuile[data-ouvrir="d-sauvegarde"]').classList.toggle('a-faire', vieille);
+    var es = $('[data-etat-sauvegarde]');
+    es.textContent = le ? 'Dernière sauvegarde : ' + dateLongue(le) + (vieille ? ' · à refaire' : '') : 'Pas encore de sauvegarde.';
+    es.classList.toggle('a-faire', vieille);
+  }
+
+  // prix : « Tu es sûr ? » quand le serveur trouve le prix bizarre (sous 30, au-dessus de 80, ou 25 % d'écart)
+  var fPrix = $('#f-prix'), msgPrix = $('.msg', fPrix), boite = $('[data-confirmer]', fPrix);
+  var envoyerPrix = function (confirme) {
+    var v = lirePrix($('#g-prix').value);
+    if (!(v >= 5 && v <= 300)) { dire(msgPrix, 'prix'); $('#g-prix').focus(); return; }
+    occupe(fPrix, true);
+    api('POST', 'prix', { kg: v, confirme: confirme === true, prevenir: $('#g-prevenir').checked }).then(function (r) {
+      occupe(fPrix, false);
+      if (r.status === 401) return montrerConnexion();
+      if (r.erreur === 'confirmer') {
+        $('[data-confirmer-texte]', boite).textContent = euros.format(v) + ' €/kg, alors que le prix est de ' + euros.format(reglages.prix.kg) + ' €/kg. Une faute de frappe est vite arrivée.';
+        boite.hidden = false;
+        $('[data-oui]', boite).focus();
+        return;
+      }
+      boite.hidden = true;
+      if (r.erreur) return dire(msgPrix, r.erreur);
+      reglages = r;
+      remplirReglages();
+      $('#g-prix').value = '';
+      dire(msgPrix, 'Enregistré : le site affiche maintenant ' + euros.format(r.prix.kg) + ' €/kg.' + (r.prevenus ? ' ' + r.prevenus + ' abonnés vont être prévenus (40 par jour au plus).' : ''), true);
+    });
+  };
+  fPrix.addEventListener('submit', function (e) { e.preventDefault(); boite.hidden = true; envoyerPrix(false); });
+  $('[data-oui]', boite).addEventListener('click', function () { envoyerPrix(true); });
+  $('[data-non]', boite).addEventListener('click', function () { boite.hidden = true; $('#g-prix').select(); });
+
+  // annonce : aperçu du texte pendant qu'on remplit
+  var fAnn = $('#f-annonce'), msgAnn = $('.msg', fAnn);
+  var lireAnnonce = function () {
+    var type = $('[name=type]:checked', fAnn).value, debut = $('#g-debut').value, fin = $('#g-fin').value || debut;
+    return { type: type, debut: debut, fin: fin, villes: $('#g-villes').value.trim() };
+  };
+  var majApercu = function () {
+    var a = lireAnnonce();
+    $('[data-villes-ligne]', fAnn).hidden = a.type !== 'tournee';
+    $('[data-apercu]', fAnn).textContent = a.debut && (a.type !== 'tournee' || a.villes) && a.fin >= a.debut
+      ? 'Les visiteurs verront : « ' + texteAnnonce({ type: a.type, debut: a.debut, fin: a.fin, villes: a.villes }) + ' »' : '';
+  };
+  fAnn.addEventListener('input', majApercu);
+  fAnn.addEventListener('change', majApercu);
+  fAnn.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var a = lireAnnonce();
+    if (!a.debut) { dire(msgAnn, 'dates'); $('#g-debut').focus(); return; }
+    occupe(fAnn, true);
+    api('POST', 'annonces', a).then(function (r) {
+      occupe(fAnn, false);
+      if (r.status === 401) return montrerConnexion();
+      if (r.erreur) return dire(msgAnn, r.erreur);
+      reglages = r;
+      remplirReglages();
+      fAnn.reset();
+      majApercu();
+      dire(msgAnn, 'Annonce ajoutée : elle est déjà en ligne.', true);
+    });
+  });
+  $('#g-debut').min = aujourdhui();
+  $('#g-fin').min = aujourdhui();
+
+  // sauvegarde : le fichier arrive comme un téléchargement (rien n'est gardé par la page)
+  var fSauve = $('#f-sauvegarde'), msgSauve = $('.msg', fSauve);
+  fSauve.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var m1 = $('#g-mdp').value, m2 = $('#g-mdp2').value;
+    if (m1.length < 10) { dire(msgSauve, 'mot_de_passe'); $('#g-mdp').focus(); return; }
+    if (m1 !== m2) { dire(msgSauve, 'mdp_differents'); $('#g-mdp2').focus(); return; }
+    occupe(fSauve, true);
+    dire(msgSauve, 'Préparation du fichier…', true);
+    fetch('/api/gestion/sauvegarde', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mot_de_passe: m1 }) })
+      .then(function (r) {
+        if (r.status === 401) { montrerConnexion(); return null; }
+        if (!r.ok) return r.json().catch(function () { return {}; }).then(function (j) { dire(msgSauve, j.erreur || 'serveur'); return null; });
+        var nom = (/filename="([^"]+)"/.exec(r.headers.get('Content-Disposition') || '') || [])[1] || 'sauvegarde-site.zip';
+        return r.blob().then(function (b) { return { b: b, nom: nom }; });
+      }, function () { dire(msgSauve, 'reseau'); return null; })
+      .then(function (x) {
+        occupe(fSauve, false);
+        if (!x) return;
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(x.b);
+        a.download = x.nom;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+        fSauve.reset();
+        dire(msgSauve, 'Fichier « ' + x.nom + ' » prêt : range-le en lieu sûr.', true);
+        chargerReglages();
+      });
+  });
+
+  lireCible();
   charger();
 })();

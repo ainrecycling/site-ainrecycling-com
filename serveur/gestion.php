@@ -5,9 +5,27 @@ declare(strict_types=1);
 // d'identité et le RIB, et cocher « étiquette envoyée ». Connexion par un code envoyé seulement aux adresses de la liste
 // « admins » du fichier de réglages (écrite à l'installation, jamais dans le code) ; cookie « gestion » signé, 30 jours.
 
+// Depuis le 8 nov. 2026 (propositions 54, 55, 57 et 65) : aussi le prix du site, les annonces, les pages vues et la
+// sauvegarde de l'espace client.
+
 require __DIR__ . '/lib/espace.php';
+require __DIR__ . '/lib/sauvegarde.php';
 
 const COOKIE_GESTION = 'gestion';
+
+/** Ce que montre la page de gestion en haut : prix, annonces, alerte prix, pages vues, sauvegarde. */
+function reglages_pour_malik(): array
+{
+    $auj = jour_paris();
+    return [
+        'prix' => prix_site(), 'aujourdhui' => $auj, 'garanti_jusqu' => garanti_jusqu($auj),
+        'limites' => ['bas' => PRIX_DOUTE_BAS, 'haut' => PRIX_DOUTE_HAUT, 'min' => PRIX_MIN, 'max' => PRIX_MAX],
+        'annonces' => annonces_actives(),
+        'abonnes' => nombre_abonnes(), 'alertes_en_attente' => alertes_en_attente(),
+        'visites' => visites_resume(),
+        'sauvegarde' => reglage_site('sauvegarde'), 'sauvegarde_zip' => zip_chiffre_possible(),
+    ];
+}
 const GESTION_JOURS = 30;
 
 function admins(): array
@@ -78,6 +96,53 @@ try {
             $e = marquer_envoi((string) ($b['envoi'] ?? ''), $action, 'Malik (site)');
             if (!$e) refus('introuvable', 404);
             repondre(['envoi' => $e]);
+
+        // Les réglages du site (8 nov. 2026) : prix et son historique, annonces, abonnés à l'alerte prix, pages vues,
+        // dernière sauvegarde.
+        case 'GET reglages':
+            exiger_admin();
+            repondre(reglages_pour_malik());
+
+        // Nouveau prix par colis : « Tu es sûr ? » (réponse « confirmer ») sous 30 €/kg, au-dessus de 80 €/kg ou pour un
+        // écart de plus de 25 % ; s'il monte, les abonnés à l'alerte prix sont prévenus (sauf si Malik décoche).
+        case 'POST prix':
+            origine_refusee();
+            $email = exiger_admin();
+            $b = corps_json() ?? [];
+            $kg = lire_prix($b['kg'] ?? null);
+            if ($kg === null) refus('prix');
+            $avant = prix_site()['kg'];
+            if (abs($kg - $avant) < 0.001) refus('meme_prix');
+            $doute = $kg < PRIX_DOUTE_BAS || $kg > PRIX_DOUTE_HAUT || abs($kg - $avant) / max($avant, 1) > 0.25;
+            if ($doute && ($b['confirme'] ?? null) !== true) refus('confirmer', 409);
+            [$ancien] = changer_prix($kg, $email);
+            $prevenus = 0;
+            if ($kg > $ancien['kg'] && ($b['prevenir'] ?? true) !== false) $prevenus = programmer_alertes($kg);
+            elseif ($kg < $ancien['kg']) annuler_alertes();
+            repondre(reglages_pour_malik() + ['prevenus' => $prevenus]);
+
+        // Annonce en haut du site : ajouter { type, debut, fin, villes } ou retirer { action: "retirer", id }.
+        case 'POST annonces':
+            origine_refusee();
+            $email = exiger_admin();
+            $b = corps_json() ?? [];
+            if (($b['action'] ?? '') === 'retirer') {
+                if (!retirer_annonce((string) ($b['id'] ?? ''), $email)) refus('introuvable', 404);
+            } else {
+                $a = lire_annonce($b);
+                if (is_string($a)) refus($a);
+                ajouter_annonce($a, $email);
+            }
+            repondre(reglages_pour_malik());
+
+        // Sauvegarde de l'espace client, fermée par le mot de passe choisi par Malik (10 caractères au moins).
+        case 'POST sauvegarde':
+            origine_refusee();
+            $email = exiger_admin();
+            $b = corps_json() ?? [];
+            $mdp = (string) ($b['mot_de_passe'] ?? '');
+            if (mb_strlen($mdp) < 10 || mb_strlen($mdp) > 200) refus('mot_de_passe');
+            servir_sauvegarde($mdp, $email);
 
         // Photo de la pièce d'un compte, déchiffrée, jamais gardée en cache.
         case 'GET piece':

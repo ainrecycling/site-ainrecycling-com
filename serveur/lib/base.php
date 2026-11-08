@@ -7,7 +7,7 @@ declare(strict_types=1);
 // Le dossier privé (prive-ain, à côté de www) garde : config.php (secrets, écrit une fois par serveur/installation.php),
 // les photos des pièces d'identité (chiffrées), le journal. Rien de tout cela n'est jamais servi par le site.
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 /** Dossier privé : à côté de www (jamais servi par le site). AIN_PRIVE le remplace pour les essais sur l'ordinateur. */
 function prive(): string
@@ -129,7 +129,41 @@ function migrer(PDO $bd): void
         bon_numero VARCHAR(20) NULL, bon_le VARCHAR(30) NULL" . ($mysql ? ', INDEX espace_envois_compte (compte)' : '') . "
     )$fin");
     if (!$mysql) $bd->exec('CREATE INDEX IF NOT EXISTS espace_envois_compte ON espace_envois (compte)');
+
+    // Version 2 (8 nov. 2026) : le prix garanti gardé dans chaque demande (proposition 50), les réglages pilotés depuis
+    // /gestion/ (prix, annonces, date de sauvegarde : propositions 54, 55, 65), l'alerte prix (56), les pages vues (57).
+    foreach (['prix_kg' => 'DOUBLE NULL', 'garanti_jusqu' => 'VARCHAR(10) NULL'] as $col => $type) {
+        if (colonne_existe($bd, 'espace_envois', $col)) continue;
+        try {
+            $bd->exec("ALTER TABLE espace_envois ADD COLUMN $col $type");
+        } catch (PDOException $e) {
+            if (!colonne_existe($bd, 'espace_envois', $col)) throw $e; // ajoutée au même moment par une autre demande
+        }
+    }
+    $bd->exec("CREATE TABLE IF NOT EXISTS site_reglages (
+        cle VARCHAR(40) NOT NULL PRIMARY KEY, valeur TEXT NOT NULL, maj_le VARCHAR(30) NOT NULL, maj_par VARCHAR(60) NOT NULL DEFAULT ''
+    )$fin");
+    $bd->exec("CREATE TABLE IF NOT EXISTS site_alertes (
+        email VARCHAR(160) NOT NULL PRIMARY KEY, jeton CHAR(32) NOT NULL UNIQUE, langue VARCHAR(2) NOT NULL DEFAULT 'fr',
+        cree_le VARCHAR(30) NOT NULL, confirme_le VARCHAR(30) NULL, demande_le VARCHAR(30) NOT NULL,
+        prevenir DOUBLE NULL, prevenu_le VARCHAR(30) NULL
+    )$fin");
+    $bd->exec("CREATE TABLE IF NOT EXISTS site_visites (
+        jour VARCHAR(10) NOT NULL, page VARCHAR(120) NOT NULL, source VARCHAR(30) NOT NULL, n INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (jour, page, source)
+    )$fin");
     @file_put_contents($drapeau, gmdate('c'));
+}
+
+function colonne_existe(PDO $bd, string $table, string $colonne): bool
+{
+    if (est_sqlite($bd)) {
+        foreach ($bd->query("PRAGMA table_info($table)")->fetchAll() as $c) if (($c['name'] ?? '') === $colonne) return true;
+        return false;
+    }
+    $q = $bd->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+    $q->execute([$table, $colonne]);
+    return (int) $q->fetchColumn() > 0;
 }
 
 // ---------- réponses ----------

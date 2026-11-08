@@ -159,6 +159,74 @@
       poids: 'Peso estimado', total: 'Total estimado', paiement: 'Pago', glisser: 'Para meter en cada paquete.' }
   };
 
+  // Textes des nouveautés du 8 novembre 2026 (propositions 49 à 60) : prix du jour piloté par Malik, garantie de 7 jours
+  // (jamais après la fin du mois), annonces en haut des pages, alerte prix, annuaire des entreprises.
+  var SITE = {
+    fr: { jusquau: 'jusqu\'au {date}', duAu: 'Du {debut} au {fin}', leJour: 'Le {date}',
+      conges: 'Fermé du {debut} au {fin}.', conges1: 'Fermé le {debut}.', fermeture: 'Fermé exceptionnellement du {debut} au {fin}.',
+      fermeture1: 'Fermé exceptionnellement le {debut}.', reprise: 'Vos demandes seront traitées dès le {date}.',
+      tournee: 'Tournée {villes} du {debut} au {fin}.', tournee1: 'Tournée {villes} le {debut}.', reserver: 'Réserver un passage', annonce: 'Annonce',
+      alerteOk: 'C\'est noté : confirmez avec le lien que nous venons de vous envoyer par e-mail.',
+      alerteConfirmer: 'Confirmer votre alerte prix ?', alerteOui: 'Oui, me prévenir', alerteActive: 'Alerte prix activée : nous vous écrirons quand notre prix monte.',
+      alerteStop: 'Ne plus recevoir l\'alerte prix ?', alerteStopOui: 'Me désinscrire', alerteFinie: 'C\'est fait : vous ne recevrez plus l\'alerte prix.',
+      lien: 'Ce lien n\'est plus valable.', email: 'Indiquez une adresse e-mail valide.', trop: 'Trop de demandes : réessayez demain.',
+      reseau: 'Pas de connexion internet : réessayez.', serveur: 'Service indisponible pour le moment : réessayez plus tard.',
+      garanti: 'Prix garanti : {prix} €/kg jusqu\'au {date}', garantiFini: 'Garantie terminée le {date} : prix du jour au dépôt du colis',
+      scanne: 'Scanné à l\'arrivée', annuaire: 'Entreprises françaises · annuaire officiel de l\'État', annuaireVide: 'Aucune entreprise française trouvée.',
+      annuaireN: '{n} entreprises trouvées : flèches pour choisir.', annuaireRempli: 'Rempli : {nom}.' },
+    de: { jusquau: 'bis {date}', duAu: 'Vom {debut} bis {fin}', leJour: 'Am {date}',
+      conges: 'Geschlossen vom {debut} bis {fin}.', conges1: 'Geschlossen am {debut}.', fermeture: 'Ausnahmsweise geschlossen vom {debut} bis {fin}.',
+      fermeture1: 'Ausnahmsweise geschlossen am {debut}.', reprise: 'Ihre Anfragen bearbeiten wir ab dem {date}.',
+      tournee: 'Tour {villes} vom {debut} bis {fin}.', tournee1: 'Tour {villes} am {debut}.', reserver: 'Abholung reservieren', annonce: 'Hinweis',
+      alerteOk: 'Notiert: Bestätigen Sie mit dem Link, den wir Ihnen gerade per E-Mail geschickt haben.',
+      alerteConfirmer: 'Ihren Preisalarm bestätigen?', alerteOui: 'Ja, benachrichtigen', alerteActive: 'Preisalarm aktiviert: Wir schreiben Ihnen, wenn unser Preis steigt.',
+      alerteStop: 'Den Preisalarm nicht mehr erhalten?', alerteStopOui: 'Abbestellen', alerteFinie: 'Erledigt: Sie erhalten den Preisalarm nicht mehr.',
+      lien: 'Dieser Link ist nicht mehr gültig.', email: 'Geben Sie eine gültige E-Mail-Adresse an.', trop: 'Zu viele Anfragen: Versuchen Sie es morgen erneut.',
+      reseau: 'Keine Internetverbindung: Versuchen Sie es erneut.', serveur: 'Dienst momentan nicht verfügbar: Versuchen Sie es später erneut.',
+      garanti: 'Garantierter Preis: {prix} €/kg bis zum {date}', garantiFini: 'Garantie am {date} abgelaufen: Tagespreis bei Abgabe des Pakets',
+      scanne: 'Wird bei Eingang gescannt', annuaire: 'Französische Unternehmen · amtliches Verzeichnis', annuaireVide: 'Kein französisches Unternehmen gefunden.',
+      annuaireN: '{n} Unternehmen gefunden: Pfeiltasten zum Auswählen.', annuaireRempli: 'Ausgefüllt: {nom}.' },
+    en: { jusquau: 'until {date}', duAu: 'From {debut} to {fin}', leJour: 'On {date}',
+      conges: 'Closed from {debut} to {fin}.', conges1: 'Closed on {debut}.', fermeture: 'Exceptionally closed from {debut} to {fin}.',
+      fermeture1: 'Exceptionally closed on {debut}.', reprise: 'Your requests will be handled from {date}.',
+      tournee: '{villes} round from {debut} to {fin}.', tournee1: '{villes} round on {debut}.', reserver: 'Book a collection', annonce: 'Notice',
+      alerteOk: 'Done: confirm with the link we have just emailed you.',
+      alerteConfirmer: 'Confirm your price alert?', alerteOui: 'Yes, alert me', alerteActive: 'Price alert on: we will write to you when our price goes up.',
+      alerteStop: 'Stop receiving the price alert?', alerteStopOui: 'Unsubscribe', alerteFinie: 'Done: you will no longer receive the price alert.',
+      lien: 'This link is no longer valid.', email: 'Enter a valid email address.', trop: 'Too many requests: try again tomorrow.',
+      reseau: 'No internet connection: try again.', serveur: 'Service unavailable for now: try again later.',
+      garanti: 'Guaranteed price: {prix} €/kg until {date}', garantiFini: 'Guarantee ended on {date}: price of the day when the parcel is dropped off',
+      scanne: 'Scanned on arrival', annuaire: 'French companies · official government register', annuaireVide: 'No French company found.',
+      annuaireN: '{n} companies found: use the arrow keys to choose.', annuaireRempli: 'Filled in: {nom}.' },
+    it: { jusquau: 'fino al {date}', duAu: 'Dal {debut} al {fin}', leJour: 'Il {date}',
+      conges: 'Chiuso dal {debut} al {fin}.', conges1: 'Chiuso il {debut}.', fermeture: 'Chiusura straordinaria dal {debut} al {fin}.',
+      fermeture1: 'Chiusura straordinaria il {debut}.', reprise: 'Le vostre richieste saranno trattate dal {date}.',
+      tournee: 'Giro {villes} dal {debut} al {fin}.', tournee1: 'Giro {villes} il {debut}.', reserver: 'Prenotare un ritiro', annonce: 'Avviso',
+      alerteOk: 'Fatto: confermate con il link che vi abbiamo appena inviato per e-mail.',
+      alerteConfirmer: 'Confermare il vostro avviso di prezzo?', alerteOui: 'Sì, avvisatemi', alerteActive: 'Avviso di prezzo attivo: vi scriveremo quando il nostro prezzo sale.',
+      alerteStop: 'Non ricevere più l\'avviso di prezzo?', alerteStopOui: 'Annullare l\'iscrizione', alerteFinie: 'Fatto: non riceverete più l\'avviso di prezzo.',
+      lien: 'Questo link non è più valido.', email: 'Indicate un indirizzo e-mail valido.', trop: 'Troppe richieste: riprovate domani.',
+      reseau: 'Nessuna connessione internet: riprovate.', serveur: 'Servizio non disponibile al momento: riprovate più tardi.',
+      garanti: 'Prezzo garantito: {prix} €/kg fino al {date}', garantiFini: 'Garanzia scaduta il {date}: prezzo del giorno alla consegna del pacco',
+      scanne: 'Scansionato all\'arrivo', annuaire: 'Aziende francesi · registro ufficiale dello Stato', annuaireVide: 'Nessuna azienda francese trovata.',
+      annuaireN: '{n} aziende trovate: frecce per scegliere.', annuaireRempli: 'Compilato: {nom}.' },
+    es: { jusquau: 'hasta el {date}', duAu: 'Del {debut} al {fin}', leJour: 'El {date}',
+      conges: 'Cerrado del {debut} al {fin}.', conges1: 'Cerrado el {debut}.', fermeture: 'Cierre excepcional del {debut} al {fin}.',
+      fermeture1: 'Cierre excepcional el {debut}.', reprise: 'Sus solicitudes se tramitarán a partir del {date}.',
+      tournee: 'Ruta {villes} del {debut} al {fin}.', tournee1: 'Ruta {villes} el {debut}.', reserver: 'Reservar una recogida', annonce: 'Aviso',
+      alerteOk: 'Anotado: confirme con el enlace que le acabamos de enviar por correo electrónico.',
+      alerteConfirmer: '¿Confirmar su alerta de precio?', alerteOui: 'Sí, avisarme', alerteActive: 'Alerta de precio activada: le escribiremos cuando suba nuestro precio.',
+      alerteStop: '¿Dejar de recibir la alerta de precio?', alerteStopOui: 'Darme de baja', alerteFinie: 'Hecho: ya no recibirá la alerta de precio.',
+      lien: 'Este enlace ya no es válido.', email: 'Indique un correo electrónico válido.', trop: 'Demasiadas solicitudes: inténtelo mañana.',
+      reseau: 'Sin conexión a internet: inténtelo de nuevo.', serveur: 'Servicio no disponible por ahora: inténtelo más tarde.',
+      garanti: 'Precio garantizado: {prix} €/kg hasta el {date}', garantiFini: 'Garantía terminada el {date}: precio del día al entregar el paquete',
+      scanne: 'Escaneado a la llegada', annuaire: 'Empresas francesas · registro oficial del Estado', annuaireVide: 'No se ha encontrado ninguna empresa francesa.',
+      annuaireN: '{n} empresas encontradas: flechas para elegir.', annuaireRempli: 'Rellenado: {nom}.' }
+  };
+  var LANGUE = document.documentElement.lang;
+  var S = SITE[LANGUE] || SITE.fr;
+  var remplacer = function (t, v) { return t.replace(/\{(\w+)\}/g, function (m, k) { return v[k] !== undefined ? v[k] : m; }); };
+
   var entete = document.getElementById('entete');
   var menu = document.getElementById('menu');
   var menuBouton = document.getElementById('menu-bouton');
@@ -201,6 +269,169 @@
 
   var calme = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // ===== Prix du jour, garantie et annonces (8 nov. 2026, propositions 50, 54 et 55) =====
+  // Malik règle le prix et les annonces depuis sa page /gestion/ ; chaque page les lit sur le serveur du site
+  // (/api/site/infos). Le prix écrit dans les pages (PRIX_PAGES) est remplacé partout par le prix du jour s'il a changé
+  // depuis la dernière mise en ligne, et les montants « 2 kg = 94 € » sont recalculés. La même demande compte la page vue
+  // (la page et le nom du site d'où l'on vient, rien d'autre : ni cookie, ni adresse IP).
+  var PRIX_PAGES = 47; // le même que PRIX_PAGES de serveur/lib/site.php
+  var infos = null;
+  var infosPretes = new Promise(function (resoudre) {
+    if (!window.fetch || location.protocol === 'file:') { resoudre(null); return; }
+    var ref = '';
+    try { ref = document.referrer ? new URL(document.referrer).hostname : ''; } catch (e) { ref = ''; }
+    var qr = new URLSearchParams(location.search).get('qr') || '';
+    var fini = false;
+    var finir = function (x) { if (!fini) { fini = true; resoudre(x); } };
+    setTimeout(function () { finir(null); }, 1500);
+    fetch('/api/site/infos?p=' + encodeURIComponent(location.pathname) + '&r=' + encodeURIComponent(ref) + (qr ? '&q=' + encodeURIComponent(qr) : ''),
+      { credentials: 'omit', cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { infos = d && d.prix ? d : null; appliquerInfos(); finir(infos); }, function () { finir(null); });
+  });
+
+  // jours en heure de Paris (« 2026-11-08 ») et dates écrites dans la langue de la page
+  var jourParis = function (d) { return (d || new Date()).toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' }); };
+  var dateDe = function (ymd) { return new Date(ymd + 'T12:00:00'); };
+  var dateLongue = function (ymd) {
+    var s = dateDe(ymd).toLocaleDateString(T.locale, { day: 'numeric', month: 'long' });
+    return LANGUE === 'fr' ? s.replace(/^1 /, '1er ') : s;
+  };
+  var dateCourte = function (ymd) { return dateDe(ymd).toLocaleDateString(T.locale, { day: 'numeric', month: 'short' }); };
+  // début d'une période : le jour seul si elle finit le même mois (« du 23 au 27 novembre », « vom 23. bis 27. November »)
+  var debutPeriode = function (debut, fin) {
+    if (debut.slice(0, 7) !== fin.slice(0, 7)) return dateLongue(debut);
+    var j = Number(debut.slice(8));
+    return LANGUE === 'fr' && j === 1 ? '1er' : j + (LANGUE === 'de' ? '.' : '');
+  };
+  var plusJours = function (ymd, n) { var d = dateDe(ymd); d.setDate(d.getDate() + n); return jourParis(d); };
+  // fin de la garantie d'une demande faite ce jour-là : 7 jours après, jamais après le dernier jour du mois
+  var garantiJusqu = function (ymd) {
+    var fin = plusJours(ymd, 7), d = dateDe(ymd);
+    var finMois = jourParis(new Date(d.getFullYear(), d.getMonth() + 1, 0, 12));
+    return fin < finMois ? fin : finMois;
+  };
+  // jour ouvré après une fermeture (ni samedi, ni dimanche, ni jour férié en France)
+  var feries = function (an) {
+    var a = an % 19, b = Math.floor(an / 100), c = an % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25),
+      g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4,
+      l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451),
+      mois = Math.floor((h + l - 7 * m + 114) / 31), jour = ((h + l - 7 * m + 114) % 31) + 1;
+    var liste = ['01-01', '05-01', '05-08', '07-14', '08-15', '11-01', '11-11', '12-25'].map(function (x) { return an + '-' + x; });
+    [1, 39, 50].forEach(function (n) { liste.push(jourParis(new Date(an, mois - 1, jour + n, 12))); });
+    return liste;
+  };
+  var reprise = function (fin) {
+    var j = fin;
+    for (var n = 0; n < 15; n++) {
+      j = plusJours(j, 1);
+      var semaine = dateDe(j).getDay();
+      if (semaine !== 0 && semaine !== 6 && feries(Number(j.slice(0, 4))).indexOf(j) < 0) return j;
+    }
+    return plusJours(fin, 1);
+  };
+  var ecrirePrix = function (n) {
+    var s = String(Math.round(n * 100) / 100);
+    return LANGUE === 'en' ? s : s.replace('.', ',');
+  };
+  var ecrireMontant = function (n) {
+    var c = Math.round(n * 100), ent = Math.floor(c / 100), dec = c % 100;
+    return String(ent).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + (dec ? (LANGUE === 'en' ? '.' : ',') + String(dec).padStart(2, '0') : '');
+  };
+
+  // le tampon du ticket : « Prix garanti jusqu'au 15 nov. » pour une demande faite aujourd'hui (sans le serveur aussi)
+  var majTampon = function () {
+    var fin = infos ? infos.prix.garanti_jusqu : garantiJusqu(jourParis());
+    document.querySelectorAll('[data-garanti]').forEach(function (el) { el.textContent = remplacer(S.jusquau, { date: dateCourte(fin) }); });
+  };
+  majTampon();
+
+  function appliquerInfos() {
+    if (!infos) return;
+    majTampon();
+    var kg = Number(infos.prix.kg);
+    if (kg > 0 && Math.abs(kg - PRIX_PAGES) > 0.001) remplacerPrix(kg);
+    afficherAnnonces(infos.annonces || []);
+  }
+
+  // Le prix écrit dans les pages devient celui du jour : textes, titres, descriptions, montants calculés.
+  function remplacerPrix(kg) {
+    var nouveau = ecrirePrix(kg);
+    var rePrix = new RegExp('(^|[^\\d.,])' + PRIX_PAGES + '(?=[\\s\\u00a0\\u202f]?€)', 'g');
+    var reMontant = /(\d+(?:[.,]\d+)?)([\s ]?)kg([\s ]?)=([\s ]?)\d[\d\s  ]*(?:[.,]\d+)?(?=[\s  ]?€)/g;
+    var refaire = function (t) {
+      return t.replace(reMontant, function (m, n, a, b, c) { return n + a + 'kg' + b + '=' + c + ecrireMontant(parseFloat(n.replace(',', '.')) * kg); })
+        .replace(rePrix, function (m, avant) { return avant + nouveau; });
+    };
+    // chiffres qui ont déjà défilé avec l'ancien prix (prix du jour arrivé tard) : remis en texte simple
+    document.querySelectorAll('.roulant').forEach(function (r) {
+      var lu = r.previousSibling;
+      if (lu && lu.classList && lu.classList.contains('sr-only')) { r.parentNode.replaceChild(document.createTextNode(lu.textContent), r); lu.remove(); }
+    });
+    var marcheur = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+      acceptNode: function (n) { return n.parentNode && /^(SCRIPT|STYLE|TEXTAREA)$/.test(n.parentNode.nodeName) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; }
+    });
+    var noeuds = [];
+    while (marcheur.nextNode()) noeuds.push(marcheur.currentNode);
+    noeuds.forEach(function (n) { var t = refaire(n.nodeValue); if (t !== n.nodeValue) n.nodeValue = t; });
+    document.querySelectorAll('[data-kg]').forEach(function (el) { el.textContent = ecrireMontant(parseFloat(el.getAttribute('data-kg')) * kg) + ' €'; });
+    document.querySelectorAll('[aria-label], [title], [alt]').forEach(function (el) {
+      ['aria-label', 'title', 'alt'].forEach(function (a) { var v = el.getAttribute(a); if (v && v.indexOf('€') >= 0) el.setAttribute(a, refaire(v)); });
+    });
+    document.title = refaire(document.title);
+    document.querySelectorAll('meta[name="description"], meta[property="og:title"], meta[property="og:description"]').forEach(function (m) {
+      m.setAttribute('content', refaire(m.getAttribute('content') || ''));
+    });
+  }
+
+  // Annonce en haut de toutes les pages (congés, fermeture, tournée), et prochaine tournée sous la carte de l'accueil
+  function afficherAnnonces(liste) {
+    var auj = jourParis();
+    var texte = function (a) {
+      var v = { debut: debutPeriode(a.debut, a.fin), fin: dateLongue(a.fin), villes: a.villes || '' }, un = a.debut === a.fin;
+      if (a.type === 'tournee') return remplacer(un ? S.tournee1 : S.tournee, v);
+      return remplacer(a.type === 'conges' ? (un ? S.conges1 : S.conges) : (un ? S.fermeture1 : S.fermeture), v) + ' '
+        + remplacer(S.reprise, { date: dateLongue(reprise(a.fin)) });
+    };
+    // en haut : les fermetures dès qu'elles sont annoncées, une tournée dans les 14 jours qui viennent (2 annonces au plus)
+    var visibles = liste.filter(function (a) { return a.fin >= auj && (a.type !== 'tournee' || a.debut <= plusJours(auj, 14)); }).slice(0, 2);
+    var avant = document.querySelector('.annonces-site');
+    if (avant) avant.remove();
+    if (visibles.length) {
+      var boite = document.createElement('aside');
+      boite.className = 'annonces-site';
+      boite.setAttribute('aria-label', S.annonce);
+      visibles.forEach(function (a) {
+        var ligne = document.createElement('div'), p = document.createElement('p');
+        ligne.className = 'annonce-site conteneur' + (a.type === 'tournee' ? ' annonce-tournee' : '');
+        ligne.innerHTML = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">' + (a.type === 'tournee'
+          ? '<path d="M10 17h4V5H2v12h3M14 9h4l4 4v4h-3M7.5 20a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM17.5 20a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"></path>'
+          : '<rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path>') + '</svg>';
+        p.textContent = texte(a) + ' ';
+        if (a.type === 'tournee') {
+          var lien = document.createElement('a');
+          lien.href = 'professionnels.html#devis';
+          lien.textContent = S.reserver;
+          p.appendChild(lien);
+        }
+        ligne.appendChild(p);
+        boite.appendChild(ligne);
+      });
+      var repere = document.querySelector('.barre-info') || document.getElementById('entete');
+      if (repere) repere.parentNode.insertBefore(boite, repere);
+    }
+    // sous la carte de l'accueil : la prochaine tournée annoncée
+    var bloc = document.querySelector('[data-tournee]');
+    var prochaine = liste.filter(function (a) { return a.type === 'tournee' && a.fin >= auj; })[0];
+    if (bloc && prochaine) {
+      bloc.querySelector('[data-tournee-villes]').textContent = prochaine.villes;
+      var date = bloc.querySelector('[data-tournee-date]');
+      date.textContent = prochaine.debut === prochaine.fin ? remplacer(S.leJour, { date: dateLongue(prochaine.debut) })
+        : remplacer(S.duAu, { debut: debutPeriode(prochaine.debut, prochaine.fin), fin: dateLongue(prochaine.fin) });
+      date.hidden = false;
+    }
+  }
+
   // Prix au kilo : les chiffres défilent comme un compteur quand le prix apparaît à l'écran
   // (idée du composant « Number Ticker » de 21st.dev, refait sans bibliothèque). Le vrai texte reste lu par les lecteurs d'écran.
   function rouler(el) {
@@ -237,12 +468,14 @@
     });
   }
   var prixRoulants = document.querySelectorAll('.hero-prix dd, .offre-prix dd, .facon-prix b');
-  if (!calme && prixRoulants.length && 'IntersectionObserver' in window) {
+  // les chiffres ne défilent qu'une fois le prix du jour connu (1,5 s au plus), pour défiler vers le bon prix
+  infosPretes.then(function () {
+    if (calme || !prixRoulants.length || !('IntersectionObserver' in window)) return;
     var obsPrix = new IntersectionObserver(function (entrees) {
       entrees.forEach(function (en) { if (en.isIntersecting) { obsPrix.unobserve(en.target); rouler(en.target); } });
     }, { threshold: .6 });
     prixRoulants.forEach(function (el) { obsPrix.observe(el); });
-  }
+  });
 
   // Questions fréquentes : ouverture et fermeture en douceur
   document.querySelectorAll('.faq-item').forEach(function (item) {
@@ -497,24 +730,174 @@
     faqOutils.hidden = false;
   }
 
-  // Prochaine tournée sous la carte (proposition 38) : villes et semaine lues dans /tournees.json
-  // ({"tournees": [{"villes": "Lyon · Grenoble", "semaine": "2026-11-23"}]}, la semaine = son lundi). Sans tournée à venir, le texte de la page reste.
-  var tournee = document.querySelector('[data-tournee]');
-  if (tournee && window.fetch) {
-    fetch('/tournees.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
-      if (!d || !d.tournees) return;
-      var aujourdhui = new Date(); aujourdhui.setHours(0, 0, 0, 0);
-      var prochaine = d.tournees.filter(function (t) {
-        var fin = new Date(t.semaine + 'T00:00:00'); fin.setDate(fin.getDate() + 6);
-        return t.villes && fin >= aujourdhui;
-      }).sort(function (a, b) { return a.semaine < b.semaine ? -1 : 1; })[0];
-      if (!prochaine) return;
-      tournee.querySelector('[data-tournee-villes]').textContent = prochaine.villes;
-      var date = tournee.querySelector('[data-tournee-date]');
-      date.textContent = T.semaineDu.replace('{date}', new Date(prochaine.semaine + 'T00:00:00').toLocaleDateString(T.locale, { day: 'numeric', month: 'long' }));
-      date.hidden = false;
-    }).catch(function () {});
+  // Prochaine tournée sous la carte (proposition 38) : depuis le 8 nov. 2026, c'est une annonce « Tournée » que Malik
+  // ajoute sur sa page /gestion/ (afficherAnnonces, plus haut) ; sans tournée à venir, le texte de la page reste.
+
+  // Alerte prix (proposition 56) : « Prévenez-moi quand le prix monte ». Inscription, puis confirmation par le lien de
+  // l'e-mail (?alerte=confirmer&j=…) ou désinscription (?alerte=stop&j=…), qui ouvrent l'accueil sur ce bloc.
+  var alerte = document.getElementById('alerte');
+  if (alerte) (function () {
+    var form = alerte.querySelector('form'), msg = alerte.querySelector('.msg-alerte'), ouvertA = Date.now();
+    var dire = function (texte, ok) { msg.hidden = !texte; msg.textContent = texte || ''; msg.classList.toggle('ok', !!ok); };
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var champ = form.querySelector('[name=email]'), email = champ.value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { champ.setAttribute('aria-invalid', 'true'); dire(S.email); champ.focus(); return; }
+      champ.removeAttribute('aria-invalid');
+      form.querySelector('button').disabled = true;
+      fetch('/api/site/alerte', { method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, langue: LANGUE, site: form.querySelector('[name=site]').value, duree: Date.now() - ouvertA }) })
+        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return r.ok ? j : { erreur: j.erreur || 'serveur' }; }); },
+          function () { return { erreur: 'reseau' }; })
+        .then(function (r) {
+          form.querySelector('button').disabled = false;
+          if (r.erreur) return dire(S[r.erreur] || S.serveur);
+          form.reset();
+          dire(S.alerteOk, true);
+        });
+    });
+    // lien de l'e-mail : un appui pour confirmer ou se désinscrire (un lien ouvert tout seul par une messagerie ne fait rien)
+    var params = new URLSearchParams(location.search), action = params.get('alerte'), jeton = params.get('j') || '';
+    if ((action !== 'confirmer' && action !== 'stop') || !/^[0-9a-f]{32}$/.test(jeton)) return;
+    history.replaceState(null, '', location.pathname + '#alerte');
+    var question = document.createElement('div'), p = document.createElement('p'), b = document.createElement('button');
+    question.className = 'alerte-question';
+    p.textContent = action === 'confirmer' ? S.alerteConfirmer : S.alerteStop;
+    b.type = 'button';
+    b.className = 'btn btn-primaire';
+    b.textContent = action === 'confirmer' ? S.alerteOui : S.alerteStopOui;
+    question.appendChild(p);
+    question.appendChild(b);
+    form.hidden = true;
+    form.parentNode.insertBefore(question, form);
+    alerte.scrollIntoView({ block: 'center' });
+    b.addEventListener('click', function () {
+      b.disabled = true;
+      fetch('/api/site/alerte/' + (action === 'confirmer' ? 'confirmer' : 'desinscrire'), { method: 'POST', credentials: 'omit',
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ j: jeton }) })
+        .then(function (r) { return r.ok ? {} : r.json().catch(function () { return {}; }).then(function (j) { return { erreur: j.erreur || 'serveur' }; }); },
+          function () { return { erreur: 'reseau' }; })
+        .then(function (r) {
+          b.disabled = false;
+          if (r.erreur) return dire(S[r.erreur] || S.serveur);
+          question.remove();
+          form.hidden = action === 'stop';
+          dire(action === 'confirmer' ? S.alerteActive : S.alerteFinie, true);
+          msg.focus();
+        });
+    });
+    b.focus({ preventScroll: true });
+  })();
+
+  // « Fin d'année : videz vos bacs avant l'inventaire » (proposition 59) : bandeau de la page des pros, visible du
+  // 1er novembre au 19 décembre de chaque année (data-saison="11-01/12-19"), retiré tout seul ensuite.
+  document.querySelectorAll('[data-saison]').forEach(function (el) {
+    var p = el.getAttribute('data-saison').split('/'), md = jourParis().slice(5);
+    el.hidden = !(md >= p[0] && md <= p[1]);
+  });
+
+  // L'entreprise remplie toute seule (proposition 60) : en tapant le début de son nom ou son SIRET, la liste des
+  // entreprises françaises s'ouvre (annuaire officiel de l'État, interrogé par le serveur du site : /api/site/entreprises) ;
+  // un choix remplit le nom, le SIRET et le lieu. Liste « combobox » au clavier : flèches, Entrée, Échap.
+  function annuaire(champ, remplir) {
+    if (!champ || !window.fetch) return;
+    var id = champ.id + '-annuaire', liste = document.createElement('ul'), annonce = document.createElement('p');
+    var resultats = [], actif = -1, minuterie = 0, derniere = '', requete = 0;
+    liste.id = id;
+    liste.className = 'annuaire';
+    liste.setAttribute('role', 'listbox');
+    liste.setAttribute('aria-label', S.annuaire);
+    liste.hidden = true;
+    annonce.className = 'sr-only';
+    annonce.setAttribute('role', 'status');
+    champ.setAttribute('role', 'combobox');
+    champ.setAttribute('aria-autocomplete', 'list');
+    champ.setAttribute('aria-expanded', 'false');
+    champ.setAttribute('aria-controls', id);
+    champ.parentNode.insertBefore(liste, champ.nextSibling);
+    champ.parentNode.insertBefore(annonce, liste.nextSibling);
+    var fermer = function () {
+      liste.hidden = true; actif = -1;
+      champ.setAttribute('aria-expanded', 'false');
+      champ.removeAttribute('aria-activedescendant');
+    };
+    var marquer = function (i) {
+      actif = i;
+      [].forEach.call(liste.querySelectorAll('[role=option]'), function (o, k) { o.setAttribute('aria-selected', String(k === i)); });
+      if (i >= 0) { champ.setAttribute('aria-activedescendant', id + '-' + i); document.getElementById(id + '-' + i).scrollIntoView({ block: 'nearest' }); }
+      else champ.removeAttribute('aria-activedescendant');
+    };
+    var choisir = function (i) {
+      var x = resultats[i];
+      if (!x) return;
+      champ.value = x.nom;
+      derniere = x.nom;
+      remplir(x);
+      fermer();
+      annonce.textContent = remplacer(S.annuaireRempli, { nom: [x.nom, x.ville, x.siret].filter(Boolean).join(', ') });
+      champ.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    var montrer = function () {
+      liste.textContent = '';
+      resultats.forEach(function (x, i) {
+        var li = document.createElement('li'), b = document.createElement('b'), s = document.createElement('span');
+        li.id = id + '-' + i;
+        li.setAttribute('role', 'option');
+        li.setAttribute('aria-selected', 'false');
+        b.textContent = x.nom;
+        s.textContent = [x.cp && x.ville ? x.ville + ' (' + x.cp.slice(0, 2) + ')' : x.ville, x.siret ? 'SIRET ' + x.siret.replace(/^(\d{3})(\d{3})(\d{3})(\d{5})$/, '$1 $2 $3 $4') : ''].filter(Boolean).join(' · ');
+        li.appendChild(b); li.appendChild(s);
+        li.addEventListener('mousedown', function (e) { e.preventDefault(); });
+        li.addEventListener('click', function () { choisir(i); });
+        liste.appendChild(li);
+      });
+      var pied = document.createElement('li');
+      pied.className = 'annuaire-pied';
+      pied.setAttribute('role', 'presentation');
+      pied.textContent = resultats.length ? S.annuaire : S.annuaireVide;
+      liste.appendChild(pied);
+      liste.hidden = false;
+      champ.setAttribute('aria-expanded', 'true');
+      annonce.textContent = resultats.length ? remplacer(S.annuaireN, { n: resultats.length }) : S.annuaireVide;
+      marquer(-1);
+    };
+    champ.addEventListener('input', function () {
+      clearTimeout(minuterie);
+      var q = champ.value.trim();
+      if (q === derniere) return;
+      if (q.length < 3) { fermer(); return; }
+      minuterie = setTimeout(function () {
+        var n = ++requete;
+        fetch('/api/site/entreprises?q=' + encodeURIComponent(q), { credentials: 'omit' })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (d) {
+            if (n !== requete || !d || document.activeElement !== champ) return;
+            resultats = (d.entreprises || []).slice(0, 6);
+            montrer();
+          }, function () {});
+      }, 350);
+    });
+    champ.addEventListener('keydown', function (e) {
+      if (liste.hidden) return;
+      var n = resultats.length;
+      if (e.key === 'ArrowDown' && n) { e.preventDefault(); marquer((actif + 1) % n); }
+      else if (e.key === 'ArrowUp' && n) { e.preventDefault(); marquer(actif <= 0 ? n - 1 : actif - 1); }
+      else if (e.key === 'Enter' && actif >= 0) { e.preventDefault(); choisir(actif); }
+      else if (e.key === 'Escape') { e.preventDefault(); fermer(); }
+    });
+    champ.addEventListener('blur', function () { setTimeout(fermer, 150); });
   }
+  var siVide = function (champ, valeur) { if (champ && valeur && !champ.value.trim()) { champ.value = valeur; champ.dispatchEvent(new Event('input', { bubbles: true })); } };
+  annuaire(document.getElementById('d-entreprise'), function (x) {
+    siVide(document.getElementById('d-siret'), x.siret);
+    siVide(document.getElementById('d-lieu'), [x.cp, x.ville].filter(Boolean).join(' '));
+  });
+  annuaire(document.getElementById('f-entreprise'), function (x) { siVide(document.getElementById('f-siret'), x.siret); });
+  annuaire(document.getElementById('x-entreprise'), function (x) {
+    var f = document.getElementById('f-coordonnees');
+    siVide(document.getElementById('x-siret'), x.siret);
+    if (f) { siVide(f.elements.adresse, x.adresse); siVide(f.elements.cp, x.cp); siVide(f.elements.ville, x.ville); }
+  });
 
   // Espace client : connexion par un code reçu par e-mail, puis le compte (coordonnées, pièce d'identité, RIB) et les
   // demandes d'envoi par colis. Le serveur est celui du site chez OVH (serveur/espace.php, en PHP, joint par l'adresse
@@ -675,6 +1058,14 @@
         tete.appendChild(etat);
         li.appendChild(tete);
         li.appendChild(detail);
+        // prix garanti de la demande (proposition 50) : jusqu'à sa date de fin, pour un colis déposé au plus tard ce jour-là
+        if (e.prix_kg && e.garanti_jusqu) {
+          var g = document.createElement('p'), fini = e.garanti_jusqu < jourParis();
+          g.className = 'mon-envoi-garanti' + (fini ? ' fini' : '');
+          g.textContent = fini ? remplacer(S.garantiFini, { date: dateLongue(e.garanti_jusqu) })
+            : remplacer(S.garanti, { prix: ecrirePrix(e.prix_kg), date: dateLongue(e.garanti_jusqu) });
+          li.appendChild(g);
+        }
         ul.appendChild(li);
       });
       espace.querySelector('[data-aucun-envoi]').hidden = envois.length > 0;
@@ -685,6 +1076,7 @@
       accueil.hidden = avantages.hidden = true;
       bandeau.hidden = espace.hidden = false;
       remplir();
+      chargerQr(); // le QR code du bordereau, prêt avant l'impression
       if (!arrivee) return;
       ouvrirSuivante();
       var h1 = bandeau.querySelector('h1');
@@ -830,23 +1222,46 @@
       fe.hidden = false;
       liste.querySelector('[name=poids]').focus();
     });
-    // bordereau : une page à glisser dans le colis, avec la référence (styles d'impression de #bordereau)
+    // bordereau : une page à glisser dans le colis, avec la référence en gros, le prix garanti et un QR code que Malik
+    // scanne à l'arrivée : il ouvre la demande sur sa page /gestion/ (proposition 52). Styles d'impression de #bordereau ;
+    // le QR code est dessiné ici par qrcode-generator (Kazuhiko Arase, licence MIT, vendor/qrcode/), chargé à la demande.
+    var chargerQr = function () {
+      if (window.qrcode) return Promise.resolve(window.qrcode);
+      return new Promise(function (resoudre) {
+        var s = document.createElement('script'), base = document.querySelector('script[src$="site.js"]');
+        s.src = new URL('vendor/qrcode/qrcode.js', base ? base.src : location.href).href;
+        s.onload = function () { resoudre(window.qrcode || null); };
+        s.onerror = function () { resoudre(null); };
+        document.head.appendChild(s);
+      });
+    };
     espace.querySelector('[data-imprimer]').addEventListener('click', function () {
       var e = dernier, c = compte, b = document.getElementById('bordereau');
       var x = function (s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
-      var lignes = e.colis.map(function (l, i) {
-        return '<tr><td>' + x(E.colisN.replace('{n}', i + 1)) + '</td><td>' + x(l.matiere) + '</td><td>' + x(nombre.format(l.poids)) + ' kg</td></tr>';
-      }).join('');
-      b.innerHTML = '<img src="' + x(document.querySelector('.logo img').src) + '" alt="Ain Recycling">' +
-        '<h1>' + x(E.bordereau) + '</h1><p class="ref-b">' + x(e.reference) + '</p><p>' + x(E.glisser) + '</p>' +
-        '<div class="bloc-b"><b>' + x(E.expediteur) + '</b><br>' + x(c.prenom + ' ' + c.nom.toUpperCase()) +
-        (c.entreprise ? '<br>' + x(c.entreprise) : '') + '<br>' + x(c.adresse) + '<br>' + x(c.cp + ' ' + c.ville) + '<br>' + x(c.email) + '</div>' +
-        '<table><thead><tr><th>' + x(E.colisTitre) + '</th><th>' + x(E.matiere) + '</th><th>' + x(E.poids) + '</th></tr></thead><tbody>' + lignes +
-        '<tr><th colspan="2">' + x(E.total) + '</th><th>' + x(nombre.format(e.total)) + ' kg</th></tr></tbody></table>' +
-        '<p>' + x(E.paiement) + ' : ' + x(e.paiement === 'Chèque' ? E.cheque : E.virement) + '</p>';
-      document.body.classList.add('impression-bordereau');
-      window.addEventListener('afterprint', function () { document.body.classList.remove('impression-bordereau'); }, { once: true });
-      window.print();
+      chargerQr().then(function (qrcode) {
+        var lignes = e.colis.map(function (l, i) {
+          return '<tr><td>' + x(E.colisN.replace('{n}', i + 1)) + '</td><td>' + x(l.matiere) + '</td><td>' + x(nombre.format(l.poids)) + ' kg</td></tr>';
+        }).join('');
+        var qr = '';
+        if (qrcode) {
+          var q = qrcode(0, 'M');
+          q.addData('https://ainrecycling.com/gestion/#' + e.reference);
+          q.make();
+          qr = '<div class="qr-b">' + q.createSvgTag({ cellSize: 4, margin: 0, scalable: true }) + '<span>' + x(S.scanne) + '</span></div>';
+        }
+        var garanti = e.prix_kg && e.garanti_jusqu
+          ? '<p class="garanti-b">' + x(remplacer(S.garanti, { prix: ecrirePrix(e.prix_kg), date: dateDe(e.garanti_jusqu).toLocaleDateString(T.locale, { day: 'numeric', month: 'long', year: 'numeric' }) })) + '</p>' : '';
+        b.innerHTML = '<div class="tete-b"><div><img src="' + x(document.querySelector('.logo img').src) + '" alt="Ain Recycling">' +
+          '<h1>' + x(E.bordereau) + '</h1><p class="ref-b">' + x(e.reference) + '</p><p>' + x(E.glisser) + '</p></div>' + qr + '</div>' + garanti +
+          '<div class="bloc-b"><b>' + x(E.expediteur) + '</b><br>' + x(c.prenom + ' ' + c.nom.toUpperCase()) +
+          (c.entreprise ? '<br>' + x(c.entreprise) : '') + '<br>' + x(c.adresse) + '<br>' + x(c.cp + ' ' + c.ville) + '<br>' + x(c.email) + '</div>' +
+          '<table><thead><tr><th>' + x(E.colisTitre) + '</th><th>' + x(E.matiere) + '</th><th>' + x(E.poids) + '</th></tr></thead><tbody>' + lignes +
+          '<tr><th colspan="2">' + x(E.total) + '</th><th>' + x(nombre.format(e.total)) + ' kg</th></tr></tbody></table>' +
+          '<p>' + x(E.paiement) + ' : ' + x(e.paiement === 'Chèque' ? E.cheque : E.virement) + '</p>';
+        document.body.classList.add('impression-bordereau');
+        window.addEventListener('afterprint', function () { document.body.classList.remove('impression-bordereau'); }, { once: true });
+        window.print();
+      });
     });
 
     // ---------- se déconnecter, supprimer le compte ----------
@@ -1273,26 +1688,58 @@
     suivre(false);
   });
 
-  // Bande « Vous avez du carbure à vendre ? » : les pièces flottent et suivent la souris (« Parallax Floating »)
+  // Bande « Vous avez du carbure à vendre ? » : les pièces flottent et suivent la souris. Le vrai composant « Parallax
+  // Floating » de Daniel Petho (fancycomponents.dev ; 21st.dev, id de démo 656, licence MIT, récupéré le 08/11/2026,
+  // https://21st.dev/@danielpetho/components/parallax-floating ; code d'origine dans
+  // 21st-composants/danielpetho__parallax-floating), refait sans React ni bibliothèque. Comme le composant : à chaque
+  // image, chaque pièce vise la position de la souris multipliée par (profondeur × sensibilité ÷ 20) et ne fait que 5 %
+  // du chemin restant (« easingFactor » 0,05), déplacée en translate3d ; la souris compte même hors de la bande. Comme la
+  // démo : sensibilité négative (les pièces partent à l'opposé de la souris) et pièces qui apparaissent une à une (0,5 s,
+  // 0,15 s d'écart). Adapté : souris comptée depuis le centre de la bande et non depuis son coin en haut à gauche (les
+  // pièces restent autour de leur place), sensibilité -0,6 au lieu de -1 (elles ne passent pas sur le texte), boucle
+  // arrêtée hors de l'écran et une fois les pièces arrivées. Souris seulement ; rien avec « moins d'animations ».
   var flottants = document.querySelector('.flottants');
-  if (flottants && souris && !calme) {
+  if (flottants) {
     var bandeAppel = flottants.parentNode;
-    var pieces = [].slice.call(flottants.querySelectorAll('.flottant'));
-    var dx = 0, dy = 0;
-    var deplacer = aChaqueImage(function () {
-      pieces.forEach(function (f) {
-        var p = parseFloat(f.getAttribute('data-profondeur')) || 1;
-        f.style.setProperty('--px', (-dx * 30 * p).toFixed(1) + 'px');
-        f.style.setProperty('--py', (-dy * 22 * p).toFixed(1) + 'px');
-      });
+    var pieces = [].slice.call(flottants.querySelectorAll('.flottant')).map(function (f) {
+      return { el: f, profondeur: parseFloat(f.getAttribute('data-profondeur')) || 1, x: 0, y: 0 };
     });
-    bandeAppel.addEventListener('pointermove', function (e) {
-      var r = bandeAppel.getBoundingClientRect();
-      dx = (e.clientX - r.left) / r.width - .5;
-      dy = (e.clientY - r.top) / r.height - .5;
-      deplacer();
-    });
-    bandeAppel.addEventListener('pointerleave', function () { dx = 0; dy = 0; deplacer(); });
+    if (!calme && 'IntersectionObserver' in window) {
+      flottants.classList.add('a-venir');
+      var bandeVue = new IntersectionObserver(function (es) {
+        if (!es[0].isIntersecting) return;
+        bandeVue.disconnect();
+        pieces.forEach(function (p, i) { p.el.style.transitionDelay = (i * 0.15).toFixed(2) + 's'; });
+        flottants.classList.remove('a-venir');
+      }, { threshold: 0.15 });
+      bandeVue.observe(bandeAppel);
+    }
+    if (souris && !calme && 'IntersectionObserver' in window) {
+      var SENSIBILITE = -0.6, AMORTI = 0.05;
+      var sx = 0, sy = 0, bandeEnVue = false, imageFlot = 0;
+      var flotter = function () {
+        imageFlot = 0;
+        var encore = false;
+        pieces.forEach(function (p) {
+          var force = p.profondeur * SENSIBILITE / 20;
+          var ex = sx * force - p.x, ey = sy * force - p.y;
+          p.x += ex * AMORTI;
+          p.y += ey * AMORTI;
+          if (Math.abs(ex) > 0.1 || Math.abs(ey) > 0.1) encore = true;
+          p.el.style.transform = 'translate3d(' + p.x.toFixed(2) + 'px, ' + p.y.toFixed(2) + 'px, 0)';
+        });
+        if (encore && bandeEnVue) imageFlot = requestAnimationFrame(flotter);
+      };
+      var relancerFlot = function () { if (!imageFlot && bandeEnVue) imageFlot = requestAnimationFrame(flotter); };
+      window.addEventListener('mousemove', function (e) {
+        if (!bandeEnVue) return;
+        var r = bandeAppel.getBoundingClientRect();
+        sx = e.clientX - (r.left + r.width / 2);
+        sy = e.clientY - (r.top + r.height / 2);
+        relancerFlot();
+      }, { passive: true });
+      new IntersectionObserver(function (es) { bandeEnVue = es[0].isIntersecting; relancerFlot(); }).observe(bandeAppel);
+    }
   }
 
   // Texte qui s'éclaire mot à mot pendant qu'on le lit : le composant « Reading Text Reveal » de waleedkibhen (21st.dev,

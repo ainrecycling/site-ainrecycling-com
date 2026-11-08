@@ -45,7 +45,7 @@
   <div class="conteneur">
     <nav class="fil" aria-label="Fil d'Ariane"><a href="index.html">Accueil</a><span aria-hidden="true">/</span><span>Politique de confidentialité</span></nav>
     <h1>Politique de confidentialité</h1>
-    <p class="maj">Dernière mise à jour : <time datetime="2026-11-06">6 novembre 2026</time></p>
+    <p class="maj">Dernière mise à jour : <time datetime="2026-11-08">8 novembre 2026</time></p>
 
     <p>Cette page explique, simplement, quelles données personnelles Ain Recycling utilise, pourquoi, combien de temps
       et avec qui, conformément au Règlement général sur la protection des données (RGPD) et à la loi Informatique et Libertés.</p>
@@ -56,7 +56,8 @@
 
     <h2>2. Ce que ce site ne fait pas</h2>
     <ul class="liste">
-      <li>Aucun traceur, aucune mesure d'audience, aucune publicité. Seul l'espace client dépose un cookie de connexion, strictement nécessaire.</li>
+      <li>Aucun traceur, aucune publicité. Le site compte seulement ses pages vues, de son côté, sans cookie et sans rien qui permette de vous
+        reconnaître (voir le tableau). Seul l'espace client dépose un cookie de connexion, strictement nécessaire.</li>
       <li>Aucun service extérieur n'est chargé pendant votre visite : les polices de caractères et les programmes du site sont hébergés sur notre propre site.
         Le bouton WhatsApp est un simple lien : rien n'est transmis à WhatsApp tant que vous ne cliquez pas dessus.</li>
       <li>En dehors du cookie de connexion de l'espace client, aucune donnée n'est enregistrée dans votre navigateur. Voir aussi la <a href="cookies.html">politique cookies</a>.</li>
@@ -78,6 +79,27 @@
             <td>Faire fonctionner et sécuriser le site</td>
             <td>Intérêt légitime</td>
             <td>Durée limitée, fixée par l'hébergeur</td>
+          </tr>
+          <tr id="mesure-audience">
+            <th scope="row">Pages vues</th>
+            <td>La page lue, le jour, et le nom du site d'où vous venez (par exemple google.fr) : ni cookie, ni adresse IP, rien qui permette de vous reconnaître</td>
+            <td>Savoir quelles pages sont lues et comment on nous trouve</td>
+            <td>Intérêt légitime</td>
+            <td>25 mois, sous forme de totaux par jour</td>
+          </tr>
+          <tr id="alerte-prix">
+            <th scope="row">Alerte prix</th>
+            <td>Adresse e-mail, langue, dates d'inscription et de confirmation</td>
+            <td>Vous prévenir par e-mail quand notre prix monte, et seulement pour cela</td>
+            <td>Votre consentement, confirmé par le lien reçu par e-mail ; vous pouvez le retirer à tout moment</td>
+            <td>Jusqu'à votre désinscription (un lien dans chaque e-mail), et au plus 3 ans après votre inscription. Une inscription non confirmée est effacée au bout de 7 jours</td>
+          </tr>
+          <tr>
+            <th scope="row">Recherche d'entreprise (formulaires des professionnels)</th>
+            <td>Le nom ou le SIRET tapé dans le champ « Entreprise »</td>
+            <td>Vous proposer les entreprises de l'annuaire officiel et remplir le formulaire pour vous</td>
+            <td>Intérêt légitime</td>
+            <td>Rien n'est gardé : notre serveur interroge l'annuaire public de l'État et vous renvoie sa réponse</td>
           </tr>
           <tr>
             <th scope="row">Demande d'estimation</th>
@@ -102,10 +124,10 @@
           </tr>
           <tr>
             <th scope="row">Rachat (sur place ou par colis)</th>
-            <td>Identité et coordonnées du vendeur, copie de la pièce d'identité, détail des matières (poids, prix), bon d'achat, mode de paiement, coordonnées bancaires</td>
+            <td>Identité et coordonnées du vendeur, copie de la pièce d'identité, détail des matières (poids, prix), bon d'achat, vidéo de la pesée, mode de paiement, coordonnées bancaires</td>
             <td>Acheter la matière, payer le vendeur, établir le bon d'achat, tenir le registre des objets achetés et la comptabilité</td>
             <td>Exécution du contrat ; obligations légales</td>
-            <td>Bons d'achat et pièces comptables : 10 ans (article L123-22 du Code de commerce). Pièce d'identité : avec le dossier de rachat, le temps exigé par nos obligations légales, puis supprimée. Coordonnées bancaires : le temps du paiement, puis uniquement dans les justificatifs comptables</td>
+            <td>Bons d'achat et pièces comptables : 10 ans (article L123-22 du Code de commerce). Pièce d'identité : avec le dossier de rachat, le temps exigé par nos obligations légales, puis supprimée. Coordonnées bancaires : le temps du paiement, puis uniquement dans les justificatifs comptables. Vidéo de la pesée : 3 ans au plus, puis supprimée</td>
           </tr>
           <tr>
             <th scope="row">Échanges par e-mail</th>
@@ -135,7 +157,9 @@
       <li><strong>OVHcloud</strong> (OVH SAS, France) : hébergement du site et des espaces clients, sur des serveurs situés en France, et nom de domaine.</li>
       <li><strong>Vercel Inc.</strong> (États-Unis) : hébergement de notre outil interne de gestion des rachats.</li>
       <li><strong>Supabase</strong> : base de données et stockage privé des dossiers de rachat, sur des serveurs situés à Paris.</li>
-      <li><strong>Resend</strong> : envoi des e-mails (bons d'achat, codes de connexion à l'espace client), depuis l'Union européenne (Irlande).</li>
+      <li><strong>Resend</strong> : envoi des e-mails (bons d'achat, codes de connexion à l'espace client, alerte prix), depuis l'Union européenne (Irlande).</li>
+      <li><strong>L'annuaire des entreprises de l'État</strong> (recherche-entreprises.api.gouv.fr) : reçoit de notre serveur le seul texte tapé dans le
+        champ « Entreprise » des formulaires des professionnels, sans rien d'autre sur vous.</li>
       <li><strong>Google</strong> : messagerie de l'entreprise (Gmail), qui reçoit vos réponses et les copies internes des bons d'achat.</li>
       <li><strong>Le transporteur</strong> qui achemine votre colis avec l'étiquette prépayée que nous vous envoyons : nom, adresse et,
         si besoin, téléphone de l'expéditeur, uniquement pour la prise en charge et la livraison du colis.</li>
@@ -152,7 +176,8 @@
 
     <h2>6. Sécurité</h2>
     <ul class="liste">
-      <li>Le site et nos outils fonctionnent uniquement en connexion chiffrée (HTTPS).</li>
+      <li>Le site et nos outils fonctionnent uniquement en connexion chiffrée (HTTPS), que votre navigateur est obligé d'utiliser, et nos pages
+        ne peuvent charger que des fichiers de notre propre site.</li>
       <li>Les pièces d'identité sont rangées dans un espace de stockage privé, accessible aux seuls comptes autorisés.</li>
       <li>Une pièce d'identité n'est jamais envoyée au vendeur par e-mail et n'est jamais accessible par un lien public.</li>
       <li>Espace client : connexion par un code à usage unique envoyé par e-mail, sans mot de passe. Les photos de la pièce d'identité

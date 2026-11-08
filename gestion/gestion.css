@@ -87,3 +87,74 @@ dialog .bouton { display: flex; margin: 12px auto 0; }
   .infos { grid-template-columns: 1fr; gap: 0; }
   .infos dt { margin-top: 8px; }
 }
+
+/* ---------- 8 nov. 2026 : le site piloté depuis cette page (prix, annonce, visites, sauvegarde) ---------- */
+.tuiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0 0 22px; }
+@media (min-width: 700px) { .tuiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.tuile { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; font: inherit; color: var(--texte);
+  background: var(--carte); border: 1px solid var(--ligne); border-radius: 14px; padding: 12px 14px; min-height: 104px; cursor: pointer; }
+.tuile:hover { border-color: var(--marine); }
+.tuile-titre { font-size: .85rem; font-weight: 600; color: var(--doux); }
+.tuile-valeur { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 1.45rem; font-weight: 500; color: var(--marine); line-height: 1.2; }
+.tuile-valeur.petite { font-family: inherit; font-size: 1.05rem; font-weight: 600; }
+.tuile-detail { font-size: .82rem; color: var(--doux); line-height: 1.35; }
+.tuile.a-faire { border-color: #e7c88f; background: var(--ambre-fond); }
+.tuile.a-faire .tuile-valeur { color: var(--ambre); }
+.titre-demandes { font-size: 1.1rem; margin: 0 0 10px; }
+
+dialog.feuille { width: min(100vw, 560px); max-height: min(92vh, 900px); margin: auto auto 0; padding: 0 16px 20px; border-radius: 18px 18px 0 0;
+  background: var(--carte); color: var(--texte); overflow: auto; }
+@media (min-width: 620px) { dialog.feuille { margin: auto; border-radius: 18px; } }
+dialog.feuille::backdrop { background: rgba(5, 10, 20, .55); }
+.feuille-tete { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: var(--carte); padding: 14px 0 10px; border-bottom: 1px solid var(--ligne); margin-bottom: 12px; }
+.feuille-tete h2 { margin: 0; }
+.feuille h3 { font-size: 1rem; color: var(--encre); margin: 16px 0 8px; }
+.pile { display: grid; gap: 8px; }
+.pile label { margin: 6px 0 0; }
+.pile .bouton { margin-top: 6px; }
+.prix-actuel { margin: 0; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 2.6rem; color: var(--marine); line-height: 1.1; }
+.prix-actuel small { font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 1rem; color: var(--doux); }
+.champ-unite { display: flex; align-items: center; border: 2px solid var(--marine); border-radius: 12px; padding: 0 14px 0 0; background: var(--carte); }
+.champ-unite input { border: 0; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 26px; color: var(--marine); }
+.champ-unite input:focus { outline: none; }
+.champ-unite:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
+.champ-unite span { font-weight: 600; color: var(--doux); white-space: nowrap; }
+.case { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; }
+.case input { width: 22px; height: 22px; flex: none; margin: 2px 0 0; }
+.confirmer { padding: 12px; border-radius: 12px; background: var(--ambre-fond); color: var(--ambre); border: 1px solid #e7c88f; }
+.confirmer p { margin: 0 0 10px; color: #5c3d00; }
+.historique { margin-top: 16px; }
+.historique summary { cursor: pointer; font-weight: 600; color: var(--marine); padding: 6px 0; }
+.historique ul { margin: 6px 0 0; padding-left: 1.2em; color: var(--doux); }
+.annonces { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.annonces li { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; padding: 10px 12px; border-radius: 12px;
+  background: #fff4dc; border: 1px solid #f0d9a8; color: #5c3d00; }
+.annonces li p { margin: 0; }
+.choix-type { display: flex; flex-wrap: wrap; gap: 8px; }
+.choix-type label { display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 14px; border: 1px solid #c9d3e3; border-radius: 999px; font-weight: 600; cursor: pointer; }
+.choix-type label:has(input:checked) { border-color: var(--marine); background: var(--bleu-fond); color: var(--marine); }
+.choix-type input { width: 18px; height: 18px; margin: 0; }
+.deux { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.apercu { margin: 4px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--fond); color: var(--texte); }
+.apercu:empty { display: none; }
+.chiffres { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.chiffres div { display: flex; flex-direction: column; padding: 10px 12px; border: 1px solid var(--ligne); border-radius: 12px; }
+.chiffres b { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 1.4rem; font-weight: 500; color: var(--marine); }
+.chiffres span { font-size: .88rem; color: var(--encre); }
+.chiffres small { font-size: .8rem; color: var(--doux); }
+.barres { display: flex; align-items: flex-end; gap: 2px; height: 90px; padding: 6px 0; border-bottom: 1px solid var(--ligne); }
+.barres span { flex: 1; min-width: 3px; background: var(--marine); border-radius: 3px 3px 0 0; opacity: .85; }
+.deux-listes { display: grid; gap: 4px 16px; }
+@media (min-width: 520px) { .deux-listes { grid-template-columns: 1fr 1fr; } }
+.liste-nombres { list-style: none; margin: 0; padding: 0; }
+.liste-nombres li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px dashed var(--ligne); font-size: .92rem; }
+.liste-nombres b { font-family: "IBM Plex Mono", ui-monospace, monospace; font-weight: 500; color: var(--marine); }
+.etat-sauvegarde { padding: 10px 12px; border-radius: 10px; background: var(--vert-fond); color: var(--vert); font-weight: 600; }
+.etat-sauvegarde.a-faire { background: var(--ambre-fond); color: var(--ambre); }
+.garantie { margin: 0 0 10px; padding: 8px 12px; border-radius: 10px; background: var(--vert-fond); color: var(--vert); font-weight: 600; }
+.garantie.finie { background: var(--fond); color: var(--doux); font-weight: 400; }
+.demande.ciblee { outline: 3px solid var(--focus); outline-offset: 3px; opacity: 1; }
+
+.feuille .pile .bouton { margin: 6px 0 0; width: 100%; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

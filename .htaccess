@@ -4,6 +4,11 @@ Options -Indexes
 DirectoryIndex index.html index.php
 ErrorDocument 404 /404.html
 
+# Types et encodage bien déclarés (proposition 53, 8 nov. 2026) : les polices n'avaient pas de type, llms.txt pas d'encodage.
+AddType font/woff2 .woff2
+AddType application/manifest+json .webmanifest
+AddCharset UTF-8 .html .css .js .mjs .json .txt .xml .svg .md
+
 <IfModule mod_rewrite.c>
 RewriteEngine On
 # Une seule adresse : https://ainrecycling.com (sans www). Pour Google (pas de pages en double) et pour l'espace client,
@@ -20,6 +25,7 @@ RewriteRule (^|/)\.(?!well-known/) - [R=404,L]
 RewriteRule ^api/espace/(.*)$ serveur/espace.php?chemin=$1 [QSA,L]
 RewriteRule ^api/gestion/(.*)$ serveur/gestion.php?chemin=$1 [QSA,L]
 RewriteRule ^api/appli/(.*)$ serveur/appli.php?chemin=$1 [QSA,L]
+RewriteRule ^api/site/(.*)$ serveur/site.php?chemin=$1 [QSA,L]
 RewriteRule ^api/installation/?$ serveur/installation.php [QSA,L]
 </IfModule>
 
@@ -27,4 +33,28 @@ RewriteRule ^api/installation/?$ serveur/installation.php [QSA,L]
 Header always set X-Content-Type-Options "nosniff"
 Header always set Referrer-Policy "strict-origin-when-cross-origin"
 Header always set X-Frame-Options "SAMEORIGIN"
+# Cadenas obligatoire (HSTS, proposition 53) : pendant un an, le navigateur ne passe plus jamais par http:// (il ignore
+# cette ligne sur une page en http). Sans les sous-domaines (ceux des e-mails ne sont pas des sites).
+Header always set Strict-Transport-Security "max-age=31536000"
+# Ce que les pages ont le droit de charger (CSP) : rien d'autre que le site lui-même. Les 3 empreintes sont celles des
+# petits scripts écrits dans les pages (classe « js » de chaque page, plan des modules 3D de l'accueil en français et
+# dans les autres langues) : à recalculer si l'un d'eux change (voir A-LIRE.md, « Protections du site »).
+Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-Du+OJKJSbdUgz5nrHeWWINvez6XKDDU/tyj/5c2uvwo=' 'sha256-59Jv0D8l/mrFTCQ2y4C2ljXaNMlkywdbMkQn2Buq5Oo=' 'sha256-IFPr5mKO4iDhqA5WlzGbCHgo1B5z5iQoubSHvfY74wo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; media-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+Header always set Cross-Origin-Opener-Policy "same-origin"
+# Ce que le navigateur garde (proposition 53) : polices un an (elles ne changent jamais), images un mois (une image
+# changée prend un autre nom, ou « ?v=2 » au bout de son adresse) ; pages, styles et scripts redemandés à chaque visite
+# (réponse « pas changé » très courte quand rien n'a bougé), pour que chaque mise en ligne se voie tout de suite.
+<FilesMatch "\.woff2$">
+Header set Cache-Control "public, max-age=31536000, immutable"
+Header unset Expires
+</FilesMatch>
+<FilesMatch "\.(webp|png|jpe?g|gif|svg|ico|avif)$">
+Header set Cache-Control "public, max-age=2592000"
+Header unset Expires
+</FilesMatch>
+<FilesMatch "\.(html?|css|m?js|json|txt|xml|webmanifest)$">
+Header set Cache-Control "no-cache"
+Header unset Expires
+</FilesMatch>
 </IfModule>

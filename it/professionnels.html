@@ -86,6 +86,8 @@
 
   <section class="page-hero">
     <div class="conteneur">
+      <!-- Fin d'année (proposition 59) : visible du 1er novembre au 19 décembre, chaque année (site.js) -->
+      <p class="saison-pros" data-saison="11-01/12-19" hidden><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg><span><b>Fine anno: svuotate i contenitori prima dell'inventario.</b> Ritiro fino al 19 dicembre, pagato prima della vostra chiusura di bilancio. <a href="#devis">Chiedere un preventivo</a></span></p>
       <div class="page-hero-in">
         <div class="page-hero-texte">
           <nav class="fil" aria-label="Percorso di navigazione"><a href="index.html">Home</a><span aria-hidden="true">/</span><span>Professionisti</span></nav>
@@ -101,8 +103,8 @@
           <p class="sur-titre">Per il vostro ufficio acquisti</p>
           <ul class="liste-icones">
             <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17h4V5H2v12h3M14 9h4l4 4v4h-3M7.5 20a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM17.5 20a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"></path></svg><span><b>Ritiro in sede</b> durante i nostri giri, in Francia e in Europa</span></li>
-            <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 15l4-4 3 3 5-6"></path></svg><span><b>Prezzo indicizzato</b> alla quotazione del tungsteno, confermato per iscritto e garantito 14 giorni</span></li>
-            <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M5 7h14M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0zM8 21h8"></path></svg><span><b>Pesatura in contraddittorio</b>, foto della bilancia allegata</span></li>
+            <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 15l4-4 3 3 5-6"></path></svg><span><b>Prezzo indicizzato</b> alla quotazione del tungsteno, confermato per iscritto e garantito 7 giorni, entro il mese</span></li>
+            <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M5 7h14M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0zM8 21h8"></path></svg><span><b>Pesatura in contraddittorio</b>, filmata: peso lordo e peso netto</span></li>
             <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5"></path></svg><span><b>Buono d'acquisto numerato</b> con la dicitura di inversione contabile dell'IVA</span></li>
             <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4"></path></svg><span><b>Attestato di ritiro</b> per il vostro registro dei rifiuti, su richiesta</span></li>
             <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h12M4 14h9M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12c0 4.4 3.5 8 7.8 8 2 0 3.8-.8 5.2-2"></path></svg><span><b>Pagamento con bonifico</b> o assegno, entro 48 h dalla pesatura</span></li>
@@ -139,7 +141,7 @@
       <div class="titre-bloc apparait">
         <p class="sur-titre">Prezzo</p>
         <h2 id="t-prix">Il vostro prezzo in base alla quantità.</h2>
-        <p class="intro">Il prezzo è sempre confermato per iscritto prima del ritiro o della spedizione, e garantito 14 giorni.</p>
+        <p class="intro">Il prezzo è sempre confermato per iscritto prima del ritiro o della spedizione, e garantito 7 giorni, al più tardi fino alla fine del mese.</p>
       </div>
       <table class="paliers apparait">
         <thead><tr><th scope="col">Quantità</th><th scope="col">Come</th><th scope="col">Prezzo</th></tr></thead>
@@ -183,7 +185,7 @@
         <li class="promesse apparait"><b>24 h</b><strong>Risposta a ogni richiesta</strong><span>giorni lavorativi</span></li>
         <li class="promesse apparait"><b>24 h</b><strong>Preventivo scritto</strong><span>dopo la vostra richiesta, giorni lavorativi</span></li>
         <li class="promesse apparait"><b>48 h</b><strong>Pagamento</strong><span>dopo la pesatura, giorni lavorativi</span></li>
-        <li class="promesse apparait"><b>1 foto</b><strong>Della bilancia</strong><span>con ogni lotto</span></li>
+        <li class="promesse apparait"><b>1 video</b><strong>Della pesatura</strong><span>con ogni lotto</span></li>
       </ul>
     </div>
   </section>
@@ -290,8 +292,12 @@
             <div class="reponse"><p>Sì, su richiesta: un attestato di ritiro che riporta date, pesi e natura del materiale, con i nostri numeri (SIRET, partita IVA). Il buono d'acquisto di ogni vendita contiene già queste informazioni.</p></div>
           </details>
           <details class="faq-item">
+            <summary>La nostra azienda chiude: comprate il metallo duro che resta?<span class="plus" aria-hidden="true"></span></summary>
+            <div class="reponse"><p>Sì, tutto il metallo duro, anche usurato o sfuso, a nome della società e pagato sul suo conto, con un documento d'acquisto dettagliato per il commercialista o il liquidatore. Vedi <a href="vider-un-atelier.html">state svuotando un'officina?</a></p></div>
+          </details>
+          <details class="faq-item">
             <summary>Quando vengo pagato?<span class="plus" aria-hidden="true"></span></summary>
-            <div class="reponse"><p>Entro 48 ore (giorni lavorativi) dalla pesatura, con bonifico o assegno, a vostra scelta. Ricevete prima il buono d'acquisto via e-mail, con il peso, il prezzo al chilo, l'importo e la foto della bilancia.</p></div>
+            <div class="reponse"><p>Entro 48 ore (giorni lavorativi) dalla pesatura, con bonifico o assegno, a vostra scelta. Ricevete prima il buono d'acquisto via e-mail, con il peso, il prezzo al chilo e l'importo, e il video della pesatura.</p></div>
           </details>
         </div>
       </div>

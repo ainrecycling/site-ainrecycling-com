@@ -109,7 +109,8 @@ try {
             servir_photo($octets);
 
         // Demande d'envoi par colis (compte complet) : 1 à 5 colis de 20 kg au plus, virement (RIB du compte) ou chèque,
-        // attestation sur l'honneur ; 3 demandes par jour au plus. Malik reçoit un e-mail, la personne sa référence.
+        // attestation sur l'honneur ; 3 demandes par jour au plus. Malik reçoit un e-mail, la personne sa référence et son
+        // prix garanti.
         case 'POST envoi':
             origine_refusee();
             $c = compte_connecte();
@@ -134,6 +135,8 @@ try {
                 'total' => round(array_sum(array_column($colis, 'poids')) * 10) / 10, 'paiement' => $paiement,
                 'message' => coupe(trim(is_string($b['message'] ?? null) ? $b['message'] : ''), 600),
                 'traite_le' => null, 'traite_par' => '', 'bon_numero' => null, 'bon_le' => null,
+                // prix du jour et fin de sa garantie (7 jours, jamais après la fin du mois), gardés avec la demande (proposition 50)
+                'prix_kg' => prix_site()['kg'], 'garanti_jusqu' => garanti_jusqu(jour_paris()),
             ];
             creer_envoi($e);
             $e = lire_envoi($e['id']) ?? $e;

@@ -85,6 +85,8 @@
 
   <section class="page-hero">
     <div class="conteneur">
+      <!-- Fin d'année (proposition 59) : visible du 1er novembre au 19 décembre, chaque année (site.js) -->
+      <p class="saison-pros" data-saison="11-01/12-19" hidden><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg><span><b>Fin d'année : videz vos bacs avant l'inventaire.</b> Enlèvement jusqu'au 19 décembre, payé avant votre clôture. <a href="#devis">Demander un devis</a></span></p>
       <div class="page-hero-in">
         <div class="page-hero-texte">
           <nav class="fil" aria-label="Fil d'Ariane"><a href="index.html">Accueil</a><span aria-hidden="true">/</span><span>Professionnels</span></nav>
@@ -100,8 +102,8 @@
           <p class="sur-titre">Pour votre service achats</p>
           <ul class="liste-icones">
             <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17h4V5H2v12h3M14 9h4l4 4v4h-3M7.5 20a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM17.5 20a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"></path></svg><span><b>Enlèvement sur site</b> lors de nos tournées, en France et en Europe</span></li>
-            <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 15l4-4 3 3 5-6"></path></svg><span><b>Prix indexé</b> sur le cours du tungstène, confirmé par écrit et garanti 14 jours</span></li>
-            <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M5 7h14M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0zM8 21h8"></path></svg><span><b>Pesée contradictoire</b>, photo de la balance jointe</span></li>
+            <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 15l4-4 3 3 5-6"></path></svg><span><b>Prix indexé</b> sur le cours du tungstène, confirmé par écrit et garanti 7 jours, dans le mois</span></li>
+            <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M5 7h14M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0zM8 21h8"></path></svg><span><b>Pesée contradictoire</b>, filmée : poids brut et poids net</span></li>
             <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5"></path></svg><span><b>Bon d'achat numéroté</b> avec la mention d'autoliquidation de la TVA</span></li>
             <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4"></path></svg><span><b>Attestation de reprise</b> pour votre registre des déchets, sur demande</span></li>
             <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h12M4 14h9M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12c0 4.4 3.5 8 7.8 8 2 0 3.8-.8 5.2-2"></path></svg><span><b>Paiement par virement</b> ou chèque, sous 48 h après la pesée</span></li>
@@ -138,7 +140,7 @@
       <div class="titre-bloc apparait">
         <p class="sur-titre">Prix</p>
         <h2 id="t-prix">Votre prix selon la quantité.</h2>
-        <p class="intro">Le prix est toujours confirmé par écrit avant l'enlèvement ou l'envoi, et garanti 14 jours.</p>
+        <p class="intro">Le prix est toujours confirmé par écrit avant l'enlèvement ou l'envoi, et garanti 7 jours, jusqu'à la fin du mois au plus tard.</p>
       </div>
       <table class="paliers apparait">
         <thead><tr><th scope="col">Quantité</th><th scope="col">Comment</th><th scope="col">Prix</th></tr></thead>
@@ -182,7 +184,7 @@
         <li class="promesse apparait"><b>24 h</b><strong>Réponse à chaque demande</strong><span>jours ouvrés</span></li>
         <li class="promesse apparait"><b>24 h</b><strong>Devis écrit</strong><span>après votre demande, jours ouvrés</span></li>
         <li class="promesse apparait"><b>48 h</b><strong>Paiement</strong><span>après la pesée, jours ouvrés</span></li>
-        <li class="promesse apparait"><b>1 photo</b><strong>De la balance</strong><span>avec chaque lot</span></li>
+        <li class="promesse apparait"><b>1 vidéo</b><strong>De la pesée</strong><span>avec chaque lot</span></li>
       </ul>
     </div>
   </section>
@@ -295,9 +297,14 @@
             (SIRET, TVA). Le bon d'achat de chaque vente contient déjà ces informations.</p></div>
           </details>
           <details class="faq-item">
+            <summary>Notre entreprise ferme : vous rachetez le carbure qui reste ?<span class="plus" aria-hidden="true"></span></summary>
+            <div class="reponse"><p>Oui, tout le carbure, même usé ou en vrac, au nom de la société et payé sur son compte, avec un document d'achat
+            détaillé pour le comptable ou le liquidateur. Voir <a href="vider-un-atelier.html">vous videz un atelier ?</a></p></div>
+          </details>
+          <details class="faq-item">
             <summary>Quand suis-je payé ?<span class="plus" aria-hidden="true"></span></summary>
             <div class="reponse"><p>Sous 48 heures (jours ouvrés) après la pesée, par virement ou par chèque, selon votre choix. Vous recevez d'abord votre bon d'achat
-            par e-mail, avec le poids, le prix au kilo, le montant et la photo de la balance.</p></div>
+            par e-mail, avec le poids, le prix au kilo et le montant, et la vidéo de la pesée.</p></div>
           </details>
         </div>
       </div>

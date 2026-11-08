@@ -38,6 +38,23 @@
     </form>
 
     <section id="liste" hidden>
+      <h1 class="sr-only">Ma page du site</h1>
+      <!-- Le site piloté par Malik (8 nov. 2026, propositions 54, 55, 57 et 65) : un appui sur une case ouvre son réglage -->
+      <div class="tuiles" aria-label="Réglages du site">
+        <button type="button" class="tuile" data-ouvrir="d-prix">
+          <span class="tuile-titre">Prix du site</span><span class="tuile-valeur" data-t-prix>…</span><span class="tuile-detail" data-t-prix-detail></span>
+        </button>
+        <button type="button" class="tuile" data-ouvrir="d-annonces">
+          <span class="tuile-titre">Annonce</span><span class="tuile-valeur petite" data-t-annonce>…</span><span class="tuile-detail" data-t-annonce-detail></span>
+        </button>
+        <button type="button" class="tuile" data-ouvrir="d-visites">
+          <span class="tuile-titre">Visites</span><span class="tuile-valeur" data-t-visites>…</span><span class="tuile-detail" data-t-visites-detail></span>
+        </button>
+        <button type="button" class="tuile" data-ouvrir="d-sauvegarde">
+          <span class="tuile-titre">Sauvegarde</span><span class="tuile-valeur petite" data-t-sauvegarde>…</span><span class="tuile-detail" data-t-sauvegarde-detail></span>
+        </button>
+      </div>
+      <h2 class="titre-demandes">Demandes d'envoi par colis</h2>
       <div class="barre">
         <div class="filtres" role="group" aria-label="Demandes à afficher">
           <button type="button" class="filtre actif" data-etat="a_traiter" aria-pressed="true">À traiter</button>
@@ -57,6 +74,80 @@
     <button type="button" class="bouton" data-fermer>Fermer</button>
   </dialog>
 
+  <!-- Prix du site (proposition 54) : tout le site suit ; les demandes déjà faites gardent leur prix garanti -->
+  <dialog id="d-prix" class="feuille" aria-labelledby="d-prix-titre">
+    <form method="dialog" class="feuille-tete"><h2 id="d-prix-titre">Prix du site</h2><button class="lien">Fermer</button></form>
+    <p class="prix-actuel"><span data-prix-actuel>…</span> <small>€ / kg par colis</small></p>
+    <p class="aide" data-prix-depuis></p>
+    <form id="f-prix" class="pile" novalidate>
+      <label for="g-prix">Nouveau prix par colis (plaquettes, forets, fraises)</label>
+      <div class="champ-unite"><input id="g-prix" inputmode="decimal" autocomplete="off" placeholder="47"><span>€ / kg</span></div>
+      <label class="case" data-prevenir-ligne hidden><input type="checkbox" id="g-prevenir" checked> <span data-prevenir-texte>Prévenir les abonnés à l'alerte prix (seulement s'il monte)</span></label>
+      <div class="confirmer" data-confirmer hidden role="alert">
+        <p><b>Tu es sûr ?</b> <span data-confirmer-texte></span></p>
+        <div class="actions"><button type="button" class="bouton" data-oui>Oui, enregistrer</button><button type="button" class="bouton fantome" data-non>Non, corriger</button></div>
+      </div>
+      <button type="submit" class="bouton">Enregistrer : tout le site suit</button>
+      <p class="msg" role="alert" hidden></p>
+    </form>
+    <details class="historique"><summary>Historique des prix</summary><ul data-historique></ul></details>
+  </dialog>
+
+  <!-- Annonce en haut de toutes les pages (proposition 55), traduite toute seule dans les 5 langues -->
+  <dialog id="d-annonces" class="feuille" aria-labelledby="d-annonces-titre">
+    <form method="dialog" class="feuille-tete"><h2 id="d-annonces-titre">Annonce en haut du site</h2><button class="lien">Fermer</button></form>
+    <ul class="annonces" data-annonces></ul>
+    <p class="aide" data-aucune-annonce>Aucune annonce en ce moment.</p>
+    <form id="f-annonce" class="pile" novalidate>
+      <h3>Nouvelle annonce</h3>
+      <div class="choix-type" role="radiogroup" aria-label="Sorte d'annonce">
+        <label><input type="radio" name="type" value="conges" checked> <span>Congés</span></label>
+        <label><input type="radio" name="type" value="fermeture"> <span>Fermeture exceptionnelle</span></label>
+        <label><input type="radio" name="type" value="tournee"> <span>Tournée</span></label>
+      </div>
+      <div class="deux">
+        <div><label for="g-debut">Du</label><input id="g-debut" type="date" required></div>
+        <div><label for="g-fin">Au</label><input id="g-fin" type="date"></div>
+      </div>
+      <div data-villes-ligne hidden><label for="g-villes">Villes de la tournée</label><input id="g-villes" maxlength="80" placeholder="Lyon · Grenoble" autocomplete="off"></div>
+      <p class="apercu" data-apercu aria-live="polite"></p>
+      <button type="submit" class="bouton">Ajouter l'annonce</button>
+      <p class="aide">Elle s'affiche en haut de toutes les pages, dans les 5 langues, et disparaît toute seule après la date de fin. Une tournée apparaît aussi sous la carte de l'accueil (« Prochaine tournée »).</p>
+      <p class="msg" role="alert" hidden></p>
+    </form>
+  </dialog>
+
+  <!-- Pages vues, sans cookie ni adresse IP (proposition 57) -->
+  <dialog id="d-visites" class="feuille" aria-labelledby="d-visites-titre">
+    <form method="dialog" class="feuille-tete"><h2 id="d-visites-titre">Visites du site</h2><button class="lien">Fermer</button></form>
+    <div class="chiffres" data-chiffres></div>
+    <h3>Arrivées sur le site, 30 derniers jours</h3>
+    <div class="barres" data-barres aria-hidden="true"></div>
+    <p class="aide" data-barres-texte></p>
+    <div class="deux-listes">
+      <div><h3>D'où ils viennent</h3><ul class="liste-nombres" data-sources></ul></div>
+      <div><h3>Pages les plus lues</h3><ul class="liste-nombres" data-pages></ul></div>
+    </div>
+    <p class="aide">Comptées par le site lui-même, sans cookie et sans adresse IP : rien qui permette de reconnaître quelqu'un. Les robots ne sont pas comptés. Le 1er de chaque mois, tu reçois le résumé du mois par e-mail.</p>
+    <p class="aide"><b>Ce que les gens tapent dans Google</b> : Google Search Console, rubrique « Performances ». <b>Les chiffres d'OVH</b> : espace client OVH › Web Cloud › Hébergements › ainrecycling.com › « Statistiques et logs ».</p>
+  </dialog>
+
+  <!-- Sauvegarde de l'espace client (proposition 65) -->
+  <dialog id="d-sauvegarde" class="feuille" aria-labelledby="d-sauvegarde-titre">
+    <form method="dialog" class="feuille-tete"><h2 id="d-sauvegarde-titre">Sauvegarde du site</h2><button class="lien">Fermer</button></form>
+    <p>Comptes, demandes, abonnés et pièces d'identité, dans un fichier fermé par <b>ton</b> mot de passe.</p>
+    <p class="etat-sauvegarde" data-etat-sauvegarde></p>
+    <form id="f-sauvegarde" class="pile" novalidate>
+      <label for="g-mdp">Choisis un mot de passe (10 caractères au moins)</label>
+      <input id="g-mdp" type="password" autocomplete="new-password" minlength="10">
+      <label for="g-mdp2">Encore une fois</label>
+      <input id="g-mdp2" type="password" autocomplete="new-password" minlength="10">
+      <button type="submit" class="bouton">Sauvegarder maintenant</button>
+      <p class="msg" role="alert" hidden></p>
+    </form>
+    <p class="aide">Range le fichier sur ton ordinateur ou une clé USB, <b>jamais dans un e-mail</b> : il y a des pièces d'identité dedans. Note bien le mot de passe : sans lui, personne ne peut ouvrir le fichier, pas même moi. Pour l'ouvrir : 7-Zip (gratuit). Une fois par mois, c'est bien.</p>
+  </dialog>
+
   <template id="modele-demande">
     <li class="carte demande">
       <div class="demande-tete"><b class="ref" data-ref></b><span class="etat" data-etat-demande></span></div>
@@ -65,6 +156,7 @@
       <ul class="colis" data-colis></ul>
       <p class="total" data-total></p>
       <p class="message-client" data-message hidden></p>
+      <p class="garantie" data-garantie hidden></p>
       <dl class="infos">
         <dt>Adresse</dt><dd><span data-adresse></span>
           <div class="mini-rangee"><button type="button" class="mini" data-copier-adresse>Copier l'adresse</button></div></dd>

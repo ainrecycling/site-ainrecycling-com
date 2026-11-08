@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Acquisto metallo duro: 47 €/kg, etichetta gratuita | Ain Recycling</title>
-  <meta name="description" content="Inserti, punte e frese in metallo duro acquistati a 47 €/kg con pacco, etichetta gratuita, prezzo garantito 14 giorni. Privati e aziende, Francia ed Europa. Pagamento con bonifico o assegno.">
+  <meta name="description" content="Inserti, punte e frese in metallo duro acquistati a 47 €/kg con pacco, etichetta gratuita, prezzo garantito 7 giorni. Privati e aziende, Francia ed Europa. Pagamento con bonifico o assegno.">
   <link rel="canonical" href="https://ainrecycling.com/it/">
   <link rel="alternate" hreflang="fr" href="https://ainrecycling.com/">
   <link rel="alternate" hreflang="de" href="https://ainrecycling.com/de/">
@@ -156,7 +156,7 @@
               <div><dt>Con pacco</dt><dd>47 € <small>/ kg</small></dd></div>
             </dl>
             <p class="hero-prix-note">Pacco: etichetta prepagata, trasporto a nostro carico.</p>
-            <p class="tampon">Prezzo fisso<br>14 giorni</p>
+            <p class="tampon">Prezzo fisso<br><span data-garanti>7 giorni</span></p>
           </div>
         </div>
         <div class="hero-actions">
@@ -280,13 +280,30 @@
           </div>
         </article>
       </div>
-      <p class="offres-note apparait">Prezzo del giorno con pacco, garantito 14 giorni dopo la vostra richiesta. Segue la quotazione del tungsteno e vi è sempre confermato prima dell'acquisto. Al deposito, durante i giri e per i grandi volumi: prezzo su richiesta.</p>
+      <p class="offres-note apparait">Prezzo del giorno con pacco, garantito 7 giorni dopo la vostra richiesta, al più tardi fino alla fine del mese. Segue la quotazione del tungsteno e vi è sempre confermato prima dell'acquisto. Al deposito, durante i giri e per i grandi volumi: prezzo su richiesta.</p>
+
+      <!-- Alerte prix (proposition 56, 8 novembre 2026) : e-mail confirmé par un lien, prévenu quand le prix monte -->
+      <div class="alerte-prix apparait" id="alerte">
+        <span class="icone"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg></span>
+        <div class="alerte-texte">
+          <h3>Non siete ancora pronti a vendere?</h3>
+          <p>Lasciate la vostra e-mail: vi avvisiamo appena il nostro prezzo sale. Nient'altro.</p>
+          <form class="alerte-form" novalidate>
+            <div class="pot" aria-hidden="true"><label>Sito web <input name="site" tabindex="-1" autocomplete="off"></label></div>
+            <label for="alerte-email" class="sr-only">Il vostro indirizzo e-mail</label>
+            <input id="alerte-email" type="email" name="email" autocomplete="email" inputmode="email" placeholder="vostra@email.it" required>
+            <button type="submit" class="btn btn-primaire">Avvisatemi</button>
+            <p class="msg-alerte" role="status" tabindex="-1" hidden></p>
+          </form>
+          <p class="alerte-note">Disiscrizione con un clic, in ogni e-mail. <a href="politique-confidentialite.html#alerte-prix">I vostri dati</a></p>
+        </div>
+      </div>
 
       <!-- D'où vient notre prix ? (proposition 8) -->
       <div class="prix-explique">
         <h3 class="prix-explique-titre apparait">Da dove viene il nostro prezzo?</h3>
         <ul class="explications">
-          <li class="explique apparait"><span class="icone"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 15l4-4 3 3 5-6"></path></svg></span><h4>Segue la quotazione del tungsteno</h4><p>Quando il mercato sale, il nostro prezzo sale. Se scende, il prezzo della vostra richiesta resta garantito 14 giorni.</p></li>
+          <li class="explique apparait"><span class="icone"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 15l4-4 3 3 5-6"></path></svg></span><h4>Segue la quotazione del tungsteno</h4><p>Quando il mercato sale, il nostro prezzo sale. Se scende, il prezzo della vostra richiesta resta garantito 7 giorni, al più tardi fino alla fine del mese.</p></li>
           <li class="explique apparait"><span class="icone"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17h4V5H2v12h3M14 9h4l4 4v4h-3M7.5 20a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM17.5 20a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"></path></svg></span><h4>Il trasporto è già pagato</h4><p>L'etichetta prepagata è compresa: non anticipate nulla, anche per un piccolo pacco.</p></li>
           <li class="explique apparait"><span class="icone"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8zM7 7h.01"></path></svg></span><h4>Nessun costo nascosto</h4><p>Nessun costo di cernita, di analisi né di pratica: il prezzo esposto è il prezzo pagato.</p></li>
         </ul>
@@ -491,7 +508,7 @@
           <h3>Messo da parte, venduto a uno specialista</h3>
           <ul>
             <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg><span>Pagato al prezzo del metallo duro: 47 €/kg</span></li>
-            <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg><span>Pesato da solo, foto della bilancia</span></li>
+            <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg><span>Pesato da solo, davanti alla telecamera</span></li>
             <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg><span>Buono d'acquisto dettagliato</span></li>
           </ul>
         </div>
@@ -502,8 +519,8 @@
 
   <!-- ============ APPEL À L'ACTION ============ -->
   <section class="bloc bloc-marine bloc-appel" aria-labelledby="t-appel">
-    <!-- Pièces qui flottent et suivent la souris (idée du composant « Parallax Floating » de 21st.dev, refait dans
-         site.js) : rendus 3D d'Ain Recycling. Décoratives, cachées sur téléphone. -->
+    <!-- Pièces qui flottent et suivent la souris (vrai composant « Parallax Floating » de Daniel Petho, 21st.dev, licence MIT,
+         refait sans React dans site.js) : rendus 3D d'Ain Recycling. Décoratives, cachées sur téléphone. -->
     <div class="flottants" aria-hidden="true">
       <span class="flottant" style="--t:112px; left:2.5%; top:9%; --a:-18deg; --d:7.5s" data-profondeur="1.3"><img src="../images/pieces/plaquette-losange-80.webp" alt width="1000" height="1000" loading="lazy"></span>
       <span class="flottant" style="--t:150px; right:3%; top:7%; --a:24deg; --d:9s; --r:-2s" data-profondeur="1.8"><img src="../images/pieces/foret-revetu.webp" alt width="1000" height="1000" loading="lazy"></span>

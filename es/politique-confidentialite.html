@@ -46,7 +46,7 @@
   <div class="conteneur">
     <nav class="fil" aria-label="Ruta de navegación"><a href="index.html">Inicio</a><span aria-hidden="true">/</span><span>Política de privacidad</span></nav>
     <h1>Política de privacidad</h1>
-    <p class="maj">Última actualización: <time datetime="2026-11-06">6 de noviembre de 2026</time></p>
+    <p class="maj">Última actualización: <time datetime="2026-11-08">8 de noviembre de 2026</time></p>
     <p class="note-traduction">Traducción facilitada a título informativo: solo la versión francesa es jurídicamente vinculante.</p>
 
     <p>Esta página explica, de forma sencilla, qué datos personales utiliza Ain Recycling, por qué, durante cuánto tiempo y con quién, conforme al Reglamento General de Protección de Datos (RGPD) y a la ley francesa de protección de datos (loi Informatique et Libertés).</p>
@@ -56,7 +56,7 @@
 
     <h2>2. Lo que este sitio no hace</h2>
     <ul class="liste">
-      <li>Sin rastreadores, sin medición de audiencia, sin publicidad. Solo el área de clientes usa una cookie de conexión estrictamente necesaria.</li>
+      <li>Sin rastreadores, sin publicidad. El sitio solo cuenta sus propias páginas vistas, sin cookies y sin nada que permita reconocerle (ver la tabla). Solo el área de clientes usa una cookie de conexión estrictamente necesaria.</li>
       <li>Durante su visita no se carga ningún servicio externo: las tipografías y los programas del sitio están alojados en nuestro propio sitio. El botón de WhatsApp es un simple enlace: no se transmite nada a WhatsApp mientras no haga clic en él.</li>
       <li>Aparte de la cookie de conexión del área de clientes, no se guarda ningún dato en su navegador. Consulte también la <a href="cookies.html">política de cookies</a>.</li>
       <li>Ninguna decisión automatizada ni elaboración de perfiles.</li>
@@ -77,6 +77,27 @@
             <td>Hacer funcionar y proteger el sitio</td>
             <td>Interés legítimo</td>
             <td>Plazo limitado, fijado por el proveedor de alojamiento</td>
+          </tr>
+          <tr id="mesure-audience">
+            <th scope="row">Páginas vistas</th>
+            <td>La página leída, el día y el nombre del sitio del que viene (por ejemplo google.fr): ni cookies, ni dirección IP, nada que permita reconocerle</td>
+            <td>Saber qué páginas se leen y cómo nos encuentran</td>
+            <td>Interés legítimo</td>
+            <td>25 meses, como totales diarios</td>
+          </tr>
+          <tr id="alerte-prix">
+            <th scope="row">Alerta de precio</th>
+            <td>Correo electrónico, idioma, fechas de alta y de confirmación</td>
+            <td>Avisarle por correo cuando suba nuestro precio, y solo para eso</td>
+            <td>Su consentimiento, confirmado por el enlace recibido por correo electrónico; puede retirarlo en cualquier momento</td>
+            <td>Hasta que se dé de baja (un enlace en cada correo), y como máximo 3 años después de su alta. Un alta no confirmada se borra a los 7 días</td>
+          </tr>
+          <tr>
+            <th scope="row">Búsqueda de empresa (formularios para profesionales)</th>
+            <td>El nombre o el SIRET escrito en el campo «Empresa»</td>
+            <td>Proponerle las empresas del registro oficial y rellenar el formulario por usted</td>
+            <td>Interés legítimo</td>
+            <td>No se guarda nada: nuestro servidor consulta el registro público del Estado y le devuelve su respuesta</td>
           </tr>
           <tr>
             <th scope="row">Solicitud de estimación</th>
@@ -101,10 +122,10 @@
           </tr>
           <tr>
             <th scope="row">Compra (en persona o por paquete)</th>
-            <td>Identidad y datos de contacto del vendedor, copia del documento de identidad, detalle de los materiales (peso, precio), justificante de compra, forma de pago, datos bancarios</td>
+            <td>Identidad y datos de contacto del vendedor, copia del documento de identidad, detalle de los materiales (peso, precio), justificante de compra, vídeo del pesaje, forma de pago, datos bancarios</td>
             <td>Comprar el material, pagar al vendedor, emitir el justificante de compra, llevar el registro de objetos comprados y la contabilidad</td>
             <td>Ejecución del contrato; obligaciones legales</td>
-            <td>Justificantes de compra y documentos contables: 10 años (artículo L123-22 del Código de Comercio francés). Documento de identidad: con el expediente de compra, el tiempo exigido por nuestras obligaciones legales, y después se suprime. Datos bancarios: el tiempo del pago, y después solo en los justificantes contables</td>
+            <td>Justificantes de compra y documentos contables: 10 años (artículo L123-22 del Código de Comercio francés). Documento de identidad: con el expediente de compra, el tiempo exigido por nuestras obligaciones legales, y después se suprime. Datos bancarios: el tiempo del pago, y después solo en los justificantes contables. Vídeo del pesaje: 3 años como máximo, y después se suprime</td>
           </tr>
           <tr>
             <th scope="row">Intercambios por correo electrónico</th>
@@ -131,7 +152,8 @@
       <li><strong>OVHcloud</strong> (OVH SAS, Francia): alojamiento del sitio y de las áreas de clientes, en servidores situados en Francia, y nombre de dominio.</li>
       <li><strong>Vercel Inc.</strong> (Estados Unidos): alojamiento de nuestra herramienta interna de gestión de compras.</li>
       <li><strong>Supabase</strong>: base de datos y almacenamiento privado de los expedientes de compra, en servidores situados en París.</li>
-      <li><strong>Resend</strong>: envío de los correos electrónicos (justificantes de compra, códigos de conexión al área de clientes), desde la Unión Europea (Irlanda).</li>
+      <li><strong>Resend</strong>: envío de los correos electrónicos (justificantes de compra, códigos de conexión al área de clientes, alerta de precio), desde la Unión Europea (Irlanda).</li>
+      <li><strong>El registro de empresas del Estado francés</strong> (recherche-entreprises.api.gouv.fr): recibe de nuestro servidor solo el texto escrito en el campo «Empresa» de los formularios para profesionales, nada más sobre usted.</li>
       <li><strong>Google</strong>: correo de la empresa (Gmail), que recibe sus respuestas y las copias internas de los justificantes de compra.</li>
       <li><strong>El transportista</strong> que lleva su paquete con la etiqueta prepagada que le enviamos: nombre, dirección y, si es necesario, teléfono del remitente, únicamente para la recogida y la entrega del paquete.</li>
     </ul>
@@ -143,7 +165,7 @@
 
     <h2>6. Seguridad</h2>
     <ul class="liste">
-      <li>El sitio y nuestras herramientas solo funcionan con conexión cifrada (HTTPS).</li>
+      <li>El sitio y nuestras herramientas solo funcionan con conexión cifrada (HTTPS), que su navegador está obligado a usar, y nuestras páginas solo pueden cargar archivos de nuestro propio sitio.</li>
       <li>Los documentos de identidad se guardan en un espacio de almacenamiento privado, accesible solo a las cuentas autorizadas.</li>
       <li>Un documento de identidad nunca se envía al vendedor por correo electrónico y nunca es accesible mediante un enlace público.</li>
       <li>Área de clientes: conexión con un código de un solo uso enviado por correo electrónico, sin contraseña. Las fotos del documento de identidad se reducen en su dispositivo y luego se envían con conexión cifrada a un almacenamiento privado, donde permanecen cifradas, al igual que el número del documento y su IBAN: solo usted (conectado) y Ain Recycling pueden verlas.</li>

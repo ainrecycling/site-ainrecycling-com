@@ -86,6 +86,8 @@
 
   <section class="page-hero">
     <div class="conteneur">
+      <!-- Fin d'année (proposition 59) : visible du 1er novembre au 19 décembre, chaque année (site.js) -->
+      <p class="saison-pros" data-saison="11-01/12-19" hidden><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg><span><b>Jahresende: Leeren Sie Ihre Behälter vor der Inventur.</b> Abholung bis zum 19. Dezember, bezahlt vor Ihrem Jahresabschluss. <a href="#devis">Angebot anfordern</a></span></p>
       <div class="page-hero-in">
         <div class="page-hero-texte">
           <nav class="fil" aria-label="Brotkrumennavigation"><a href="index.html">Startseite</a><span aria-hidden="true">/</span><span>Unternehmen</span></nav>
@@ -101,8 +103,8 @@
           <p class="sur-titre">Für Ihren Einkauf</p>
           <ul class="liste-icones">
             <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17h4V5H2v12h3M14 9h4l4 4v4h-3M7.5 20a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM17.5 20a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"></path></svg><span><b>Abholung vor Ort</b> bei unseren Touren, in Frankreich und Europa</span></li>
-            <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 15l4-4 3 3 5-6"></path></svg><span><b>An den Wolframkurs gekoppelter Preis</b>, schriftlich bestätigt und 14 Tage garantiert</span></li>
-            <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M5 7h14M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0zM8 21h8"></path></svg><span><b>Wiegen in Ihrem Beisein</b>, Foto der Waage beigefügt</span></li>
+            <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 15l4-4 3 3 5-6"></path></svg><span><b>An den Wolframkurs gekoppelter Preis</b>, schriftlich bestätigt und 7 Tage garantiert, im laufenden Monat</span></li>
+            <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M5 7h14M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0zM8 21h8"></path></svg><span><b>Wiegen in Ihrem Beisein</b>, gefilmt: Brutto- und Nettogewicht</span></li>
             <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5"></path></svg><span><b>Nummerierter Ankaufsbeleg</b> mit Hinweis auf die Umkehr der Steuerschuldnerschaft</span></li>
             <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4"></path></svg><span><b>Rücknahmebescheinigung</b> für Ihr Abfallregister, auf Anfrage</span></li>
             <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h12M4 14h9M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12c0 4.4 3.5 8 7.8 8 2 0 3.8-.8 5.2-2"></path></svg><span><b>Zahlung per Überweisung</b> oder Scheck, innerhalb von 48 Std. nach dem Wiegen</span></li>
@@ -139,7 +141,7 @@
       <div class="titre-bloc apparait">
         <p class="sur-titre">Preis</p>
         <h2 id="t-prix">Ihr Preis je nach Menge.</h2>
-        <p class="intro">Der Preis wird vor der Abholung oder dem Versand immer schriftlich bestätigt und 14 Tage garantiert.</p>
+        <p class="intro">Der Preis wird vor der Abholung oder dem Versand immer schriftlich bestätigt und 7 Tage garantiert, längstens bis zum Monatsende.</p>
       </div>
       <table class="paliers apparait">
         <thead><tr><th scope="col">Menge</th><th scope="col">Wie</th><th scope="col">Preis</th></tr></thead>
@@ -183,7 +185,7 @@
         <li class="promesse apparait"><b>24 Std.</b><strong>Antwort auf jede Anfrage</strong><span>Werktage</span></li>
         <li class="promesse apparait"><b>24 Std.</b><strong>Schriftliches Angebot</strong><span>nach Ihrer Anfrage, Werktage</span></li>
         <li class="promesse apparait"><b>48 Std.</b><strong>Zahlung</strong><span>nach dem Wiegen, Werktage</span></li>
-        <li class="promesse apparait"><b>1 Foto</b><strong>Der Waage</strong><span>bei jeder Partie</span></li>
+        <li class="promesse apparait"><b>1 Video</b><strong>Vom Wiegen</strong><span>bei jeder Partie</span></li>
       </ul>
     </div>
   </section>
@@ -290,8 +292,12 @@
             <div class="reponse"><p>Ja, auf Anfrage: eine Rücknahmebescheinigung mit Daten, Gewichten und Art des Materials sowie unseren Nummern (SIRET, USt-IdNr.). Der Ankaufsbeleg jedes Verkaufs enthält diese Angaben bereits.</p></div>
           </details>
           <details class="faq-item">
+            <summary>Unser Unternehmen schließt: Kaufen Sie das restliche Hartmetall?<span class="plus" aria-hidden="true"></span></summary>
+            <div class="reponse"><p>Ja, das gesamte Hartmetall, auch abgenutzt oder lose, im Namen der Gesellschaft und auf ihr Konto bezahlt, mit einem detaillierten Kaufbeleg für den Buchhalter oder den Insolvenzverwalter. Siehe <a href="vider-un-atelier.html">Sie räumen eine Werkstatt aus?</a></p></div>
+          </details>
+          <details class="faq-item">
             <summary>Wann werde ich bezahlt?<span class="plus" aria-hidden="true"></span></summary>
-            <div class="reponse"><p>Innerhalb von 48 Stunden (Werktage) nach dem Wiegen, per Überweisung oder Scheck, wie Sie möchten. Sie erhalten zuerst Ihren Ankaufsbeleg per E-Mail, mit Gewicht, Kilopreis, Betrag und dem Foto der Waage.</p></div>
+            <div class="reponse"><p>Innerhalb von 48 Stunden (Werktage) nach dem Wiegen, per Überweisung oder Scheck, wie Sie möchten. Sie erhalten zuerst Ihren Ankaufsbeleg per E-Mail, mit Gewicht, Kilopreis und Betrag, und das Video vom Wiegen.</p></div>
           </details>
         </div>
       </div>

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/base.php';
 require_once __DIR__ . '/mail.php';
+require_once __DIR__ . '/site.php';
 
 // Espace client du site (demandé par Malik le 2 nov. 2026 : « que les gens créent un compte pour ne pas renvoyer leur
 // pièce d'identité »), refait chez OVH le 6 nov. 2026 avec les mêmes adresses (/api/espace/…), les mêmes réponses et les
@@ -364,6 +365,7 @@ function envoi_depuis_ligne(array $l): array
         'paiement' => (string) $l['paiement'], 'message' => (string) $l['message'],
         'traite_le' => $l['traite_le'] ?: null, 'traite_par' => (string) $l['traite_par'],
         'bon_numero' => $l['bon_numero'] ?: null, 'bon_le' => $l['bon_le'] ?: null,
+        'prix_kg' => isset($l['prix_kg']) ? (float) $l['prix_kg'] : null, 'garanti_jusqu' => ($l['garanti_jusqu'] ?? null) ?: null,
     ];
 }
 
@@ -386,7 +388,7 @@ function lire_envoi(string $id): ?array
 function envoi_visible(array $e): array
 {
     return ['reference' => $e['reference'], 'cree_le' => $e['cree_le'], 'colis' => $e['colis'], 'total' => $e['total'],
-        'paiement' => $e['paiement'], 'traite_le' => $e['traite_le']];
+        'paiement' => $e['paiement'], 'traite_le' => $e['traite_le'], 'prix_kg' => $e['prix_kg'] ?? null, 'garanti_jusqu' => $e['garanti_jusqu'] ?? null];
 }
 
 /** Référence lisible à écrire sur le colis : COL-AAMMJJ- + 4 caractères sans ambiguïté (pas de 0/O ni 1/I). */
@@ -402,10 +404,10 @@ function creer_envoi(array $e): void
 {
     for ($essai = 0; ; $essai++) {
         try {
-            bd()->prepare('INSERT INTO espace_envois (id, reference, compte, cree_le, colis, total, paiement, message, traite_le, traite_par)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, \'\')')
+            bd()->prepare('INSERT INTO espace_envois (id, reference, compte, cree_le, colis, total, paiement, message, traite_le, traite_par, prix_kg, garanti_jusqu)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, \'\', ?, ?)')
                 ->execute([$e['id'], $e['reference'], $e['compte'], $e['cree_le'], json_encode($e['colis'], JSON_UNESCAPED_UNICODE),
-                    $e['total'], $e['paiement'], $e['message']]);
+                    $e['total'], $e['paiement'], $e['message'], $e['prix_kg'] ?? null, $e['garanti_jusqu'] ?? null]);
             return;
         } catch (PDOException $x) {
             // référence déjà prise (une chance sur un million par jour) : une autre
@@ -449,6 +451,7 @@ function menage_du_jour(): void
                 bd()->prepare('DELETE FROM espace_codes WHERE cle = ?')->execute([$l['cle']]);
             }
         }
+        menage_site(); // alertes pas confirmées, compteurs et pages vues trop anciens, résumé du mois (lib/site.php)
     });
 }
 
