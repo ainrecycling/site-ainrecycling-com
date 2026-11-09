@@ -89,9 +89,9 @@ function date_longue(string $ymd, string $langue): string
 }
 
 /** Poids écrit comme l'appli : « 12,5 » (« 12.5 » en anglais). */
-function kg_texte(float $kg, string $langue = 'fr'): string
+function kg_texte(float $kg, string $langue = 'fr', int $decimales = 1): string
 {
-    $s = rtrim(rtrim(number_format($kg, 1, '.', ''), '0'), '.');
+    $s = rtrim(rtrim(number_format($kg, $decimales, '.', ''), '0'), '.');
     return $langue === 'en' ? $s : str_replace('.', ',', $s);
 }
 
@@ -410,6 +410,7 @@ const MAIL_ETAPE = [
         'traite' => ['Votre étiquette prépayée est partie ({ref})', "Votre étiquette de transport prépayée vous a été envoyée par e-mail. Collez-la sur le colis, glissez le bordereau dedans et déposez-le au plus tard le {date} pour garder votre prix de {prix} €/kg."],
         'recu' => ['Votre colis est bien arrivé ({ref})', "Votre colis est bien arrivé. Nous le pesons devant la caméra : le colis fermé (poids brut), puis le carbure seul (poids net). La vidéo et votre bon d'achat suivent."],
         'pese' => ['Votre carbure est pesé : {net} kg ({ref})', 'Poids net, le carbure seul : {net} kg{brut}. Au prix garanti de {prix} €/kg, cela fait {montant} €. Votre paiement part sous 48 h (jours ouvrés).'],
+        'pese_bon' => "Poids net, le carbure seul : {net} kg{brut}. Votre bon d'achat est de {montant} €. Votre paiement part sous 48 h (jours ouvrés).",
         'brut' => ' (colis fermé : {brut} kg)',
         'paye' => ['Votre paiement de {montant} € est parti ({ref})', 'Votre paiement de {montant} € est parti par {paiement}. Merci pour votre confiance !'],
         'virement' => 'virement', 'cheque' => 'chèque', 'bouton' => 'Voir ma demande',
@@ -418,6 +419,7 @@ const MAIL_ETAPE = [
             'traite' => 'Bonjour {prenom}, ici Ain Recycling : votre étiquette prépayée pour la demande {ref} vous a été envoyée par e-mail. À déposer au plus tard le {date}.',
             'recu' => 'Bonjour {prenom}, ici Ain Recycling : votre colis {ref} est bien arrivé. Nous le pesons, la vidéo suit.',
             'pese' => 'Bonjour {prenom}, ici Ain Recycling : votre carbure est pesé, {net} kg net, soit {montant} € au prix garanti. Paiement sous 48 h (jours ouvrés).',
+            'pese_bon' => "Bonjour {prenom}, ici Ain Recycling : votre carbure est pesé, {net} kg net. Votre bon d'achat est de {montant} €. Paiement sous 48 h (jours ouvrés).",
             'paye' => 'Bonjour {prenom}, ici Ain Recycling : votre paiement de {montant} € est parti par {paiement}. Merci !',
         ],
     ],
@@ -426,6 +428,7 @@ const MAIL_ETAPE = [
         'traite' => ['Ihr vorausbezahltes Etikett ist unterwegs ({ref})', 'Ihr vorausbezahltes Versandetikett wurde Ihnen per E-Mail geschickt. Kleben Sie es auf das Paket, legen Sie den Versandschein hinein und geben Sie es spätestens am {date} ab, damit Ihr Preis von {prix} €/kg gilt.'],
         'recu' => ['Ihr Paket ist angekommen ({ref})', 'Ihr Paket ist gut angekommen. Wir wiegen es vor der Kamera: zuerst das geschlossene Paket (Bruttogewicht), dann das Hartmetall allein (Nettogewicht). Das Video und Ihr Ankaufsbeleg folgen.'],
         'pese' => ['Ihr Hartmetall ist gewogen: {net} kg ({ref})', 'Nettogewicht, das Hartmetall allein: {net} kg{brut}. Zum garantierten Preis von {prix} €/kg sind das {montant} €. Ihre Zahlung erfolgt innerhalb von 48 Std. (Werktage).'],
+        'pese_bon' => 'Nettogewicht, das Hartmetall allein: {net} kg{brut}. Ihr Ankaufbeleg beträgt {montant} €. Ihre Zahlung erfolgt innerhalb von 48 Std. (Werktage).',
         'brut' => ' (geschlossenes Paket: {brut} kg)',
         'paye' => ['Ihre Zahlung von {montant} € ist unterwegs ({ref})', 'Ihre Zahlung von {montant} € wurde per {paiement} veranlasst. Vielen Dank für Ihr Vertrauen!'],
         'virement' => 'Überweisung', 'cheque' => 'Scheck', 'bouton' => 'Meine Anfrage ansehen',
@@ -434,6 +437,7 @@ const MAIL_ETAPE = [
             'traite' => 'Guten Tag {prenom}, hier Ain Recycling: Ihr vorausbezahltes Etikett für die Anfrage {ref} wurde Ihnen per E-Mail geschickt. Bitte spätestens am {date} abgeben.',
             'recu' => 'Guten Tag {prenom}, hier Ain Recycling: Ihr Paket {ref} ist gut angekommen. Wir wiegen es, das Video folgt.',
             'pese' => 'Guten Tag {prenom}, hier Ain Recycling: Ihr Hartmetall ist gewogen, {net} kg netto, also {montant} € zum garantierten Preis. Zahlung innerhalb von 48 Std. (Werktage).',
+            'pese_bon' => 'Guten Tag {prenom}, hier Ain Recycling: Ihr Hartmetall ist gewogen, {net} kg netto. Ihr Ankaufbeleg beträgt {montant} €. Zahlung innerhalb von 48 Std. (Werktage).',
             'paye' => 'Guten Tag {prenom}, hier Ain Recycling: Ihre Zahlung von {montant} € wurde per {paiement} veranlasst. Danke!',
         ],
     ],
@@ -442,6 +446,7 @@ const MAIL_ETAPE = [
         'traite' => ['Your prepaid label is on its way ({ref})', 'Your prepaid shipping label has been emailed to you. Stick it on the parcel, put the shipping slip inside and drop it off by {date} at the latest to keep your price of {prix} €/kg.'],
         'recu' => ['Your parcel has arrived ({ref})', 'Your parcel has arrived safely. We weigh it on camera: first the closed parcel (gross weight), then the carbide on its own (net weight). The video and your purchase receipt will follow.'],
         'pese' => ['Your carbide has been weighed: {net} kg ({ref})', 'Net weight, the carbide on its own: {net} kg{brut}. At the guaranteed price of {prix} €/kg, that comes to {montant} €. Your payment will be sent within 48 h (working days).'],
+        'pese_bon' => 'Net weight, the carbide on its own: {net} kg{brut}. Your purchase receipt comes to {montant} €. Your payment will be sent within 48 h (working days).',
         'brut' => ' (closed parcel: {brut} kg)',
         'paye' => ['Your payment of {montant} € has been sent ({ref})', 'Your payment of {montant} € has been sent by {paiement}. Thank you for your trust!'],
         'virement' => 'bank transfer', 'cheque' => 'cheque', 'bouton' => 'View my request',
@@ -450,6 +455,7 @@ const MAIL_ETAPE = [
             'traite' => 'Hello {prenom}, this is Ain Recycling: your prepaid label for request {ref} has been emailed to you. Please drop the parcel off by {date}.',
             'recu' => 'Hello {prenom}, this is Ain Recycling: your parcel {ref} has arrived safely. We are weighing it, the video will follow.',
             'pese' => 'Hello {prenom}, this is Ain Recycling: your carbide has been weighed, {net} kg net, i.e. {montant} € at the guaranteed price. Payment within 48 h (working days).',
+            'pese_bon' => 'Hello {prenom}, this is Ain Recycling: your carbide has been weighed, {net} kg net. Your purchase receipt comes to {montant} €. Payment within 48 h (working days).',
             'paye' => 'Hello {prenom}, this is Ain Recycling: your payment of {montant} € has been sent by {paiement}. Thank you!',
         ],
     ],
@@ -458,6 +464,7 @@ const MAIL_ETAPE = [
         'traite' => ['La vostra etichetta prepagata è partita ({ref})', 'La vostra etichetta di trasporto prepagata vi è stata inviata per e-mail. Incollatela sul pacco, inserite la distinta e consegnatelo entro il {date} per mantenere il prezzo di {prix} €/kg.'],
         'recu' => ['Il vostro pacco è arrivato ({ref})', "Il vostro pacco è arrivato. Lo pesiamo davanti alla telecamera: prima il pacco chiuso (peso lordo), poi il metallo duro da solo (peso netto). Il video e il buono d'acquisto seguiranno."],
         'pese' => ['Il vostro metallo duro è pesato: {net} kg ({ref})', 'Peso netto, il metallo duro da solo: {net} kg{brut}. Al prezzo garantito di {prix} €/kg, fanno {montant} €. Il pagamento parte entro 48 h (giorni lavorativi).'],
+        'pese_bon' => "Peso netto, il metallo duro da solo: {net} kg{brut}. Il vostro buono d'acquisto è di {montant} €. Il pagamento parte entro 48 h (giorni lavorativi).",
         'brut' => ' (pacco chiuso: {brut} kg)',
         'paye' => ['Il vostro pagamento di {montant} € è partito ({ref})', 'Il vostro pagamento di {montant} € è partito tramite {paiement}. Grazie per la fiducia!'],
         'virement' => 'bonifico', 'cheque' => 'assegno', 'bouton' => 'Vedere la mia richiesta',
@@ -466,6 +473,7 @@ const MAIL_ETAPE = [
             'traite' => "Buongiorno {prenom}, qui Ain Recycling: l'etichetta prepagata per la richiesta {ref} vi è stata inviata per e-mail. Da consegnare entro il {date}.",
             'recu' => 'Buongiorno {prenom}, qui Ain Recycling: il vostro pacco {ref} è arrivato. Lo stiamo pesando, il video segue.',
             'pese' => 'Buongiorno {prenom}, qui Ain Recycling: il vostro metallo duro è pesato, {net} kg netti, cioè {montant} € al prezzo garantito. Pagamento entro 48 h (giorni lavorativi).',
+            'pese_bon' => "Buongiorno {prenom}, qui Ain Recycling: il vostro metallo duro è pesato, {net} kg netti. Il vostro buono d'acquisto è di {montant} €. Pagamento entro 48 h (giorni lavorativi).",
             'paye' => 'Buongiorno {prenom}, qui Ain Recycling: il vostro pagamento di {montant} € è partito tramite {paiement}. Grazie!',
         ],
     ],
@@ -474,6 +482,7 @@ const MAIL_ETAPE = [
         'traite' => ['Su etiqueta prepagada ya está enviada ({ref})', 'Le hemos enviado por correo electrónico su etiqueta de transporte prepagada. Péguela en el paquete, meta la hoja de envío dentro y entréguelo a más tardar el {date} para conservar su precio de {prix} €/kg.'],
         'recu' => ['Su paquete ha llegado ({ref})', 'Su paquete ha llegado bien. Lo pesamos delante de la cámara: primero el paquete cerrado (peso bruto) y luego el metal duro solo (peso neto). El vídeo y su justificante de compra le llegarán después.'],
         'pese' => ['Su metal duro está pesado: {net} kg ({ref})', 'Peso neto, el metal duro solo: {net} kg{brut}. Al precio garantizado de {prix} €/kg, son {montant} €. Su pago sale en 48 h (días laborables).'],
+        'pese_bon' => 'Peso neto, el metal duro solo: {net} kg{brut}. Su justificante de compra es de {montant} €. Su pago sale en 48 h (días laborables).',
         'brut' => ' (paquete cerrado: {brut} kg)',
         'paye' => ['Su pago de {montant} € ya está enviado ({ref})', 'Su pago de {montant} € se ha enviado por {paiement}. ¡Gracias por su confianza!'],
         'virement' => 'transferencia', 'cheque' => 'cheque', 'bouton' => 'Ver mi solicitud',
@@ -482,6 +491,7 @@ const MAIL_ETAPE = [
             'traite' => 'Hola {prenom}, le escribe Ain Recycling: le hemos enviado por correo electrónico la etiqueta prepagada de la solicitud {ref}. Entréguela a más tardar el {date}.',
             'recu' => 'Hola {prenom}, le escribe Ain Recycling: su paquete {ref} ha llegado bien. Lo estamos pesando, el vídeo le llegará después.',
             'pese' => 'Hola {prenom}, le escribe Ain Recycling: su metal duro está pesado, {net} kg netos, es decir {montant} € al precio garantizado. Pago en 48 h (días laborables).',
+            'pese_bon' => 'Hola {prenom}, le escribe Ain Recycling: su metal duro está pesado, {net} kg netos. Su justificante de compra es de {montant} €. Pago en 48 h (días laborables).',
             'paye' => 'Hola {prenom}, le escribe Ain Recycling: su pago de {montant} € se ha enviado por {paiement}. ¡Gracias!',
         ],
     ],
@@ -497,11 +507,29 @@ function valeurs_etape(array $c, array $e, string $langue): array
         'prenom' => $c['prenom'], 'ref' => $e['reference'],
         'date' => !empty($e['garanti_jusqu']) ? date_longue((string) $e['garanti_jusqu'], $langue) : '',
         'prix' => !empty($e['prix_kg']) ? prix_texte((float) $e['prix_kg'], $langue) : '',
-        'net' => !empty($e['poids_net']) ? kg_texte((float) $e['poids_net'], $langue) : '',
-        'brut' => !empty($e['poids_brut']) ? remplir($m['brut'], ['brut' => kg_texte((float) $e['poids_brut'], $langue)]) : '',
+        // pesée au centième près, comme sur le bon d'achat de l'appli (47,72 kg)
+        'net' => !empty($e['poids_net']) ? kg_texte((float) $e['poids_net'], $langue, 2) : '',
+        'brut' => !empty($e['poids_brut']) ? remplir($m['brut'], ['brut' => kg_texte((float) $e['poids_brut'], $langue, 2)]) : '',
         'montant' => $montant ? montant_texte((float) $montant, $langue) : '',
-        'paiement' => $e['paiement'] === 'Chèque' ? $m['cheque'] : $m['virement'],
+        'paiement' => paiement_fait($e) === 'Chèque' ? $m['cheque'] : $m['virement'],
     ];
+}
+
+/** Virement ou chèque : celui du paiement fait (détail donné par l'appli ou par Malik), sinon celui choisi dans la demande. */
+function paiement_fait(array $e): string
+{
+    $d = mb_strtolower(trim((string) ($e['paye_detail'] ?? '')));
+    if (str_starts_with($d, 'chèque') || str_starts_with($d, 'cheque')) return 'Chèque';
+    if (str_starts_with($d, 'virement')) return 'Virement';
+    return (string) $e['paiement'];
+}
+
+/** Pesée : le montant du bon de l'appli n'est pas « poids net × prix garanti » (autre prix, autre matière, pas de prix
+ *  garanti) : le mail annonce alors le montant du bon, sans parler du prix garanti. */
+function pese_autre_montant(array $e): bool
+{
+    if (empty($e['montant']) || empty($e['poids_net'])) return false;
+    return empty($e['prix_kg']) || abs((float) $e['montant'] - round((float) $e['poids_net'] * (float) $e['prix_kg'], 2)) > 0.01;
 }
 
 /** Le suivi en 5 cases dans l'e-mail (tableau : lu par toutes les messageries). */
@@ -525,7 +553,7 @@ function mail_etape(array $c, array $e, string $etape): void
     if (!isset($m[$etape])) return;
     if ($etape === 'pese' && empty($e['poids_net'])) return;
     $v = valeurs_etape($c, $e, $langue);
-    [$sujet, $texte] = [remplir($m[$etape][0], $v), remplir($m[$etape][1], $v)];
+    [$sujet, $texte] = [remplir($m[$etape][0], $v), remplir($etape === 'pese' && pese_autre_montant($e) ? $m['pese_bon'] : $m[$etape][1], $v)];
     $faites = ['traite' => 2, 'recu' => 3, 'pese' => 4, 'paye' => 5][$etape];
     $lien = lien_page($langue, 'espace-client.html') . '#demandes';
     $html = '<p style="margin:0 0 10px">' . echapper(remplir($m['bonjour'], $v)) . '</p>'
@@ -538,7 +566,8 @@ function texte_whatsapp_etape(array $c, array $e, string $etape): string
 {
     $langue = langue_mail($c['langue']);
     $m = MAIL_ETAPE[$langue] ?? MAIL_ETAPE['fr'];
-    return remplir($m['wa'][$etape] ?? '', valeurs_etape($c, $e, $langue));
+    $cle = $etape === 'pese' && pese_autre_montant($e) ? 'pese_bon' : $etape;
+    return remplir($m['wa'][$cle] ?? '', valeurs_etape($c, $e, $langue));
 }
 
 const MAIL_PIECE = [

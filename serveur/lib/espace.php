@@ -608,7 +608,11 @@ function marquer_envoi(string $id, string $action, string $par, string $numero =
         case 'pese':
             $net = $kg($x['poids_net'] ?? null);
             if ($net === null) return null;
-            $e = ['pese_le' => iso(), 'poids_net' => $net, 'poids_brut' => $kg($x['poids_brut'] ?? null), 'recu_le' => ($e['recu_le'] ?? null) ?: iso()] + $e;
+            // montant du bon fait dans l'appli (proposition 99) : c'est lui que le mail « pesé » annonce
+            $montant = is_numeric($x['montant'] ?? null) && (float) $x['montant'] > 0 && (float) $x['montant'] < 1000000
+                ? round((float) $x['montant'] * 100) / 100 : null; // pesée sans bon (page /gestion) : montant = poids × prix garanti
+            $e = ['pese_le' => iso(), 'poids_net' => $net, 'poids_brut' => $kg($x['poids_brut'] ?? null), 'recu_le' => ($e['recu_le'] ?? null) ?: iso(),
+                'montant' => $montant] + $e;
             break;
         case 'sans_pese': $e = ['pese_le' => null, 'poids_net' => null, 'poids_brut' => null] + $e; break;
         case 'paye':

@@ -1196,7 +1196,7 @@
     var ouverture = Date.now(), compte = null, envois = [], dernier = null, photos = {};
     var accueil = document.getElementById('espace-accueil'), avantages = document.getElementById('espace-avantages');
     var bandeau = document.getElementById('espace-connecte');
-    var nombre = new Intl.NumberFormat(T.locale, { maximumFractionDigits: 1 });
+    var nombre = new Intl.NumberFormat(T.locale, { maximumFractionDigits: 2 }); // poids au centième, comme sur le bon d'achat
     var argent = new Intl.NumberFormat(T.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     var argentRond = new Intl.NumberFormat(T.locale, { maximumFractionDigits: 0 });
     var jour = function (iso) { return new Date(iso).toLocaleDateString(T.locale, { day: 'numeric', month: 'long', year: 'numeric' }); };

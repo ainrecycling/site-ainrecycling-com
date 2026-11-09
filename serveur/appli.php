@@ -23,15 +23,16 @@ try {
             $etat = in_array($_GET['etat'] ?? '', ['a_traiter', 'toutes'], true) ? $_GET['etat'] : 'en_cours';
             repondre(['envois' => demandes_pour_malik($etat)]);
 
-        // { action: traite | remettre | bon | sans_bon, envoi, par, numero (bon AR-…) }
+        // { action: traite | remettre | bon | sans_bon | recu | pese | paye (et sans_recu, sans_pese, sans_paye), envoi, par,
+        //   numero (bon AR-…), valeurs (pese : poids_net, poids_brut, montant du bon ; paye : montant, detail) }
         case 'POST demandes':
             $b = corps_json() ?? [];
             $action = (string) ($b['action'] ?? '');
             $numero = (string) ($b['numero'] ?? '');
             if ($action === 'bon' && !preg_match('/^AR-\d{4}-\d{4,6}$/', $numero)) refus('numero');
-            $connues = ['traite', 'remettre', 'bon', 'sans_bon', 'recu', 'pese', 'paye'];
+            $connues = ['traite', 'remettre', 'bon', 'sans_bon', 'recu', 'sans_recu', 'pese', 'sans_pese', 'paye', 'sans_paye'];
             if (!in_array($action, $connues, true)) refus('action', 404);
-            // l'appli peut aussi envoyer le poids (pese : poids_net, poids_brut) et le paiement (paye : montant, detail)
+            // l'appli envoie le poids et le montant de son bon (pese) puis le paiement (paye) : proposition 99
             $e = marquer_envoi((string) ($b['envoi'] ?? ''), $action, texte($b['par'] ?? 'appli', 40) ?: 'appli', $numero,
                 is_array($b['valeurs'] ?? null) ? $b['valeurs'] : []);
             if (!$e) refus($action === 'pese' ? 'poids' : 'introuvable', $action === 'pese' ? 400 : 404);
