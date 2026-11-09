@@ -65,16 +65,33 @@
       <img src="../logo.png" alt="Ain Recycling" width="171" height="36">
     </a>
     <nav class="menu" id="menu" aria-label="Main navigation">
+      <div class="menu-compte" data-compte-menu>
+        <a href="espace-client.html" class="btn btn-contour"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4.5"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>Log in</a>
+        <a href="espace-client.html#creer" class="btn btn-primaire">Create an account</a>
+      </div>
       <a href="index.html">Home</a>
       <a href="correspondance.html">Individuals</a>
       <a href="professionnels.html">Businesses</a>
       <a href="questions.html">FAQ</a>
-      <a href="contact.html" class="btn btn-primaire menu-cta">Contact us</a>
-      <a href="espace-client.html" class="btn btn-contour menu-cta"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4.5"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>Customer area</a>
+      <a href="contact.html">Contact</a>
+      <div class="menu-joindre">
+        <a href="tel:+33761119523" class="btn btn-contour"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>07 61 11 95 23</a>
+        <a href="https://wa.me/33761119523?text=Hello%2C%20I%20would%20like%20to%20sell%20tungsten%20carbide." class="btn btn-contour menu-wa"><svg class="ic ic-plein" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-whatsapp"></use></svg>WhatsApp</a>
+      </div>
+      <div class="langues menu-langues" role="group" aria-label="Langue du site">
+        <ul>
+        <li><a href="../rachat-carbure-lyon.html" lang="fr" hreflang="fr">FR<span class="sr-only"> (Français)</span></a></li>
+        <li><a href="../de/rachat-carbure-lyon.html" lang="de" hreflang="de">DE<span class="sr-only"> (Deutsch)</span></a></li>
+        <li><a href="rachat-carbure-lyon.html" lang="en" hreflang="en" aria-current="true">EN<span class="sr-only"> (English)</span></a></li>
+        <li><a href="../it/rachat-carbure-lyon.html" lang="it" hreflang="it">IT<span class="sr-only"> (Italiano)</span></a></li>
+        <li><a href="../es/rachat-carbure-lyon.html" lang="es" hreflang="es">ES<span class="sr-only"> (Español)</span></a></li>
+        </ul>
+      </div>
     </nav>
     <div class="entete-actions">
-      <a href="contact.html" class="btn btn-primaire btn-petit">Contact us</a>
-      <a href="espace-client.html" class="btn btn-contour btn-petit btn-compte"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4.5"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg><span class="btn-compte-texte">Customer area</span></a>
+      <a href="espace-client.html" class="lien-connexion" data-compte-lien><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4.5"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg><span class="lien-connexion-texte">Log in</span></a>
+      <a href="espace-client.html#creer" class="btn btn-primaire btn-petit btn-creer">Create an account</a>
+      <a href="tel:+33761119523" class="btn btn-contour btn-petit btn-tel" aria-label="Call 07 61 11 95 23"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></a>
       <button class="menu-bouton" id="menu-bouton" aria-expanded="false" aria-controls="menu" aria-label="Open menu">
         <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
       </button>
@@ -166,46 +183,54 @@
       <p>We buy tungsten carbide from private individuals and businesses: at our depot in the Ain department, by parcel from France, and on collection rounds across Europe.</p>
     </div>
     <nav aria-labelledby="pied-rachat">
-      <h2 id="pied-rachat">Selling to us</h2>
-      <ul>
-        <li><a href="correspondance.html">Individuals</a></li>
-        <li><a href="professionnels.html">Businesses</a></li>
-        <li><a href="espace-client.html#envoi">Start my request</a></li>
-        <li><a href="espace-client.html">Customer area</a></li>
-      </ul>
+      <details class="pied-groupe" open>
+        <summary><h2 id="pied-rachat">Selling to us</h2></summary>
+        <ul>
+          <li><a href="correspondance.html">Individuals</a></li>
+          <li><a href="professionnels.html">Businesses</a></li>
+          <li><a href="espace-client.html#envoi">Start my request</a></li>
+          <li><a href="espace-client.html">My account</a></li>
+        </ul>
+      </details>
     </nav>
     <nav aria-labelledby="pied-entreprise">
-      <h2 id="pied-entreprise">Company</h2>
-      <ul>
-        <li><a href="entreprise.html">The company</a></li>
-        <li><a href="questions.html">Frequently asked questions</a></li>
-        <li><a href="guides.html">Guides</a></li>
-        <li><a href="contact.html">Contact us</a></li>
-      </ul>
+      <details class="pied-groupe" open>
+        <summary><h2 id="pied-entreprise">Company</h2></summary>
+        <ul>
+          <li><a href="entreprise.html">The company</a></li>
+          <li><a href="questions.html">Frequently asked questions</a></li>
+          <li><a href="guides.html">Guides</a></li>
+          <li><a href="contact.html">Contact us</a></li>
+        </ul>
+      </details>
     </nav>
     <div class="pied-joindre">
-      <h2 id="pied-joindre">Get in touch</h2>
-      <ul aria-labelledby="pied-joindre">
-        <li><a href="tel:+33761119523">07 61 11 95 23</a><span class="pied-detail">Mon–Fri 8am–6pm</span></li>
-        <li><a href="https://wa.me/33761119523?text=Hello%2C%20I%20would%20like%20to%20sell%20tungsten%20carbide.">WhatsApp 07 61 11 95 23</a></li>
-        <li><a href="mailto:contact@ainrecycling.com">contact@ainrecycling.com</a></li>
-        <li><span class="pied-detail">Depot in the Ain, by appointment</span></li>
-      </ul>
+      <details class="pied-groupe" open>
+        <summary><h2 id="pied-joindre">Get in touch</h2></summary>
+        <ul aria-labelledby="pied-joindre">
+          <li><a href="tel:+33761119523">07 61 11 95 23</a><span class="pied-detail">Mon–Fri 8am–6pm</span></li>
+          <li><a href="https://wa.me/33761119523?text=Hello%2C%20I%20would%20like%20to%20sell%20tungsten%20carbide.">WhatsApp 07 61 11 95 23</a></li>
+          <li><a href="mailto:contact@ainrecycling.com">contact@ainrecycling.com</a></li>
+          <li><span class="pied-detail">Depot in the Ain, by appointment</span></li>
+        </ul>
+      </details>
     </div>
     <nav aria-labelledby="pied-infos">
-      <h2 id="pied-infos">Legal information</h2>
-      <ul>
-        <li><a href="mentions-legales.html">Legal notice</a></li>
-        <li><a href="politique-confidentialite.html">Privacy policy</a></li>
-        <li><a href="conditions-utilisation.html">Terms of use and purchase</a></li>
-        <li><a href="cookies.html">Cookie policy</a></li>
-      </ul>
+      <details class="pied-groupe" open>
+        <summary><h2 id="pied-infos">Legal information</h2></summary>
+        <ul>
+          <li><a href="mentions-legales.html">Legal notice</a></li>
+          <li><a href="politique-confidentialite.html">Privacy policy</a></li>
+          <li><a href="conditions-utilisation.html">Terms of use and purchase</a></li>
+          <li><a href="cookies.html">Cookie policy</a></li>
+        </ul>
+      </details>
     </nav>
   </div>
   <div class="conteneur pied-bas">
     <p>© <span id="annee">2026</span> AIN RECYCLING · Port (01460), Ain, France</p>
     <p>SASU · SIRET 132 041 039 00018 · VAT FR58132041039 · RCS Bourg-en-Bresse</p>
-    <p>Payment by bank transfer or cheque only · No tracking, no advertising</p>
+    <p>Payment by bank transfer or cheque only</p>
     <p><a href="#top" class="pied-haut">Back to top <span aria-hidden="true">↑</span></a></p>
   </div>
 </footer>

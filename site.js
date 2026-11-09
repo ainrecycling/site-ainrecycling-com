@@ -236,20 +236,121 @@
   majEntete();
   window.addEventListener('scroll', majEntete, { passive: true });
 
-  // Menu mobile
+  // Menu replié (tablette, téléphone) : une feuille sous l'en-tête, sur toute la largeur (9 nov. 2026, proposition 109) ;
+  // la page derrière ne défile plus tant qu'il est ouvert
   function fermerMenu() {
     if (!menu || !menuBouton) return;
     menu.classList.remove('ouvert');
+    if (entete) entete.classList.remove('menu-ouvert');
+    document.documentElement.classList.remove('menu-ouvert-page');
     menuBouton.setAttribute('aria-expanded', 'false');
     menuBouton.setAttribute('aria-label', T.ouvrir);
   }
   if (menuBouton) menuBouton.addEventListener('click', function () {
-    var ouvert = menu.classList.toggle('ouvert');
-    menuBouton.setAttribute('aria-expanded', String(ouvert));
-    menuBouton.setAttribute('aria-label', ouvert ? T.fermer : T.ouvrir);
+    if (menu.classList.contains('ouvert')) return fermerMenu();
+    document.documentElement.style.setProperty('--haut-menu', Math.max(0, Math.round(entete.getBoundingClientRect().bottom)) + 'px');
+    menu.classList.add('ouvert');
+    entete.classList.add('menu-ouvert');
+    document.documentElement.classList.add('menu-ouvert-page');
+    menuBouton.setAttribute('aria-expanded', 'true');
+    menuBouton.setAttribute('aria-label', T.fermer);
   });
   if (menu) menu.addEventListener('click', function (e) { if (e.target.closest('a')) fermerMenu(); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fermerMenu(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { fermerMenu(); fermerMenuCompte(); } });
+  window.addEventListener('resize', function () { if (window.innerWidth > 1180) fermerMenu(); });
+
+  // Compte dans l'en-tête (9 nov. 2026, propositions 67 et 73) : « Se connecter » et « Créer un compte » ; une fois connecté,
+  // les initiales et le prénom, avec un petit menu. Le prénom est gardé dans le navigateur par la page du compte (rien de
+  // secret : la connexion elle-même reste le cookie lu par le serveur) et effacé à la déconnexion.
+  var TC = ({
+    fr: { monCompte: 'Mon compte', demandes: 'Mes demandes', envoyer: 'Envoyer un colis', profil: 'Mon profil', sortir: 'Se déconnecter', fermerAnnonce: 'Fermer l\'annonce', menuCompte: 'Menu de mon compte' },
+    de: { monCompte: 'Mein Konto', demandes: 'Meine Anfragen', envoyer: 'Paket senden', profil: 'Mein Profil', sortir: 'Abmelden', fermerAnnonce: 'Hinweis schließen', menuCompte: 'Menü meines Kontos' },
+    en: { monCompte: 'My account', demandes: 'My requests', envoyer: 'Send a parcel', profil: 'My profile', sortir: 'Sign out', fermerAnnonce: 'Close notice', menuCompte: 'My account menu' },
+    it: { monCompte: 'Il mio account', demandes: 'Le mie richieste', envoyer: 'Inviare un pacco', profil: 'Il mio profilo', sortir: 'Esci', fermerAnnonce: 'Chiudi l\'avviso', menuCompte: 'Menu del mio account' },
+    es: { monCompte: 'Mi cuenta', demandes: 'Mis solicitudes', envoyer: 'Enviar un paquete', profil: 'Mi perfil', sortir: 'Cerrar sesión', fermerAnnonce: 'Cerrar el aviso', menuCompte: 'Menú de mi cuenta' },
+  })[document.documentElement.lang] || null;
+  if (!TC) TC = { monCompte: 'Mon compte', demandes: 'Mes demandes', envoyer: 'Envoyer un colis', profil: 'Mon profil', sortir: 'Se déconnecter', fermerAnnonce: 'Fermer l\'annonce', menuCompte: 'Menu de mon compte' };
+  var IC = function (d) { return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="' + d + '"></path></svg>'; };
+  var compteLu = function () { try { return JSON.parse(localStorage.getItem('ain-compte') || 'null'); } catch (e) { return null; } };
+  function memoCompte(c) {
+    try {
+      if (c && c.prenom) localStorage.setItem('ain-compte', JSON.stringify({ prenom: String(c.prenom).slice(0, 40), nom: String(c.nom || '').slice(0, 1) }));
+      else localStorage.removeItem('ain-compte');
+    } catch (e) { /* navigateur sans mémoire : l'en-tête garde « Se connecter » */ }
+    majCompteEntete();
+  }
+  var lienCompte = document.querySelector('[data-compte-lien]');
+  var menuCompte = null;
+  function fermerMenuCompte() {
+    if (!menuCompte) return;
+    menuCompte.remove(); menuCompte = null;
+    if (lienCompte) lienCompte.setAttribute('aria-expanded', 'false');
+  }
+  function seDeconnecter() {
+    fetch('/api/espace/connexion', { method: 'DELETE', credentials: 'same-origin' }).catch(function () {}).then(function () {
+      memoCompte(null);
+      location.href = 'espace-client.html';
+    });
+  }
+  function majCompteEntete() {
+    var c = compteLu();
+    var blocMenu = document.querySelector('[data-compte-menu]');
+    var creer = document.querySelector('.entete-actions .btn-creer');
+    if (!lienCompte) return;
+    var x = function (s) { return String(s).replace(/[&<>"]/g, function (k) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[k]; }); };
+    if (c && c.prenom) {
+      var ini = (c.prenom.charAt(0) + (c.nom || '')).toUpperCase();
+      lienCompte.classList.add('connecte');
+      lienCompte.setAttribute('aria-haspopup', 'menu');
+      lienCompte.setAttribute('aria-expanded', 'false');
+      lienCompte.setAttribute('aria-label', TC.menuCompte);
+      lienCompte.innerHTML = '<span class="initiales" aria-hidden="true">' + x(ini) + '</span><span class="prenom">' + x(c.prenom) + '</span>' + IC('m6 9 6 6 6-6').replace('class="ic"', 'class="ic chevron"');
+      if (creer) creer.hidden = true;
+      if (blocMenu) blocMenu.innerHTML = '<a href="espace-client.html" class="btn btn-primaire">' + x(TC.monCompte) + '</a><button type="button" class="btn btn-contour" data-sortir>' + x(TC.sortir) + '</button>';
+    } else {
+      lienCompte.classList.remove('connecte');
+      lienCompte.removeAttribute('aria-haspopup'); lienCompte.removeAttribute('aria-expanded'); lienCompte.removeAttribute('aria-label');
+      if (creer) creer.hidden = false;
+    }
+  }
+  if (lienCompte) {
+    majCompteEntete();
+    lienCompte.addEventListener('click', function (e) {
+      var c = compteLu();
+      if (!c || !c.prenom) return; // pas connecté : le lien mène à la page de connexion
+      e.preventDefault();
+      if (menuCompte) return fermerMenuCompte();
+      var x = function (s) { return String(s).replace(/[&<>"]/g, function (k) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[k]; }); };
+      menuCompte = document.createElement('div');
+      menuCompte.className = 'compte-menu';
+      menuCompte.innerHTML = '<div class="qui"><b>' + x(c.prenom) + '</b><span>' + x(TC.monCompte) + '</span></div>'
+        + '<a href="espace-client.html">' + IC('M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z') + x(TC.monCompte) + '</a>'
+        + '<a href="espace-client.html#demandes">' + IC('M21 8 12 3 3 8v8l9 5 9-5V8zM3 8l9 5 9-5M12 13v8') + x(TC.demandes) + '</a>'
+        + '<a href="espace-client.html#envoi">' + IC('M22 2 11 13M22 2l-7 20-4-9-9-4z') + x(TC.envoyer) + '</a>'
+        + '<a href="espace-client.html#profil">' + IC('M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10z') + x(TC.profil) + '</a>'
+        + '<hr><button type="button" data-sortir>' + IC('M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9') + x(TC.sortir) + '</button>';
+      lienCompte.parentNode.appendChild(menuCompte);
+      lienCompte.setAttribute('aria-expanded', 'true');
+      var premier = menuCompte.querySelector('a');
+      if (premier) premier.focus();
+    });
+    document.addEventListener('click', function (e) {
+      if (e.target.closest('[data-sortir]')) { e.preventDefault(); seDeconnecter(); return; }
+      if (menuCompte && !e.target.closest('.compte-menu') && !e.target.closest('[data-compte-lien]')) fermerMenuCompte();
+    });
+  }
+
+  // Pied de page : rubriques ouvertes sur ordinateur, repliées sur téléphone (un appui les ouvre) (proposition 107)
+  var piedGroupes = document.querySelectorAll('.pied-groupe');
+  if (piedGroupes.length) {
+    var petitEcran = window.matchMedia('(max-width: 640px)');
+    var majPied = function () { piedGroupes.forEach(function (d) { d.open = !petitEcran.matches; }); };
+    majPied();
+    if (petitEcran.addEventListener) petitEcran.addEventListener('change', majPied); else if (petitEcran.addListener) petitEcran.addListener(majPied);
+    piedGroupes.forEach(function (d) {
+      d.querySelector('summary').addEventListener('click', function (e) { if (!petitEcran.matches) e.preventDefault(); });
+    });
+  }
 
   // Apparition au défilement
   var elements = document.querySelectorAll('.apparait');
@@ -417,8 +518,26 @@
         ligne.appendChild(p);
         boite.appendChild(ligne);
       });
+      // une croix ferme l'annonce pour la visite (proposition 104) ; sur téléphone, une ligne qu'un appui ouvre en entier
+      var cle = visibles.map(function (a) { return a.type + a.debut + a.fin; }).join('|');
+      var dejaFermee = '';
+      try { dejaFermee = sessionStorage.getItem('annonce-fermee') || ''; } catch (e) { /* sans mémoire : l'annonce reste */ }
+      var croix = document.createElement('button');
+      croix.type = 'button';
+      croix.className = 'annonce-fermer';
+      croix.setAttribute('aria-label', TC.fermerAnnonce);
+      croix.innerHTML = IC('M18 6 6 18M6 6l12 12');
+      croix.addEventListener('click', function () {
+        boite.remove();
+        try { sessionStorage.setItem('annonce-fermee', cle); } catch (e) { /* rien */ }
+      });
+      boite.firstChild.appendChild(croix);
+      boite.addEventListener('click', function (e) {
+        var l = e.target.closest('.annonce-site');
+        if (l && e.target.tagName === 'P') l.classList.toggle('deplie');
+      });
       var repere = document.querySelector('.barre-info') || document.getElementById('entete');
-      if (repere) repere.parentNode.insertBefore(boite, repere);
+      if (repere && dejaFermee !== cle) repere.parentNode.insertBefore(boite, repere);
     }
     // sous la carte de l'accueil : la prochaine tournée annoncée
     var bloc = document.querySelector('[data-tournee]');
@@ -1030,6 +1149,7 @@
       resume('rib', c.rib ? 'fait' : '', c.rib ? c.rib.iban : E.pourVirement);
 
       bandeau.querySelector('.prenom').textContent = c.prenom || '';
+      memoCompte(c); // prénom et initiale pour l'en-tête des autres pages
       bandeau.querySelector('[data-email]').textContent = c.email;
       bandeau.querySelector('[data-etat-compte]').textContent = m.length ? E.reste : E.pret;
       espace.querySelector('[data-envoi-bloque]').hidden = !m.length;
@@ -1266,19 +1386,23 @@
 
     // ---------- se déconnecter, supprimer le compte ----------
     bandeau.querySelector('[data-deconnexion]').addEventListener('click', function () {
-      api('DELETE', 'connexion').then(function () { recharger(); });
+      api('DELETE', 'connexion').then(function () { memoCompte(null); recharger(); });
     });
     espace.querySelector('[data-supprimer]').addEventListener('click', function () {
       if (!window.confirm(E.confirmer)) return;
       api('DELETE', 'compte').then(function (r) {
         if (r.erreur && r.status !== 401) return window.alert(E[r.erreur] || E.serveur);
+        memoCompte(null);
         recharger('?compte=supprime');
       });
     });
 
     // à l'ouverture : déjà connecté ? (cookie du site, lu par le serveur seulement)
     if (new URLSearchParams(location.search).get('compte') === 'supprime') dire(msgCx, 'supprime', true);
-    api('GET', 'compte').then(function (r) { if (!r.erreur && r.compte) afficher(r, true); });
+    api('GET', 'compte').then(function (r) {
+      if (!r.erreur && r.compte) afficher(r, true);
+      else if (r.status === 401) memoCompte(null); // plus connecté : l'en-tête redit « Se connecter »
+    });
   })();
 
   var annee = document.getElementById('annee');

@@ -65,16 +65,33 @@
       <img src="../logo.png" alt="Ain Recycling" width="171" height="36">
     </a>
     <nav class="menu" id="menu" aria-label="Navigazione principale">
+      <div class="menu-compte" data-compte-menu>
+        <a href="espace-client.html" class="btn btn-contour"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4.5"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>Accedi</a>
+        <a href="espace-client.html#creer" class="btn btn-primaire">Crea un account</a>
+      </div>
       <a href="index.html">Home</a>
       <a href="correspondance.html">Privati</a>
       <a href="professionnels.html">Professionisti</a>
       <a href="questions.html">Domande</a>
-      <a href="contact.html" class="btn btn-primaire menu-cta">Contattateci</a>
-      <a href="espace-client.html" class="btn btn-contour menu-cta"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4.5"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>Area clienti</a>
+      <a href="contact.html">Contatto</a>
+      <div class="menu-joindre">
+        <a href="tel:+33761119523" class="btn btn-contour"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>07 61 11 95 23</a>
+        <a href="https://wa.me/33761119523?text=Buongiorno%2C%20vorrei%20vendere%20del%20metallo%20duro%20(carburo%20di%20tungsteno)." class="btn btn-contour menu-wa"><svg class="ic ic-plein" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-whatsapp"></use></svg>WhatsApp</a>
+      </div>
+      <div class="langues menu-langues" role="group" aria-label="Langue du site">
+        <ul>
+        <li><a href="../guide-emballer-un-colis.html" lang="fr" hreflang="fr">FR<span class="sr-only"> (Français)</span></a></li>
+        <li><a href="../de/guide-emballer-un-colis.html" lang="de" hreflang="de">DE<span class="sr-only"> (Deutsch)</span></a></li>
+        <li><a href="../en/guide-emballer-un-colis.html" lang="en" hreflang="en">EN<span class="sr-only"> (English)</span></a></li>
+        <li><a href="guide-emballer-un-colis.html" lang="it" hreflang="it" aria-current="true">IT<span class="sr-only"> (Italiano)</span></a></li>
+        <li><a href="../es/guide-emballer-un-colis.html" lang="es" hreflang="es">ES<span class="sr-only"> (Español)</span></a></li>
+        </ul>
+      </div>
     </nav>
     <div class="entete-actions">
-      <a href="contact.html" class="btn btn-primaire btn-petit">Contattateci</a>
-      <a href="espace-client.html" class="btn btn-contour btn-petit btn-compte"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4.5"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg><span class="btn-compte-texte">Area clienti</span></a>
+      <a href="espace-client.html" class="lien-connexion" data-compte-lien><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4.5"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg><span class="lien-connexion-texte">Accedi</span></a>
+      <a href="espace-client.html#creer" class="btn btn-primaire btn-petit btn-creer">Crea un account</a>
+      <a href="tel:+33761119523" class="btn btn-contour btn-petit btn-tel" aria-label="Chiamare lo 07 61 11 95 23"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></a>
       <button class="menu-bouton" id="menu-bouton" aria-expanded="false" aria-controls="menu" aria-label="Apri il menu">
         <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
       </button>
@@ -138,46 +155,54 @@
       <p>Acquisto di metallo duro (carburo di tungsteno) da privati e aziende: presso il nostro deposito nell'Ain, con pacco dalla Francia e durante i giri di raccolta in Europa.</p>
     </div>
     <nav aria-labelledby="pied-rachat">
-      <h2 id="pied-rachat">Acquisto</h2>
-      <ul>
-        <li><a href="correspondance.html">Privati</a></li>
-        <li><a href="professionnels.html">Professionisti</a></li>
-        <li><a href="espace-client.html#envoi">Avvia la richiesta</a></li>
-        <li><a href="espace-client.html">Area clienti</a></li>
-      </ul>
+      <details class="pied-groupe" open>
+        <summary><h2 id="pied-rachat">Acquisto</h2></summary>
+        <ul>
+          <li><a href="correspondance.html">Privati</a></li>
+          <li><a href="professionnels.html">Professionisti</a></li>
+          <li><a href="espace-client.html#envoi">Avvia la richiesta</a></li>
+          <li><a href="espace-client.html">Il mio account</a></li>
+        </ul>
+      </details>
     </nav>
     <nav aria-labelledby="pied-entreprise">
-      <h2 id="pied-entreprise">Azienda</h2>
-      <ul>
-        <li><a href="entreprise.html">L'azienda</a></li>
-        <li><a href="questions.html">Domande frequenti</a></li>
-        <li><a href="guides.html">Guide</a></li>
-        <li><a href="contact.html">Contattateci</a></li>
-      </ul>
+      <details class="pied-groupe" open>
+        <summary><h2 id="pied-entreprise">Azienda</h2></summary>
+        <ul>
+          <li><a href="entreprise.html">L'azienda</a></li>
+          <li><a href="questions.html">Domande frequenti</a></li>
+          <li><a href="guides.html">Guide</a></li>
+          <li><a href="contact.html">Contattateci</a></li>
+        </ul>
+      </details>
     </nav>
     <div class="pied-joindre">
-      <h2 id="pied-joindre">Contattarci</h2>
-      <ul aria-labelledby="pied-joindre">
-        <li><a href="tel:+33761119523">07 61 11 95 23</a><span class="pied-detail">Lun–ven 8–18</span></li>
-        <li><a href="https://wa.me/33761119523?text=Buongiorno%2C%20vorrei%20vendere%20del%20metallo%20duro%20(carburo%20di%20tungsteno).">WhatsApp 07 61 11 95 23</a></li>
-        <li><a href="mailto:contact@ainrecycling.com">contact@ainrecycling.com</a></li>
-        <li><span class="pied-detail">Deposito nell'Ain, su appuntamento</span></li>
-      </ul>
+      <details class="pied-groupe" open>
+        <summary><h2 id="pied-joindre">Contattarci</h2></summary>
+        <ul aria-labelledby="pied-joindre">
+          <li><a href="tel:+33761119523">07 61 11 95 23</a><span class="pied-detail">Lun–ven 8–18</span></li>
+          <li><a href="https://wa.me/33761119523?text=Buongiorno%2C%20vorrei%20vendere%20del%20metallo%20duro%20(carburo%20di%20tungsteno).">WhatsApp 07 61 11 95 23</a></li>
+          <li><a href="mailto:contact@ainrecycling.com">contact@ainrecycling.com</a></li>
+          <li><span class="pied-detail">Deposito nell'Ain, su appuntamento</span></li>
+        </ul>
+      </details>
     </div>
     <nav aria-labelledby="pied-infos">
-      <h2 id="pied-infos">Informazioni legali</h2>
-      <ul>
-        <li><a href="mentions-legales.html">Note legali</a></li>
-        <li><a href="politique-confidentialite.html">Informativa sulla privacy</a></li>
-        <li><a href="conditions-utilisation.html">Condizioni d'uso e di acquisto</a></li>
-        <li><a href="cookies.html">Informativa sui cookie</a></li>
-      </ul>
+      <details class="pied-groupe" open>
+        <summary><h2 id="pied-infos">Informazioni legali</h2></summary>
+        <ul>
+          <li><a href="mentions-legales.html">Note legali</a></li>
+          <li><a href="politique-confidentialite.html">Informativa sulla privacy</a></li>
+          <li><a href="conditions-utilisation.html">Condizioni d'uso e di acquisto</a></li>
+          <li><a href="cookies.html">Informativa sui cookie</a></li>
+        </ul>
+      </details>
     </nav>
   </div>
   <div class="conteneur pied-bas">
     <p>© <span id="annee">2026</span> AIN RECYCLING · Port (01460), Ain, France</p>
     <p>SASU · SIRET 132 041 039 00018 · P. IVA FR58132041039 · RCS Bourg-en-Bresse</p>
-    <p>Pagamento solo con bonifico o assegno · Nessun tracciamento, nessuna pubblicità</p>
+    <p>Pagamento solo tramite bonifico o assegno</p>
     <p><a href="#top" class="pied-haut">Torna su <span aria-hidden="true">↑</span></a></p>
   </div>
 </footer>
