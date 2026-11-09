@@ -15,12 +15,12 @@ function echapper(string $s): string
 }
 
 /** $entetes : en-têtes en plus (ex. List-Unsubscribe de l'alerte prix). */
-function envoyer_mail(string $a, string $sujet, string $html, string $texte, array $cci = [], array $entetes = []): void
+function envoyer_mail(string $a, string $sujet, string $html, string $texte, array $cci = [], array $entetes = [], array $pieces = []): void
 {
     if (mode_essai()) {
         $d = prive() . '/journal';
         if (!is_dir($d)) @mkdir($d, 0700, true);
-        $ligne = '[' . iso() . "] à $a : $sujet\n$texte\n----\n";
+        $ligne = '[' . iso() . "] à $a : $sujet" . ($pieces ? ' (' . count($pieces) . ' pièce(s) jointe(s))' : '') . "\n$texte\n----\n";
         @file_put_contents("$d/mails.log", $ligne, FILE_APPEND | LOCK_EX);
         // le dernier e-mail en HTML, pour le regarder dans un navigateur pendant les essais
         @file_put_contents("$d/dernier-mail.html", $html, LOCK_EX);
@@ -38,6 +38,7 @@ function envoyer_mail(string $a, string $sujet, string $html, string $texte, arr
     ];
     if ($cci) $corps['bcc'] = array_values($cci);
     if ($entetes) $corps['headers'] = $entetes;
+    if ($pieces) $corps['attachments'] = $pieces;
     $ch = curl_init('https://api.resend.com/emails');
     curl_setopt_array($ch, [
         CURLOPT_POST => true,
@@ -130,7 +131,7 @@ function bouton_mail(string $texte, string $lien): string
 function mail_cadre(string $langue, string $contenu, string $bas = ''): string
 {
     $p = PIED_MAIL[$langue] ?? PIED_MAIL['fr'];
-    $tel = $langue === 'fr' ? '07 61 11 95 23' : '+33 7 61 11 95 23';
+    $tel = '+33 7 61 11 95 23';
     $site = adresse_site();
     return '<!doctype html><html lang="' . echapper($langue) . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
         . '<meta name="color-scheme" content="light only"><title>Ain Recycling</title></head>'
@@ -153,18 +154,18 @@ function mail_cadre(string $langue, string $contenu, string $bas = ''): string
 function pied_texte(string $langue): string
 {
     $p = PIED_MAIL[$langue] ?? PIED_MAIL['fr'];
-    $tel = $langue === 'fr' ? '07 61 11 95 23' : '+33 7 61 11 95 23';
+    $tel = '+33 7 61 11 95 23';
     return "--\nAin Recycling · " . $p[2] . "\n1 rue des Prairies, 01460 Port, France · $tel · contact@ainrecycling.com\n"
         . $p[0] . ' · SIRET 132 041 039 00018 · RCS Bourg-en-Bresse · ' . $p[1] . ' FR58132041039';
 }
 
 // ---------- code de connexion (5 langues, comme l'appli) ----------
 const MAIL_CODE = [
-    'fr' => ['Votre code de connexion Ain Recycling', "Votre code pour l'espace client Ain Recycling : ", "Il est valable 10 minutes. Si vous n'avez rien demandé, ignorez ce message."],
-    'de' => ['Ihr Anmeldecode für Ain Recycling', 'Ihr Code für den Kundenbereich von Ain Recycling: ', 'Er ist 10 Minuten gültig. Wenn Sie nichts angefordert haben, ignorieren Sie diese Nachricht.'],
-    'en' => ['Your Ain Recycling login code', 'Your code for the Ain Recycling customer area: ', 'It is valid for 10 minutes. If you did not ask for it, please ignore this message.'],
-    'it' => ['Il vostro codice di accesso Ain Recycling', "Il vostro codice per l'area clienti Ain Recycling: ", 'È valido 10 minuti. Se non avete richiesto nulla, ignorate questo messaggio.'],
-    'es' => ['Su código de acceso a Ain Recycling', 'Su código para el área de clientes de Ain Recycling: ', 'Es válido durante 10 minutos. Si no ha solicitado nada, ignore este mensaje.'],
+    'fr' => ['Votre code de connexion Ain Recycling', "Votre code pour votre compte Ain Recycling : ", "Il est valable 10 minutes. Si vous n'avez rien demandé, ignorez ce message."],
+    'de' => ['Ihr Anmeldecode für Ain Recycling', 'Ihr Code für Ihr Konto bei Ain Recycling: ', 'Er ist 10 Minuten gültig. Wenn Sie nichts angefordert haben, ignorieren Sie diese Nachricht.'],
+    'en' => ['Your Ain Recycling login code', 'Your code for your Ain Recycling account: ', 'It is valid for 10 minutes. If you did not ask for it, please ignore this message.'],
+    'it' => ['Il vostro codice di accesso Ain Recycling', "Il vostro codice per il vostro account Ain Recycling: ", 'È valido 10 minuti. Se non avete richiesto nulla, ignorate questo messaggio.'],
+    'es' => ['Su código de acceso a Ain Recycling', 'Su código para su cuenta de Ain Recycling: ', 'Es válido durante 10 minutos. Si no ha solicitado nada, ignore este mensaje.'],
 ];
 
 /** Code à 6 chiffres envoyé à la personne (espace client) ou à Malik (page de gestion, en français). */
@@ -195,7 +196,7 @@ const MAIL_ENVOI = [
         'garanti' => "Prix garanti : {prix} €/kg jusqu'au {date}", 'garanti2' => 'pour un colis déposé chez le transporteur au plus tard ce jour-là.',
         'suite' => 'La suite', 'etapes' => ["{b}Étiquette prépayée{/b} par e-mail sous 24 h (jours ouvrés)", '{b}Déposez{/b} le colis, avec le bordereau dedans',
             '{b}Pesée filmée{/b} à réception : le colis fermé (poids brut), puis le carbure seul (poids net)', '{b}Paiement{/b} sous 48 h (jours ouvrés) après la pesée, par {paiement}'],
-        'bouton' => 'Voir ma demande', 'note' => "Glissez dans chaque colis le bordereau (à imprimer depuis votre espace client) ou un papier avec la référence {ref}.",
+        'bouton' => 'Voir ma demande', 'note' => "Glissez dans chaque colis le bordereau (à imprimer depuis votre compte) ou un papier avec la référence {ref}.",
     ],
     'de' => [
         'sujet' => 'Ihre Versandanfrage {ref} ist eingegangen', 'bonjour' => 'Guten Tag {prenom}, Ihre Anfrage ist eingegangen.',
@@ -203,7 +204,7 @@ const MAIL_ENVOI = [
         'garanti' => 'Garantierter Preis: {prix} €/kg bis zum {date}', 'garanti2' => 'für ein Paket, das spätestens an diesem Tag beim Versanddienst abgegeben wird.',
         'suite' => 'Wie es weitergeht', 'etapes' => ['{b}Vorausbezahltes Etikett{/b} per E-Mail innerhalb von 24 Stunden (Werktage)', '{b}Geben Sie{/b} das Paket ab, mit dem Begleitschein darin',
             '{b}Gefilmtes Wiegen{/b} bei Eingang: das geschlossene Paket (Bruttogewicht), dann das Hartmetall allein (Nettogewicht)', '{b}Zahlung{/b} innerhalb von 48 Stunden (Werktage) nach dem Wiegen, per {paiement}'],
-        'bouton' => 'Meine Anfrage ansehen', 'note' => 'Legen Sie in jedes Paket den Begleitschein (in Ihrem Kundenbereich auszudrucken) oder einen Zettel mit der Referenz {ref}.',
+        'bouton' => 'Meine Anfrage ansehen', 'note' => 'Legen Sie in jedes Paket den Begleitschein (in Ihrem Konto auszudrucken) oder einen Zettel mit der Referenz {ref}.',
     ],
     'en' => [
         'sujet' => 'Your shipping request {ref} has been received', 'bonjour' => 'Hello {prenom}, your request has been received.',
@@ -211,7 +212,7 @@ const MAIL_ENVOI = [
         'garanti' => 'Guaranteed price: {prix} €/kg until {date}', 'garanti2' => 'for a parcel handed to the carrier by that day at the latest.',
         'suite' => 'What happens next', 'etapes' => ['{b}Prepaid label{/b} by email within 24 hours (working days)', '{b}Drop off{/b} the parcel, with the slip inside',
             '{b}Filmed weighing{/b} on arrival: the closed parcel (gross weight), then the carbide alone (net weight)', '{b}Payment{/b} within 48 hours (working days) after weighing, by {paiement}'],
-        'bouton' => 'View my request', 'note' => 'Put the slip (to print from your customer area) or a note with the reference {ref} in each parcel.',
+        'bouton' => 'View my request', 'note' => 'Put the slip (to print from your account) or a note with the reference {ref} in each parcel.',
     ],
     'it' => [
         'sujet' => 'La vostra richiesta di spedizione {ref} è stata ricevuta', 'bonjour' => 'Buongiorno {prenom}, la vostra richiesta è stata ricevuta.',
@@ -219,7 +220,7 @@ const MAIL_ENVOI = [
         'garanti' => 'Prezzo garantito: {prix} €/kg fino al {date}', 'garanti2' => 'per un pacco consegnato al corriere entro quel giorno.',
         'suite' => 'I prossimi passi', 'etapes' => ['{b}Etichetta prepagata{/b} per e-mail entro 24 ore (giorni lavorativi)', '{b}Consegnate{/b} il pacco, con la distinta dentro',
             "{b}Pesatura filmata{/b} all'arrivo: il pacco chiuso (peso lordo), poi il metallo duro da solo (peso netto)", '{b}Pagamento{/b} entro 48 ore (giorni lavorativi) dopo la pesatura, con {paiement}'],
-        'bouton' => 'Vedi la mia richiesta', 'note' => 'Mettete in ogni pacco la distinta (da stampare dalla vostra area clienti) o un foglio con il riferimento {ref}.',
+        'bouton' => 'Vedi la mia richiesta', 'note' => 'Mettete in ogni pacco la distinta (da stampare dal vostro account) o un foglio con il riferimento {ref}.',
     ],
     'es' => [
         'sujet' => 'Hemos recibido su solicitud de envío {ref}', 'bonjour' => 'Buenos días {prenom}: hemos recibido su solicitud.',
@@ -227,7 +228,7 @@ const MAIL_ENVOI = [
         'garanti' => 'Precio garantizado: {prix} €/kg hasta el {date}', 'garanti2' => 'para un paquete entregado al transportista como muy tarde ese día.',
         'suite' => 'Los siguientes pasos', 'etapes' => ['{b}Etiqueta prepagada{/b} por correo electrónico en 24 horas (días laborables)', '{b}Entregue{/b} el paquete, con el albarán dentro',
             '{b}Pesaje filmado{/b} a la llegada: el paquete cerrado (peso bruto) y luego el metal duro solo (peso neto)', '{b}Pago{/b} en 48 horas (días laborables) tras el pesaje, por {paiement}'],
-        'bouton' => 'Ver mi solicitud', 'note' => 'Meta en cada paquete el albarán (para imprimir desde su área de clientes) o un papel con la referencia {ref}.',
+        'bouton' => 'Ver mi solicitud', 'note' => 'Meta en cada paquete el albarán (para imprimir desde su cuenta) o un papel con la referencia {ref}.',
     ],
 ];
 
@@ -602,4 +603,25 @@ function mail_bon_redemande(array $c, array $e): void
     $html = '<p style="margin:0 0 10px">' . echapper($l1) . '</p><p style="margin:0">' . echapper($l2) . '</p>'
         . bouton_mail('Voir la demande', adresse_site() . '/gestion/#' . $e['reference']);
     envoyer_mail($a, '🧾 Bon redemandé : ' . $nom . ' (' . $e['bon_numero'] . ')', mail_cadre('fr', $html), $l1 . "\n\n" . $l2);
+}
+
+/** Le prix garanti arrive à sa fin et le colis n'est pas parti (4e revue, n° 158). */
+const MAIL_GARANTIE = [
+    'fr' => ['Plus que 2 jours pour votre prix de {prix} €/kg ({ref})', "Votre colis n'est pas encore parti. Votre prix de {prix} €/kg est garanti jusqu'au {date}. Il suffit de déposer votre colis avec l'étiquette reçue par e-mail avant cette date.", 'Revoir ma demande'],
+    'de' => ['Nur noch 2 Tage für Ihren Preis von {prix} €/kg ({ref})', 'Ihr Paket wurde noch nicht aufgegeben. Ihr Preis von {prix} €/kg ist bis zum {date} garantiert. Geben Sie Ihr Paket einfach bis dahin mit dem per E-Mail erhaltenen Etikett auf.', 'Meine Anfrage ansehen'],
+    'en' => ['Only 2 days left for your price of {prix} €/kg ({ref})', 'Your parcel has not been sent yet. Your price of {prix} €/kg is guaranteed until {date}. Just drop off your parcel with the label we emailed you before that date.', 'See my request'],
+    'it' => ['Solo 2 giorni per il vostro prezzo di {prix} €/kg ({ref})', 'Il vostro pacco non è ancora partito. Il vostro prezzo di {prix} €/kg è garantito fino al {date}. Basta consegnare il pacco con l\'etichetta ricevuta per e-mail entro quella data.', 'Rivedi la mia richiesta'],
+    'es' => ['Solo 2 días para su precio de {prix} €/kg ({ref})', 'Su paquete aún no ha salido. Su precio de {prix} €/kg está garantizado hasta el {date}. Basta con entregar el paquete con la etiqueta recibida por correo antes de esa fecha.', 'Ver mi solicitud'],
+];
+
+function mail_rappel_garantie(array $c, array $e): void
+{
+    if (empty($e['prix_kg']) || empty($e['garanti_jusqu'])) return;
+    $langue = langue_mail($c['langue']);
+    $m = MAIL_GARANTIE[$langue] ?? MAIL_GARANTIE['fr'];
+    $b = MAIL_ETAPE[$langue] ?? MAIL_ETAPE['fr'];
+    $v = ['prenom' => $c['prenom'], 'ref' => $e['reference'], 'prix' => prix_texte((float) $e['prix_kg'], $langue), 'date' => date_longue((string) $e['garanti_jusqu'], $langue)];
+    $lien = lien_page($langue, 'espace-client.html') . '#demandes';
+    $html = '<p style="margin:0 0 10px">' . echapper(remplir($b['bonjour'], $v)) . '</p><p style="margin:0">' . echapper(remplir($m[1], $v)) . '</p>' . bouton_mail($m[2], $lien);
+    envoyer_mail($c['email'], remplir($m[0], $v), mail_cadre($langue, $html), remplir($b['bonjour'], $v) . "\n\n" . remplir($m[1], $v) . "\n\n" . $m[2] . ' : ' . $lien . "\n\n" . pied_texte($langue));
 }

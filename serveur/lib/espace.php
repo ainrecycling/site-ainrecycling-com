@@ -548,6 +548,7 @@ function menage_du_jour(): void
         $maintenant = ms();
         bd()->prepare('DELETE FROM espace_liens WHERE exp < ?')->execute([$maintenant]);
         rappeler_pieces();
+        rappeler_garanties();
         $q = bd()->prepare('SELECT cle, envois FROM espace_codes WHERE exp < ?');
         $q->execute([$maintenant]);
         foreach ($q->fetchAll() as $l) {
@@ -649,6 +650,20 @@ function envoi_du_compte(array $c, string $reference): ?array
 {
     foreach (envois_du($c['id']) as $e) if ($e['reference'] === $reference) return $e;
     return null;
+}
+
+/** Colis pas encore arrivé, 2 jours avant la fin du prix garanti : un e-mail, une seule fois par demande (4e revue, n° 158). */
+function rappeler_garanties(): void
+{
+    $dans2 = (new DateTimeImmutable(aujourdhui() . ' 12:00:00'))->modify('+2 days')->format('Y-m-d');
+    $q = bd()->prepare('SELECT * FROM espace_envois WHERE garanti_jusqu = ? AND traite_le IS NOT NULL AND recu_le IS NULL AND bon_numero IS NULL AND paye_le IS NULL AND rappel_garantie IS NULL LIMIT 20');
+    $q->execute([$dans2]);
+    foreach ($q->fetchAll() as $l) {
+        $e = envoi_depuis_ligne($l);
+        $c = lire_compte($e['compte']);
+        bd()->prepare('UPDATE espace_envois SET rappel_garantie = ? WHERE id = ?')->execute([iso(), $e['id']]);
+        if ($c && !$c['archive_le']) apres_reponse(fn () => mail_rappel_garantie($c, $e));
+    }
 }
 
 /** Pièces d'identité qui expirent dans les 30 jours : un e-mail, une seule fois par date de fin (proposition 81). */

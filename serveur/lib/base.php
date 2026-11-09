@@ -7,7 +7,7 @@ declare(strict_types=1);
 // Le dossier privé (prive-ain, à côté de www) garde : config.php (secrets, écrit une fois par serveur/installation.php),
 // les photos des pièces d'identité (chiffrées), le journal. Rien de tout cela n'est jamais servi par le site.
 
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 /** Dossier privé : à côté de www (jamais servi par le site). AIN_PRIVE le remplace pour les essais sur l'ordinateur. */
 function prive(): string
@@ -154,6 +154,7 @@ function migrer(PDO $bd): void
         'bon_redemande_le' => 'VARCHAR(30) NULL']);
     ajouter_colonnes($bd, 'espace_comptes', ['prevenir' => 'VARCHAR(12) NULL', 'archive_le' => 'VARCHAR(30) NULL', 'rappel_piece' => 'VARCHAR(10) NULL']);
     ajouter_colonnes($bd, 'espace_codes', ['creation' => 'TEXT NULL']);
+    ajouter_colonnes($bd, 'espace_envois', ['rappel_garantie' => 'VARCHAR(30) NULL']); // 4e revue, n° 158
     $bd->exec("CREATE TABLE IF NOT EXISTS espace_liens (
         h CHAR(64) NOT NULL PRIMARY KEY, email TEXT NOT NULL, exp BIGINT NOT NULL
     )$fin");

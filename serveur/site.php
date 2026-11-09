@@ -27,6 +27,11 @@ try {
             envoyer_alertes_en_attente();
             repondre(infos_publiques());
 
+        // Formulaires Contact et Devis : la demande part directement chez Malik, avec les photos (4e revue, n° 144 et 146)
+        case 'POST contact':
+            origine_refusee();
+            recevoir_contact();
+
         case 'POST alerte':
             origine_refusee();
             $b = corps_json();

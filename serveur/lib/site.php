@@ -96,6 +96,7 @@ function changer_prix(float $kg, string $par): array
         array_unshift($histo, ['kg' => $kg, 'le' => iso(), 'par' => coupe($par, 60), 'avant' => $avant['kg']]);
         $nouveau = ['kg' => $kg, 'le' => iso(), 'par' => coupe($par, 60), 'historique' => array_slice($histo, 0, 60)];
         ecrire_reglage_site('prix', $nouveau, $par);
+        drapeau_prix((float) $nouveau['kg']);
         return [$avant, $nouveau];
     });
 }
@@ -171,6 +172,32 @@ function empreinte_ip(): string
 {
     $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
     return substr(hash_hmac('sha256', $ip . '|' . aujourdhui(), cle_binaire('secret')), 0, 16);
+}
+
+/** Une demande envoyée par les formulaires Contact et Devis : e-mail à Malik, avec au plus 3 photos. Rien n'est gardé sur le site. */
+function recevoir_contact(): void
+{
+    if (trim((string) ($_POST['site'] ?? '')) !== '') repondre(['ok' => true]); // robot : la case cachée est remplie
+    $sujet = coupe(trim(preg_replace('/[\r\n]+/', ' ', (string) ($_POST['sujet'] ?? '')) ?? ''), 150);
+    $corps = trim(str_replace("\r", '', (string) ($_POST['texte'] ?? '')));
+    $corps = mb_substr((string) preg_replace('/[^\P{C}\n\t]/u', '', $corps), 0, 4000);
+    $retour = coupe(trim((string) ($_POST['retour'] ?? '')), 120);
+    if ($corps === '' || $sujet === '') refus('vide');
+    if (!sous_la_limite('contact:' . empreinte_ip(), 8) || !sous_la_limite('contact:tous', 40)) refus('trop', 429);
+    $pieces = [];
+    $f = $_FILES['photos'] ?? null;
+    if ($f && is_array($f['tmp_name'])) {
+        foreach (array_slice($f['tmp_name'], 0, 3, true) as $i => $tmp) {
+            if (($f['error'][$i] ?? 1) !== UPLOAD_ERR_OK || !is_uploaded_file($tmp) || ($f['size'][$i] ?? 0) > 6 * 1024 * 1024) continue;
+            $info = @getimagesize($tmp);
+            if (!$info || !in_array($info[2], [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_WEBP], true)) continue;
+            $pieces[] = ['filename' => 'photo-' . (count($pieces) + 1) . image_type_to_extension($info[2]), 'content' => base64_encode((string) file_get_contents($tmp))];
+        }
+    }
+    $html = '<p style="margin:0;white-space:pre-line">' . echapper($corps) . '</p>';
+    $entetes = filter_var($retour, FILTER_VALIDATE_EMAIL) ? ['Reply-To' => $retour] : [];
+    envoyer_mail((string) reglage('mail_admin', ''), $sujet, mail_cadre('fr', $html), $corps, [], $entetes, $pieces);
+    repondre(['ok' => true]);
 }
 
 /** Compte une action pour ce nom aujourd'hui ; faux si la limite est déjà atteinte (rien n'est compté alors). */
@@ -456,8 +483,17 @@ function resume_du_mois(): void
     $sauve = reglage_site('sauvegarde');
     $le = is_array($sauve) ? (string) ($sauve['le'] ?? '') : '';
     $lignes[] = $le !== '' && $le > iso(ms() - 31 * 86400000)
-        ? 'Sauvegarde de l\'espace client faite le ' . date_longue(jour_paris((int) strtotime($le) * 1000), 'fr') . '.'
-        : 'Pense à la sauvegarde de l\'espace client (bouton « Sauvegarder » de ta page).';
+        ? 'Sauvegarde des comptes clients faite le ' . date_longue(jour_paris((int) strtotime($le) * 1000), 'fr') . '.'
+        : 'Pense à la sauvegarde des comptes clients (bouton « Sauvegarder » de ta page).';
     $lignes[] = 'Ce que les gens tapent dans Google pour te trouver : Google Search Console, rubrique « Performances ».';
     mail_resume_mois($a, "Le site en $nomMois", $lignes, adresse_site() . '/gestion/');
+}
+
+/** Prix différent de celui écrit dans les pages : les pages passent par serveur/page.php, qui met le vrai prix dans le titre et
+ *  les aperçus (Google, WhatsApp). Revenu au prix écrit : les pages sont de nouveau servies telles quelles (4e revue, n° 118). */
+function drapeau_prix(float $kg): void
+{
+    $f = dirname(__DIR__, 2) . '/.prix-change';
+    if (abs($kg - PRIX_PAGES) > 0.001) @touch($f);
+    elseif (is_file($f)) @unlink($f);
 }

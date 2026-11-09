@@ -3,6 +3,7 @@
 Options -Indexes
 DirectoryIndex index.html index.php
 ErrorDocument 404 /404.html
+AddType text/vcard .vcf
 
 # Types et encodage bien déclarés (proposition 53, 8 nov. 2026) : les polices n'avaient pas de type, llms.txt pas d'encodage.
 AddType font/woff2 .woff2
@@ -22,6 +23,18 @@ RewriteRule ^(.*)$ https://ainrecycling.com/$1 [R=301,L]
 # Fichiers et dossiers cachés jamais servis (.git déposé par le déploiement GitHub d'OVH, .ovhconfig…),
 # sauf /.well-known/ (validation du certificat HTTPS).
 RewriteRule (^|/)\.(?!well-known/) - [R=404,L]
+# Une seule adresse pour l'accueil (4e revue, n° 117) : /index.html → /, /de/index.html → /de/, et /de → /de/ (sans « :443 » dedans).
+# THE_REQUEST = l'adresse demandée par le navigateur : pas de boucle avec DirectoryIndex.
+RewriteCond %{HTTP_HOST} ^ainrecycling\.com$ [NC]
+RewriteCond %{THE_REQUEST} \s/+((?:de/|en/|it/|es/)?)index\.html[\s?]
+RewriteRule ^ https://ainrecycling.com/%1 [R=301,L]
+RewriteCond %{HTTP_HOST} ^ainrecycling\.com$ [NC]
+RewriteRule ^(de|en|it|es)$ https://ainrecycling.com/$1/ [R=301,L]
+# Prix différent de celui écrit dans les pages (fichier .prix-change posé par le serveur) : les pages passent par PHP (4e revue, n° 118)
+RewriteCond %{DOCUMENT_ROOT}/.prix-change -f
+RewriteRule ^((?:de/|en/|it/|es/)?[a-z0-9-]+\.html)$ serveur/page.php?f=$1 [L]
+RewriteCond %{DOCUMENT_ROOT}/.prix-change -f
+RewriteRule ^((?:de/|en/|it/|es/)?)$ serveur/page.php?f=$1index.html [L]
 RewriteRule ^api/espace/(.*)$ serveur/espace.php?chemin=$1 [QSA,L]
 RewriteRule ^api/gestion/(.*)$ serveur/gestion.php?chemin=$1 [QSA,L]
 RewriteRule ^api/appli/(.*)$ serveur/appli.php?chemin=$1 [QSA,L]

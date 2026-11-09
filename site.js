@@ -476,6 +476,8 @@
     while (marcheur.nextNode()) noeuds.push(marcheur.currentNode);
     noeuds.forEach(function (n) { var t = refaire(n.nodeValue); if (t !== n.nodeValue) n.nodeValue = t; });
     document.querySelectorAll('[data-kg]').forEach(function (el) { el.textContent = ecrireMontant(parseFloat(el.getAttribute('data-kg')) * kg) + ' €'; });
+    // prix livré au dépôt : celui du colis + 3 € (4e revue, n° 128)
+    document.querySelectorAll('[data-depot]').forEach(function (el) { var n = el.firstChild; if (n && n.nodeType === 3) n.nodeValue = n.nodeValue.replace(/\d+(?:[.,]\d+)?/, ecrirePrix(kg + 3)); });
     document.querySelectorAll('[aria-label], [title], [alt]').forEach(function (el) {
       ['aria-label', 'title', 'alt'].forEach(function (a) { var v = el.getAttribute(a); if (v && v.indexOf('€') >= 0) el.setAttribute(a, refaire(v)); });
     });
@@ -711,6 +713,50 @@
   }
 
   // Formulaire : prépare un e-mail déjà rédigé
+  // Contact et devis partent directement chez Malik, avec les photos (4e revue, n° 144 et 146) : plus de messagerie à ouvrir.
+  var T4 = ({
+    fr: { envoi: 'Envoi…', recu: 'Bien reçu : nous vous répondons sous 24 h (jours ouvrés).', rate: "L'envoi n'a pas abouti. Réessayez, ou écrivez-nous sur WhatsApp.", etape1: 'Étape 1 sur 2', etape2: 'Étape 2 sur 2', retour: 'Retour', copierLien: 'Copier le lien de cette réponse', copie: 'Copié', ouvert: 'Ouvert : on décroche', fermeAuj: "Fermé : on décroche aujourd'hui dès 8 h", fermeDemain: 'Fermé : on décroche demain dès 8 h', fermeLundi: 'Fermé : on décroche lundi dès 8 h' },
+    de: { envoi: 'Wird gesendet…', recu: 'Erhalten: Wir antworten innerhalb von 24 Std. (Werktage).', rate: 'Das Senden hat nicht geklappt. Versuchen Sie es erneut oder schreiben Sie uns auf WhatsApp.', etape1: 'Schritt 1 von 2', etape2: 'Schritt 2 von 2', retour: 'Zurück', copierLien: 'Link zu dieser Antwort kopieren', copie: 'Kopiert', ouvert: 'Geöffnet: Wir gehen ran', fermeAuj: 'Geschlossen: heute ab 8 Uhr erreichbar', fermeDemain: 'Geschlossen: morgen ab 8 Uhr erreichbar', fermeLundi: 'Geschlossen: Montag ab 8 Uhr erreichbar' },
+    en: { envoi: 'Sending…', recu: 'Received: we will reply within 24 h (working days).', rate: 'Sending failed. Try again, or write to us on WhatsApp.', etape1: 'Step 1 of 2', etape2: 'Step 2 of 2', retour: 'Back', copierLien: 'Copy the link to this answer', copie: 'Copied', ouvert: 'Open: we pick up', fermeAuj: 'Closed: we pick up today from 8 am', fermeDemain: 'Closed: we pick up tomorrow from 8 am', fermeLundi: 'Closed: we pick up on Monday from 8 am' },
+    it: { envoi: 'Invio…', recu: 'Ricevuto: vi rispondiamo entro 24 h (giorni lavorativi).', rate: "L'invio non è riuscito. Riprovate, oppure scriveteci su WhatsApp.", etape1: 'Passo 1 di 2', etape2: 'Passo 2 di 2', retour: 'Indietro', copierLien: 'Copia il link di questa risposta', copie: 'Copiato', ouvert: 'Aperto: rispondiamo', fermeAuj: 'Chiuso: rispondiamo oggi dalle 8', fermeDemain: 'Chiuso: rispondiamo domani dalle 8', fermeLundi: 'Chiuso: rispondiamo lunedì dalle 8' },
+    es: { envoi: 'Enviando…', recu: 'Recibido: le respondemos en 24 h (días laborables).', rate: 'El envío no ha funcionado. Inténtelo de nuevo o escríbanos por WhatsApp.', etape1: 'Paso 1 de 2', etape2: 'Paso 2 de 2', retour: 'Volver', copierLien: 'Copiar el enlace de esta respuesta', copie: 'Copiado', ouvert: 'Abierto: contestamos', fermeAuj: 'Cerrado: contestamos hoy desde las 8', fermeDemain: 'Cerrado: contestamos mañana desde las 8', fermeLundi: 'Cerrado: contestamos el lunes desde las 8' },
+  })[document.documentElement.lang] || null;
+  if (!T4) T4 = { envoi: 'Envoi…', recu: 'Bien reçu.', rate: "L'envoi n'a pas abouti.", etape1: '1/2', etape2: '2/2', retour: 'Retour', copierLien: 'Copier le lien', copie: 'Copié', ouvert: 'Ouvert', fermeAuj: 'Fermé', fermeDemain: 'Fermé', fermeLundi: 'Fermé' };
+  // photo réduite dans le navigateur (1 600 px, JPEG) : envoi plus rapide, moins de place dans l'e-mail
+  function reduireImage(fichier) {
+    return new Promise(function (resoudre) {
+      var url = URL.createObjectURL(fichier), img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        var r = Math.min(1, 1600 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+        c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        c.toBlob(function (b) { resoudre(b); }, 'image/jpeg', .82);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); resoudre(null); };
+      img.src = url;
+    });
+  }
+  function envoyerDemande(formEl, sujet, texte, retour) {
+    var etat = formEl.querySelector('.form-retour');
+    var bouton = formEl.querySelector('button[type="submit"]:not([value="whatsapp"])');
+    var libelle = bouton ? bouton.innerHTML : '';
+    if (bouton) { bouton.disabled = true; bouton.textContent = T4.envoi; }
+    var champ = formEl.querySelector('input[type="file"]');
+    var photos = champ ? [].slice.call(champ.files || [], 0, 3) : [];
+    var pot = formEl.querySelector('[name="site"]');
+    var fin = function (ok) {
+      if (bouton) { bouton.disabled = false; bouton.innerHTML = libelle; }
+      if (etat) { etat.hidden = false; etat.classList.toggle('envoi-rate', !ok); etat.textContent = ok ? T4.recu : T4.rate; etat.scrollIntoView({ block: 'center' }); }
+      if (ok) formEl.reset();
+    };
+    Promise.all(photos.map(reduireImage)).then(function (blobs) {
+      var d = new FormData();
+      d.append('sujet', sujet); d.append('texte', texte); d.append('retour', retour || ''); d.append('site', pot ? pot.value : '');
+      blobs.forEach(function (b, i) { if (b) d.append('photos[]', b, 'photo-' + (i + 1) + '.jpg'); });
+      return fetch('/api/site/contact', { method: 'POST', body: d, credentials: 'same-origin' });
+    }).then(function (r) { fin(r.ok); }).catch(function () { fin(false); });
+  }
   var form = document.getElementById('formulaire');
   if (form) {
     var nom = form.querySelector('#f-nom');
@@ -727,6 +773,15 @@
         nom.focus();
         return;
       }
+      var champRetour = form.querySelector('#f-retour'), erreurRetour = form.querySelector('#f-retour-erreur');
+      if (champRetour && !champRetour.value.trim()) {
+        champRetour.setAttribute('aria-invalid', 'true');
+        champRetour.setAttribute('aria-describedby', 'f-retour-erreur');
+        erreurRetour.hidden = false;
+        champRetour.focus();
+        return;
+      }
+      if (champRetour) { champRetour.removeAttribute('aria-invalid'); erreurRetour.hidden = true; }
       var f = new FormData(form);
       var poids = String(f.get('poids') || '').trim();
       var sep = document.documentElement.lang === 'fr' ? ' : ' : ': ';
@@ -752,10 +807,9 @@
       }
       var message = String(f.get('message') || '').trim();
       if (message) lignes.push('', message);
-      lignes.push('', T.photos, '');
-      var sujet = T.sujet + f.get('nom');
-      window.location.href = 'mailto:contact@ainrecycling.com?subject=' + encodeURIComponent(sujet) +
-        '&body=' + encodeURIComponent(lignes.join('\n'));
+      var retour = String(f.get('retour') || '').trim();
+      lignes.push('', 'À recontacter : ' + retour);
+      envoyerDemande(form, T.sujet + f.get('nom'), lignes.join('\n'), retour);
     });
   }
 
@@ -783,6 +837,22 @@
     var dEntreprise = devis.querySelector('#d-entreprise');
     var dErreur = devis.querySelector('#d-entreprise-erreur');
     var dVia = 'mail';
+    // En deux temps (n° 146) : d'abord les boutons, puis les coordonnées. Sans script, tout reste affiché.
+    var dProgres = devis.querySelector('[data-progres]'), dE1 = devis.querySelector('[data-etape="1"]'), dE2 = devis.querySelector('[data-etape="2"]'), dSuivant = devis.querySelector('[data-suivant]');
+    if (dProgres && dE1 && dE2 && dSuivant) {
+      var dTexte = dProgres.querySelector('[data-progres-texte]'), dJauge = dProgres.querySelector('.devis-jauge');
+      var dPasser = function (n) {
+        dE1.hidden = n !== 1; dE2.hidden = n !== 2;
+        dTexte.textContent = n === 1 ? T4.etape1 : T4.etape2; dJauge.classList.toggle('fini', n === 2);
+        devis.scrollIntoView({ block: 'start' });
+      };
+      dProgres.hidden = false; dSuivant.hidden = false; dE2.hidden = true; dTexte.textContent = T4.etape1;
+      var dRetour = document.createElement('button');
+      dRetour.type = 'button'; dRetour.className = 'lien-simple'; dRetour.textContent = '‹ ' + T4.retour;
+      dE2.insertBefore(dRetour, dE2.firstChild);
+      dSuivant.addEventListener('click', function () { dPasser(2); });
+      dRetour.addEventListener('click', function () { dPasser(1); });
+    }
     devis.querySelectorAll('button[type="submit"]').forEach(function (b) { b.addEventListener('click', function () { dVia = b.value; }); });
     dEntreprise.addEventListener('input', function () {
       if (dEntreprise.value.trim()) { dEntreprise.removeAttribute('aria-invalid'); dErreur.hidden = true; }
@@ -797,6 +867,15 @@
         return;
       }
       var via = (e.submitter && e.submitter.value) || dVia;
+      var dTel = devis.querySelector('#d-tel'), dTelErreur = devis.querySelector('#d-tel-erreur');
+      if (via !== 'whatsapp' && dTel && !dTel.value.trim()) {
+        dTel.setAttribute('aria-invalid', 'true');
+        dTel.setAttribute('aria-describedby', 'd-tel-erreur');
+        dTelErreur.hidden = false;
+        dTel.focus();
+        return;
+      }
+      if (dTel) { dTel.removeAttribute('aria-invalid'); dTelErreur.hidden = true; }
       var f = new FormData(devis);
       var sep = document.documentElement.lang === 'fr' ? ' : ' : ': ';
       var choix = function (n) {
@@ -813,8 +892,7 @@
       if (message) lignes.push('', message);
       var texte = lignes.join('\n');
       if (via === 'whatsapp') window.location.href = 'https://wa.me/33761119523?text=' + encodeURIComponent(texte);
-      else window.location.href = 'mailto:contact@ainrecycling.com?subject=' + encodeURIComponent(T.sujetDevis + f.get('entreprise')) +
-        '&body=' + encodeURIComponent(texte + '\n');
+      else envoyerDemande(devis, T.sujetDevis + f.get('entreprise'), texte, String(f.get('telephone') || '').trim());
     });
   }
 
@@ -2777,4 +2855,110 @@
       document.fonts.ready.then(refaire);
     }
   }
+
+  // ---------- 4e revue (9 novembre 2026) ----------
+  // Bouton « Vendre mon carbure » : un seul menu ouvert, fermé en touchant à côté ou avec Échap (n° 130 et 134)
+  var vendres = [].slice.call(document.querySelectorAll('[data-vendre]'));
+  if (vendres.length) {
+    vendres.forEach(function (d) { d.addEventListener('toggle', function () { if (d.open) vendres.forEach(function (x) { if (x !== d) x.open = false; }); }); });
+    document.addEventListener('click', function (e) { vendres.forEach(function (d) { if (d.open && !d.contains(e.target)) d.open = false; }); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') vendres.forEach(function (d) { if (d.open) { d.open = false; d.querySelector('summary').focus(); } }); });
+  }
+  // Sur ordinateur, une fine barre avec le prix une fois le haut de page dépassé (n° 141)
+  var barrePrix = document.getElementById('barre-prix'), herosPrix = document.querySelector('.hero');
+  if (barrePrix && herosPrix && 'IntersectionObserver' in window) {
+    new IntersectionObserver(function (l) { barrePrix.classList.toggle('visible', !l[0].isIntersecting); }, { rootMargin: '-140px 0px 0px 0px' }).observe(herosPrix);
+  }
+  // Page colis : sur téléphone, les étapes se replient (n° 149)
+  var frise = document.getElementById('frise');
+  if (frise) {
+    var etapes = [].slice.call(frise.querySelectorAll('.frise-etape'));
+    frise.classList.add('repliable');
+    if (etapes[0]) etapes[0].classList.add('ouverte');
+    var friseTel = window.matchMedia('(max-width: 640px)');
+    etapes.forEach(function (x, i) {
+      var tete = x.querySelector('.frise-tete'), titre = x.querySelector('.frise-titre'), bascule = null;
+      if (titre && friseTel.matches) { // un vrai bouton sur téléphone : clavier et lecteurs d'écran peuvent ouvrir l'étape
+        bascule = document.createElement('button');
+        bascule.type = 'button'; bascule.className = 'frise-bascule'; bascule.textContent = titre.textContent;
+        bascule.setAttribute('aria-expanded', i === 0 ? 'true' : 'false');
+        titre.textContent = ''; titre.appendChild(bascule);
+      }
+      if (tete) tete.addEventListener('click', function () {
+        if (!friseTel.matches) return;
+        var ouverte = x.classList.toggle('ouverte');
+        if (bascule) bascule.setAttribute('aria-expanded', ouverte ? 'true' : 'false');
+      });
+    });
+  }
+  // Questions : un lien direct vers chaque réponse (n° 152)
+  var copierTexte = function (texte, bouton, libelle) {
+    var fini = function () { bouton.textContent = T4.copie; setTimeout(function () { bouton.textContent = libelle; }, 1800); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(texte).then(fini, function () {});
+  };
+  document.querySelectorAll('.faq-item[id]').forEach(function (d) {
+    var rep = d.querySelector('.reponse');
+    if (!rep) return;
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'lien-simple copier-lien'; b.textContent = T4.copierLien;
+    b.addEventListener('click', function () { copierTexte(location.href.split('#')[0] + '#' + d.id, b, T4.copierLien); });
+    rep.appendChild(b);
+  });
+  var ouvrirQuestion = function () {
+    var id = location.hash.slice(1);
+    if (id.indexOf('q-') !== 0) return;
+    var d = document.getElementById(id);
+    if (d) { d.open = true; d.scrollIntoView({ block: 'center' }); }
+  };
+  ouvrirQuestion();
+  window.addEventListener('hashchange', ouvrirQuestion);
+  // Contact : ouvert ou fermé en ce moment, heure de Paris (n° 155), et « Copier » le numéro
+  var ouvert = document.querySelector('[data-ouvert]');
+  if (ouvert) {
+    var parties = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Paris', weekday: 'short', hour: 'numeric', hour12: false }).formatToParts(new Date());
+    var valeur = function (t) { var p = parties.filter(function (x) { return x.type === t; })[0]; return p ? p.value : ''; };
+    var jourSem = valeur('weekday'), heure = parseInt(valeur('hour'), 10) % 24;
+    var ouvre = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].indexOf(jourSem) >= 0;
+    var estOuvert = ouvre && heure >= 8 && heure < 18;
+    ouvert.textContent = estOuvert ? T4.ouvert : (ouvre && heure < 8 ? T4.fermeAuj : (jourSem === 'Fri' || jourSem === 'Sat' || jourSem === 'Sun' ? T4.fermeLundi : T4.fermeDemain));
+    ouvert.classList.toggle('ferme', !estOuvert);
+    ouvert.hidden = false;
+  }
+  document.querySelectorAll('[data-copier]').forEach(function (b) {
+    var libelle = b.textContent;
+    b.addEventListener('click', function () { copierTexte(b.getAttribute('data-copier'), b, libelle); });
+  });
+  // Guides : envoyer le guide sur WhatsApp (n° 151)
+  document.querySelectorAll('[data-partage-wa]').forEach(function (a) {
+    a.href = 'https://wa.me/?text=' + encodeURIComponent(document.title + ' ' + location.href.split('#')[0]);
+  });
+  // Proposer la langue du téléphone, sans jamais forcer (n° 142)
+  (function () {
+    if (document.documentElement.lang !== 'fr' || !document.querySelector('.barre-info')) return;
+    var langues = { de: ['Diese Seite gibt es auf Deutsch.', 'Auf Deutsch lesen'], en: ['This page is available in English.', 'Read in English'], it: ['Questa pagina è disponibile in italiano.', 'Leggi in italiano'], es: ['Esta página está disponible en español.', 'Leer en español'] };
+    var l = String(navigator.language || '').slice(0, 2).toLowerCase();
+    if (!langues[l]) return;
+    try { if (localStorage.getItem('langue-proposee')) return; } catch (e) { return; }
+    var page = location.pathname.split('/').pop() || 'index.html';
+    var b = document.createElement('div');
+    b.className = 'suggestion-langue'; b.lang = l;
+    var s = document.createElement('span'); s.textContent = langues[l][0];
+    var a = document.createElement('a'); a.href = l + '/' + (page === 'index.html' ? '' : page); a.textContent = langues[l][1];
+    var x = document.createElement('button'); x.type = 'button'; x.textContent = '×'; x.setAttribute('aria-label', 'Fermer');
+    x.addEventListener('click', function () { b.remove(); try { localStorage.setItem('langue-proposee', '1'); } catch (e) {} });
+    b.append(s, a, x);
+    document.body.insertBefore(b, document.body.firstChild);
+  })();
+  // Pages prêtes avant le clic : chargées dès que la souris ou le doigt se pose sur un lien (n° 160)
+  (function () {
+    var deja = {};
+    var preparer = function (e) {
+      var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+      if (!a || a.origin !== location.origin || deja[a.href] || !/(\.html|\/)$/.test(a.pathname) || a.pathname === location.pathname) return;
+      deja[a.href] = 1;
+      var l = document.createElement('link'); l.rel = 'prefetch'; l.href = a.href; document.head.appendChild(l);
+    };
+    document.addEventListener('pointerover', preparer, { passive: true });
+    document.addEventListener('touchstart', preparer, { passive: true });
+  })();
 })();

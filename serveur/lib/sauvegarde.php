@@ -31,7 +31,7 @@ function contenu_sauvegarde(string $par): array
     foreach (bd()->query('SELECT cle, valeur FROM site_reglages')->fetchAll() as $l) $donnees['reglages'][$l['cle']] = json_decode((string) $l['valeur'], true);
     $donnees['visites'] = bd()->query('SELECT jour, page, source, n FROM site_visites ORDER BY jour')->fetchAll();
     $jour = jour_paris();
-    $lisezmoi = "Sauvegarde de l'espace client du site ainrecycling.com, faite le " . date_longue($jour, 'fr') . " par $par.\r\n\r\n"
+    $lisezmoi = "Sauvegarde des comptes clients du site ainrecycling.com, faite le " . date_longue($jour, 'fr') . " par $par.\r\n\r\n"
         . "donnees.json : les comptes (coordonnées, n° de pièce d'identité, IBAN), les demandes d'envoi par colis, les abonnés à\r\n"
         . "l'alerte prix, les réglages du site (prix et son historique, annonces) et les pages vues.\r\n"
         . "pieces/ : les photos des pièces d'identité, un dossier par compte (le nom du dossier est l'« id » du compte).\r\n\r\n"
