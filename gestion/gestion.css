@@ -182,3 +182,4 @@ dialog.feuille::backdrop { background: rgba(5, 10, 20, .55); }
 .bouton.vert { background: var(--vert); text-decoration: none; }
 .bouton.vert:hover { background: #12623e; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.demande.traitee { opacity: 1; } /* 9 nov. 2026 : les demandes en cours restent bien lisibles (contraste) */

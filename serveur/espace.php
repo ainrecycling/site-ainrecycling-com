@@ -5,6 +5,7 @@ declare(strict_types=1);
 // version faite dans l'appli. code → connexion → compte (coordonnées, RIB), piece (pièce d'identité), envoi (colis).
 
 require __DIR__ . '/lib/espace.php';
+require __DIR__ . '/lib/google.php';
 
 $chemin = trim((string) ($_GET['chemin'] ?? ''), '/');
 $methode = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -186,6 +187,13 @@ try {
             apres_reponse(fn () => mail_nouvelle_demande($c, $e));
             apres_reponse(fn () => mail_envoi_recu($c, $e));
             repondre(['envoi' => envoi_visible($e)]);
+
+        // « Continuer avec Google » (propositions 68 et 74) : départ vers Google, puis retour avec l'identité vérifiée.
+        case 'GET google':
+            google_depart(langue_de($_GET['langue'] ?? null));
+
+        case 'GET google/retour':
+            google_arrivee();
 
         default:
             refus('inconnu', 404);

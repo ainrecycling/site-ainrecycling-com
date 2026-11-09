@@ -1051,7 +1051,8 @@
       creerNom: 'Indiquez votre prénom et votre nom.', creerSiret: 'Indiquez le nom de l\'entreprise et son SIRET (14 chiffres).',
       cgu: 'Cochez la case pour accepter les conditions.', renvoyer: 'Renvoyer le code ({s} s)', renvoyerOk: 'Renvoyer le code',
       rColis: 'Colis', rColisTexte: '{n} colis · {kg} kg à peu près', rPaiement: 'Paiement', rEtiquette: 'Expéditeur sur l\'étiquette',
-      rPrix: 'Prix garanti', rPrixTexte: '{prix} €/kg jusqu\'au {date}', modifier: 'Modifier', introuvable: 'Introuvable.', deja2: 'Déjà demandé aujourd\'hui.' },
+      rPrix: 'Prix garanti', rPrixTexte: '{prix} €/kg jusqu\'au {date}', modifier: 'Modifier', introuvable: 'Introuvable.', deja2: 'Déjà demandé aujourd\'hui.',
+      googleEchec: 'La connexion avec Google n\'a pas abouti : réessayez, ou recevez un code par e-mail.' },
     de: { depuis: 'Kunde seit {mois}', enCours: 'Meine laufende Anfrage', etapes: ['Anfrage', 'Etikett', 'Abgabe', 'Wiegung', 'Zahlung'],
       etats: ['Anfrage erhalten', 'Etikett verschickt', 'Paket erhalten', 'Gewogen', 'Bezahlt'],
       longues: ['Anfrage erhalten', 'Vorausbezahltes Etikett verschickt', 'Abgabe Ihres Pakets', 'Eingang und gefilmte Wiegung', 'Zahlung'],
@@ -1082,7 +1083,8 @@
       creerNom: 'Geben Sie Ihren Vor- und Nachnamen an.', creerSiret: 'Geben Sie den Namen des Unternehmens und seine SIRET (14 Ziffern) an.',
       cgu: 'Kreuzen Sie das Kästchen an, um die Bedingungen zu akzeptieren.', renvoyer: 'Code erneut senden ({s} s)', renvoyerOk: 'Code erneut senden',
       rColis: 'Pakete', rColisTexte: '{n} Paket(e) · etwa {kg} kg', rPaiement: 'Zahlung', rEtiquette: 'Absender auf dem Etikett',
-      rPrix: 'Garantierter Preis', rPrixTexte: '{prix} €/kg bis {date}', modifier: 'Ändern', introuvable: 'Nicht gefunden.', deja2: 'Heute schon angefordert.' },
+      rPrix: 'Garantierter Preis', rPrixTexte: '{prix} €/kg bis {date}', modifier: 'Ändern', introuvable: 'Nicht gefunden.', deja2: 'Heute schon angefordert.',
+      googleEchec: 'Die Anmeldung mit Google hat nicht geklappt: Versuchen Sie es erneut oder lassen Sie sich einen Code per E-Mail schicken.' },
     en: { depuis: 'Customer since {mois}', enCours: 'My current request', etapes: ['Request', 'Label', 'Drop-off', 'Weighing', 'Payment'],
       etats: ['Request received', 'Label sent', 'Parcel received', 'Weighed', 'Paid'],
       longues: ['Request received', 'Prepaid label sent', 'Dropping off your parcel', 'Receipt and filmed weighing', 'Payment'],
@@ -1113,7 +1115,8 @@
       creerNom: 'Enter your first name and last name.', creerSiret: 'Enter the company name and its SIRET (14 digits).',
       cgu: 'Tick the box to accept the terms.', renvoyer: 'Send the code again ({s} s)', renvoyerOk: 'Send the code again',
       rColis: 'Parcels', rColisTexte: '{n} parcel(s) · about {kg} kg', rPaiement: 'Payment', rEtiquette: 'Sender on the label',
-      rPrix: 'Guaranteed price', rPrixTexte: '{prix} €/kg until {date}', modifier: 'Change', introuvable: 'Not found.', deja2: 'Already asked today.' },
+      rPrix: 'Guaranteed price', rPrixTexte: '{prix} €/kg until {date}', modifier: 'Change', introuvable: 'Not found.', deja2: 'Already asked today.',
+      googleEchec: 'Signing in with Google did not work: try again, or get a code by email.' },
     it: { depuis: 'Cliente dal {mois}', enCours: 'La mia richiesta in corso', etapes: ['Richiesta', 'Etichetta', 'Consegna', 'Pesatura', 'Pagamento'],
       etats: ['Richiesta ricevuta', 'Etichetta inviata', 'Pacco ricevuto', 'Pesato', 'Pagato'],
       longues: ['Richiesta ricevuta', 'Etichetta prepagata inviata', 'Consegna del pacco', 'Ricevimento e pesatura filmata', 'Pagamento'],
@@ -1144,7 +1147,8 @@
       creerNom: 'Indicate nome e cognome.', creerSiret: 'Indicate il nome dell\'azienda e il suo SIRET (14 cifre).',
       cgu: 'Spuntate la casella per accettare le condizioni.', renvoyer: 'Rinviare il codice ({s} s)', renvoyerOk: 'Rinviare il codice',
       rColis: 'Pacchi', rColisTexte: '{n} pacco/i · circa {kg} kg', rPaiement: 'Pagamento', rEtiquette: 'Mittente sull\'etichetta',
-      rPrix: 'Prezzo garantito', rPrixTexte: '{prix} €/kg fino al {date}', modifier: 'Modificare', introuvable: 'Non trovato.', deja2: 'Già richiesto oggi.' },
+      rPrix: 'Prezzo garantito', rPrixTexte: '{prix} €/kg fino al {date}', modifier: 'Modificare', introuvable: 'Non trovato.', deja2: 'Già richiesto oggi.',
+      googleEchec: 'L\'accesso con Google non è riuscito: riprovate, oppure ricevete un codice per e-mail.' },
     es: { depuis: 'Cliente desde {mois}', enCours: 'Mi solicitud en curso', etapes: ['Solicitud', 'Etiqueta', 'Entrega', 'Pesaje', 'Pago'],
       etats: ['Solicitud recibida', 'Etiqueta enviada', 'Paquete recibido', 'Pesado', 'Pagado'],
       longues: ['Solicitud recibida', 'Etiqueta prepagada enviada', 'Entrega de su paquete', 'Recepción y pesaje filmado', 'Pago'],
@@ -1175,7 +1179,8 @@
       creerNom: 'Indique su nombre y apellidos.', creerSiret: 'Indique el nombre de la empresa y su SIRET (14 cifras).',
       cgu: 'Marque la casilla para aceptar las condiciones.', renvoyer: 'Volver a enviar el código ({s} s)', renvoyerOk: 'Volver a enviar el código',
       rColis: 'Paquetes', rColisTexte: '{n} paquete(s) · unos {kg} kg', rPaiement: 'Pago', rEtiquette: 'Remitente en la etiqueta',
-      rPrix: 'Precio garantizado', rPrixTexte: '{prix} €/kg hasta el {date}', modifier: 'Cambiar', introuvable: 'No encontrado.', deja2: 'Ya pedido hoy.' },
+      rPrix: 'Precio garantizado', rPrixTexte: '{prix} €/kg hasta el {date}', modifier: 'Cambiar', introuvable: 'No encontrado.', deja2: 'Ya pedido hoy.',
+      googleEchec: 'El inicio de sesión con Google no ha funcionado: inténtelo de nuevo o reciba un código por correo.' },
   };
 
   // Mon compte (anciennement « Espace client » ; 3e revue, 9 nov. 2026, propositions 69 à 93 choisies par Malik) :
@@ -1355,6 +1360,12 @@
       cxEmail.focus();
     });
     if (location.hash === '#creer') changerMode('creation');
+    // « Continuer avec Google » : seulement quand Malik a enregistré la clé Google (annoncé par /api/site/infos)
+    infosPretes.then(function () {
+      if (!infos || !infos.google) return;
+      connexion.querySelectorAll('[data-google]').forEach(function (el) { el.hidden = false; });
+      connexion.querySelector('a[data-google]').href = '/api/espace/google?langue=' + encodeURIComponent(lang);
+    });
 
     // ---------- le compte ----------
     var sections = {};
@@ -1958,6 +1969,7 @@
     var params = new URLSearchParams(location.search);
     if (params.get('compte') === 'supprime') dire(msgCx, 'supprime', true);
     if (params.get('compte') === 'ferme') dire(msgCx, 'supprimeGarde', true);
+    if (params.get('google')) dire(msgCx, 'googleEchec');
     var jeton = params.get('lien');
     if (jeton) {
       history.replaceState(history.state, '', location.pathname + location.hash); // le jeton ne reste pas dans l'adresse

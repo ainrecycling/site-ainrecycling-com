@@ -162,6 +162,7 @@ function infos_publiques(): array
             'garanti_jusqu' => garanti_jusqu($auj)],
         'aujourdhui' => $auj,
         'annonces' => array_map(fn ($a) => ['type' => $a['type'], 'debut' => $a['debut'], 'fin' => $a['fin'], 'villes' => $a['villes'] ?? ''], array_slice(annonces_actives(), 0, 4)),
+        'google' => !empty((reglage_site('google') ?? [])['client_id']), // le bouton « Continuer avec Google » (proposition 68)
     ];
 }
 

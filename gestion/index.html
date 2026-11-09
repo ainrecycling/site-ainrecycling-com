@@ -53,6 +53,9 @@
         <button type="button" class="tuile" data-ouvrir="d-sauvegarde">
           <span class="tuile-titre">Sauvegarde</span><span class="tuile-valeur petite" data-t-sauvegarde>…</span><span class="tuile-detail" data-t-sauvegarde-detail></span>
         </button>
+        <button type="button" class="tuile" data-ouvrir="d-google">
+          <span class="tuile-titre">Connexion Google</span><span class="tuile-valeur petite" data-t-google>…</span><span class="tuile-detail" data-t-google-detail></span>
+        </button>
       </div>
       <h2 class="titre-demandes">Demandes d'envoi par colis</h2>
       <!-- ce qui t'attend (proposition 100) : un appui montre ces demandes -->
@@ -155,6 +158,25 @@
       <p class="msg" role="alert" hidden></p>
     </form>
     <p class="aide">Range le fichier sur ton ordinateur ou une clé USB, <b>jamais dans un e-mail</b> : il y a des pièces d'identité dedans. Note bien le mot de passe : sans lui, personne ne peut ouvrir le fichier, pas même moi. Pour l'ouvrir : 7-Zip (gratuit). Une fois par mois, c'est bien.</p>
+  </dialog>
+
+  <dialog id="d-google" class="feuille" aria-labelledby="d-google-titre">
+    <form method="dialog" class="feuille-tete"><h2 id="d-google-titre">Connexion avec Google</h2><button class="lien">Fermer</button></form>
+    <p>Le bouton « Continuer avec Google » de la page Mon compte marche dès que la clé est enregistrée ici. Elle se crée une fois,
+      gratuitement, dans la console Google Cloud (« Identifiants » › « ID client OAuth » › « Application Web »).</p>
+    <p class="aide">Adresse de retour à déclarer chez Google : <b data-google-retour></b>
+      <button type="button" class="mini" data-copier-retour>Copier</button></p>
+    <p class="etat-sauvegarde" data-etat-google></p>
+    <form id="f-google" class="pile" novalidate>
+      <label for="g-client">ID client (se termine par .apps.googleusercontent.com)</label>
+      <input id="g-client" autocomplete="off" spellcheck="false">
+      <label for="g-secret">Code secret du client</label>
+      <input id="g-secret" type="password" autocomplete="off" spellcheck="false">
+      <button type="submit" class="bouton">Enregistrer la clé</button>
+      <button type="button" class="bouton fantome" data-retirer-google>Retirer la clé (bouton caché)</button>
+      <p class="msg" role="alert" hidden></p>
+    </form>
+    <p class="aide">Le code secret est gardé chiffré sur le serveur et n'est plus jamais affiché.</p>
   </dialog>
 
   <template id="modele-demande">

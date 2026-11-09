@@ -483,6 +483,13 @@
     $('[data-t-sauvegarde]').textContent = le ? 'Le ' + dateLongue(le) : 'Jamais faite';
     $('[data-t-sauvegarde-detail]').textContent = vieille ? 'à faire' : 'à refaire dans un mois';
     $('.tuile[data-ouvrir="d-sauvegarde"]').classList.toggle('a-faire', vieille);
+    // case Connexion Google (propositions 68 et 74)
+    var g = r.google || {};
+    $('[data-t-google]').textContent = g.pret ? 'Active' : 'Pas encore';
+    $('[data-t-google-detail]').textContent = g.pret ? 'bouton visible sur Mon compte' : 'clé à créer chez Google';
+    $('[data-google-retour]').textContent = g.retour || '';
+    $('[data-etat-google]').textContent = g.pret ? 'Clé enregistrée : ' + g.client_id : 'Pas encore de clé : le bouton Google est caché.';
+    $('#g-client').value = g.client_id || '';
     var es = $('[data-etat-sauvegarde]');
     es.textContent = le ? 'Dernière sauvegarde : ' + dateLongue(le) + (vieille ? ' · à refaire' : '') : 'Pas encore de sauvegarde.';
     es.classList.toggle('a-faire', vieille);
@@ -581,4 +588,19 @@
 
   lireCible();
   charger();
+
+  // clé Google : enregistrée (chiffrée) ou retirée
+  var fg = $('#f-google'), msgG = $('.msg', fg);
+  var envoyerCle = function (corps) {
+    api('POST', 'google', corps).then(function (r) {
+      if (r.status === 401) return montrerConnexion();
+      if (r.erreur) return dire(msgG, r.erreur === 'client_id' ? 'Cet ID client ne ressemble pas à celui de Google.' : r.erreur === 'secret' ? 'Ce code secret ne ressemble pas à celui de Google.' : r.erreur);
+      dire(msgG, r.google && r.google.pret ? 'Clé enregistrée : le bouton Google est visible sur Mon compte.' : 'Clé retirée : le bouton Google est caché.', true);
+      $('#g-secret').value = '';
+      chargerReglages();
+    });
+  };
+  fg.addEventListener('submit', function (ev) { ev.preventDefault(); envoyerCle({ client_id: $('#g-client').value.trim(), secret: $('#g-secret').value.trim() }); });
+  $('[data-retirer-google]').addEventListener('click', function () { envoyerCle({ client_id: '', secret: '' }); });
+  $('[data-copier-retour]').addEventListener('click', function () { copier(this, $('[data-google-retour]').textContent); });
 })();

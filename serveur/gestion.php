@@ -10,8 +10,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/lib/espace.php';
 require __DIR__ . '/lib/sauvegarde.php';
-
-const COOKIE_GESTION = 'gestion';
+require __DIR__ . '/lib/google.php'; // aussi admins() et cookie_gestion() (lib/admins.php)
 
 /** Ce que montre la page de gestion en haut : prix, annonces, alerte prix, pages vues, sauvegarde. */
 function reglages_pour_malik(): array
@@ -24,20 +23,9 @@ function reglages_pour_malik(): array
         'abonnes' => nombre_abonnes(), 'alertes_en_attente' => alertes_en_attente(),
         'visites' => visites_resume(),
         'sauvegarde' => reglage_site('sauvegarde'), 'sauvegarde_zip' => zip_chiffre_possible(),
+        // connexion avec Google (propositions 68 et 74) : prête ou non, et l'adresse de retour à déclarer chez Google
+        'google' => ['pret' => google_cle() !== null, 'client_id' => (string) ((reglage_site('google') ?? [])['client_id'] ?? ''), 'retour' => google_retour()],
     ];
-}
-const GESTION_JOURS = 30;
-
-function admins(): array
-{
-    return array_map('strtolower', (array) reglage('admins', []));
-}
-
-function cookie_gestion(string $email): string
-{
-    $charge = b64url((string) json_encode(['e' => $email, 'exp' => ms() + GESTION_JOURS * 86400000]));
-    return COOKIE_GESTION . "=$charge." . signer('gestion|' . $charge) . '; Path=/; HttpOnly; ' . (https() || !mode_essai() ? 'Secure; ' : '')
-        . 'SameSite=Strict; Max-Age=' . (GESTION_JOURS * 86400);
 }
 
 /** L'adresse de Malik connecté (toujours dans la liste), sinon refus. */
@@ -134,6 +122,19 @@ try {
                 ajouter_annonce($a, $email);
             }
             repondre(reglages_pour_malik());
+
+        // La clé Google collée par Malik (identifiant et code secret du client OAuth), gardée chiffrée ; vide = retirée.
+        case 'POST google':
+            origine_refusee();
+            $email = exiger_admin();
+            $b = corps_json() ?? [];
+            $id = trim((string) ($b['client_id'] ?? ''));
+            $secret = trim((string) ($b['secret'] ?? ''));
+            if ($id === '' && $secret === '') { ecrire_reglage_site('google', null, $email); repondre(['google' => ['pret' => false]]); }
+            if (!preg_match('/^[0-9]{6,}-[a-z0-9]{10,}\.apps\.googleusercontent\.com$/', $id)) refus('client_id');
+            if (!preg_match('/^[A-Za-z0-9_-]{20,80}$/', $secret)) refus('secret');
+            ecrire_reglage_site('google', ['client_id' => $id, 'secret' => chiffrer($secret)], $email);
+            repondre(['google' => ['pret' => true, 'client_id' => $id, 'retour' => google_retour()]]);
 
         // Sauvegarde de l'espace client, fermée par le mot de passe choisi par Malik (10 caractères au moins).
         case 'POST sauvegarde':
