@@ -29,8 +29,13 @@ try {
             $action = (string) ($b['action'] ?? '');
             $numero = (string) ($b['numero'] ?? '');
             if ($action === 'bon' && !preg_match('/^AR-\d{4}-\d{4,6}$/', $numero)) refus('numero');
-            $e = marquer_envoi((string) ($b['envoi'] ?? ''), $action, texte($b['par'] ?? 'appli', 40) ?: 'appli', $numero);
-            if (!$e) refus(in_array($action, ['traite', 'remettre', 'bon', 'sans_bon'], true) ? 'introuvable' : 'action', 404);
+            $connues = ['traite', 'remettre', 'bon', 'sans_bon', 'recu', 'pese', 'paye'];
+            if (!in_array($action, $connues, true)) refus('action', 404);
+            // l'appli peut aussi envoyer le poids (pese : poids_net, poids_brut) et le paiement (paye : montant, detail)
+            $e = marquer_envoi((string) ($b['envoi'] ?? ''), $action, texte($b['par'] ?? 'appli', 40) ?: 'appli', $numero,
+                is_array($b['valeurs'] ?? null) ? $b['valeurs'] : []);
+            if (!$e) refus($action === 'pese' ? 'poids' : 'introuvable', $action === 'pese' ? 400 : 404);
+            prevenir_etape($e, $action);
             repondre(['envoi' => $e]);
 
         // { action: vendeur, compte, vendeur_id } : la fiche du carnet de l'appli créée ou reliée pour ce compte.

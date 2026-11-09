@@ -21,7 +21,7 @@ try {
             if (robot($b)) repondre(['ok' => true]);
             $email = email_valide($b['email'] ?? null);
             if (!$email) refus('email');
-            if (envoyer_code($email, langue_de($b['langue'] ?? null)) === 'trop') refus('trop', 429);
+            if (envoyer_code($email, langue_de($b['langue'] ?? null), 'espace', lire_creation($b['creation'] ?? null)) === 'trop') refus('trop', 429);
             repondre(['ok' => true]);
 
         // 2e pas : le code reçu. Bon code → le compte (créé à la première connexion) et le cookie de session (60 jours).
@@ -32,7 +32,17 @@ try {
             if (!$b || !$email) refus('email');
             $r = verifier_code($email, (string) preg_replace('/\s/', '', (string) ($b['code'] ?? '')));
             if ($r !== 'ok') refus($r, $r === 'bloque' ? 429 : 400);
-            $c = compte_par_email($email, langue_de($b['langue'] ?? null));
+            $c = appliquer_creation(compte_par_email($email, langue_de($b['langue'] ?? null)), prendre_creation($email));
+            repondre(['compte' => compte_visible($c), 'envois' => array_map('envoi_visible', envois_du($c['id']))], 200, cookie_session($c['id']));
+
+        // Connexion par le bouton « Me connecter » de l'e-mail (proposition 72) : la page ouverte par le lien envoie le jeton
+        // (un logiciel qui ouvre les liens des e-mails tout seul ne connecte donc personne).
+        case 'POST lien':
+            origine_refusee();
+            $b = corps_json();
+            $email = utiliser_lien((string) ($b['jeton'] ?? ''));
+            if (!$email) refus('lien_expire');
+            $c = appliquer_creation(compte_par_email($email, langue_de($b['langue'] ?? null)), prendre_creation($email));
             repondre(['compte' => compte_visible($c), 'envois' => array_map('envoi_visible', envois_du($c['id']))], 200, cookie_session($c['id']));
 
         case 'DELETE connexion':
@@ -52,18 +62,51 @@ try {
             if (!$c) refus('connexion', 401);
             $b = corps_json();
             if (!$b) refus('illisible');
-            $n = ($b['section'] ?? '') === 'rib' ? lire_rib($b, $c) : lire_coordonnees($b, $c);
+            $section = (string) ($b['section'] ?? '');
+            if ($section === 'prevenir') {
+                // être prévenu des étapes par e-mail (au départ), WhatsApp ou les deux (proposition 95)
+                $p = (string) ($b['prevenir'] ?? '');
+                if (!in_array($p, PREVENIR, true)) refus('prevenir');
+                if ($p !== 'email' && !numero_international($c['telephone'])) refus('telephone_whatsapp');
+                $n = ['prevenir' => $p, 'maj_le' => iso()] + $c;
+                enregistrer_compte($n);
+                repondre(['compte' => compte_visible($n)]);
+            }
+            $n = $section === 'rib' ? lire_rib($b, $c) : lire_coordonnees($b, $c);
             if (is_string($n)) refus($n);
             enregistrer_compte($n);
             repondre(['compte' => compte_visible($n)]);
 
-        // Suppression du compte, de ses photos et de ses demandes.
+        // Le RIB en entier, pour la personne elle-même (bouton « Voir », proposition 82) ; jamais gardé en cache.
+        case 'GET rib':
+            $c = compte_connecte();
+            if (!$c) refus('connexion', 401);
+            header('Cache-Control: no-store');
+            repondre(['iban' => $c['rib']['iban'] ?? null]);
+
+        // Le bon d'achat redemandé (proposition 98, version de Malik : le numéro et un bouton) : Malik reçoit un e-mail et le
+        // renvoie lui-même ; une fois par jour au plus pour un même bon.
+        case 'POST bon':
+            origine_refusee();
+            $c = compte_connecte();
+            if (!$c) refus('connexion', 401);
+            $b = corps_json();
+            $e = envoi_du_compte($c, (string) ($b['reference'] ?? ''));
+            if (!$e || !$e['bon_numero']) refus('introuvable', 404);
+            if ($e['bon_redemande_le'] && $e['bon_redemande_le'] > iso(ms() - 86400000)) refus('deja', 429);
+            bd()->prepare('UPDATE espace_envois SET bon_redemande_le = ? WHERE id = ?')->execute([iso(), $e['id']]);
+            apres_reponse(fn () => mail_bon_redemande($c, $e));
+            repondre(['ok' => true]);
+
+        // Suppression du compte : effacé avec ses photos et ses demandes ; si la personne a vendu, fermé seulement, sa pièce
+        // d'identité restant pour justifier l'achat (proposition 86).
         case 'DELETE compte':
             origine_refusee();
             $c = compte_connecte();
             if (!$c) refus('connexion', 401);
+            $garde = a_vendu($c);
             supprimer_compte($c);
-            repondre(['ok' => true], 200, cookie_efface());
+            repondre(['ok' => true, 'garde' => $garde], 200, cookie_efface());
 
         // La pièce d'identité, déposée une seule fois : type, numéro, date de fin et photos recto / verso (réduites par le
         // téléphone en JPEG de 4 Mo au plus ; une nouvelle photo remplace l'ancienne, le passeport n'a pas de verso).

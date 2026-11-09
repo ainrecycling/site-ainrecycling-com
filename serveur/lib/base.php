@@ -7,7 +7,7 @@ declare(strict_types=1);
 // Le dossier privé (prive-ain, à côté de www) garde : config.php (secrets, écrit une fois par serveur/installation.php),
 // les photos des pièces d'identité (chiffrées), le journal. Rien de tout cela n'est jamais servi par le site.
 
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 /** Dossier privé : à côté de www (jamais servi par le site). AIN_PRIVE le remplace pour les essais sur l'ordinateur. */
 function prive(): string
@@ -132,14 +132,7 @@ function migrer(PDO $bd): void
 
     // Version 2 (8 nov. 2026) : le prix garanti gardé dans chaque demande (proposition 50), les réglages pilotés depuis
     // /gestion/ (prix, annonces, date de sauvegarde : propositions 54, 55, 65), l'alerte prix (56), les pages vues (57).
-    foreach (['prix_kg' => 'DOUBLE NULL', 'garanti_jusqu' => 'VARCHAR(10) NULL'] as $col => $type) {
-        if (colonne_existe($bd, 'espace_envois', $col)) continue;
-        try {
-            $bd->exec("ALTER TABLE espace_envois ADD COLUMN $col $type");
-        } catch (PDOException $e) {
-            if (!colonne_existe($bd, 'espace_envois', $col)) throw $e; // ajoutée au même moment par une autre demande
-        }
-    }
+    ajouter_colonnes($bd, 'espace_envois', ['prix_kg' => 'DOUBLE NULL', 'garanti_jusqu' => 'VARCHAR(10) NULL']);
     $bd->exec("CREATE TABLE IF NOT EXISTS site_reglages (
         cle VARCHAR(40) NOT NULL PRIMARY KEY, valeur TEXT NOT NULL, maj_le VARCHAR(30) NOT NULL, maj_par VARCHAR(60) NOT NULL DEFAULT ''
     )$fin");
@@ -152,7 +145,32 @@ function migrer(PDO $bd): void
         jour VARCHAR(10) NOT NULL, page VARCHAR(120) NOT NULL, source VARCHAR(30) NOT NULL, n INTEGER NOT NULL DEFAULT 0,
         PRIMARY KEY (jour, page, source)
     )$fin");
+    // Version 3 (9 nov. 2026, 3e revue) : les étapes du suivi (colis reçu, pesé, payé : propositions 94 à 97), la façon
+    // d'être prévenu (e-mail, WhatsApp ou les deux : 95), le compte gardé pour justifier une vente quand la personne le
+    // supprime (86), le rappel de la pièce qui expire (81), le lien de connexion dans l'e-mail (72), le prénom et le nom
+    // donnés en créant le compte (71), le bon redemandé (98).
+    ajouter_colonnes($bd, 'espace_envois', ['recu_le' => 'VARCHAR(30) NULL', 'pese_le' => 'VARCHAR(30) NULL', 'poids_brut' => 'DOUBLE NULL',
+        'poids_net' => 'DOUBLE NULL', 'paye_le' => 'VARCHAR(30) NULL', 'montant' => 'DOUBLE NULL', 'paye_detail' => 'VARCHAR(60) NULL',
+        'bon_redemande_le' => 'VARCHAR(30) NULL']);
+    ajouter_colonnes($bd, 'espace_comptes', ['prevenir' => 'VARCHAR(12) NULL', 'archive_le' => 'VARCHAR(30) NULL', 'rappel_piece' => 'VARCHAR(10) NULL']);
+    ajouter_colonnes($bd, 'espace_codes', ['creation' => 'TEXT NULL']);
+    $bd->exec("CREATE TABLE IF NOT EXISTS espace_liens (
+        h CHAR(64) NOT NULL PRIMARY KEY, email TEXT NOT NULL, exp BIGINT NOT NULL
+    )$fin");
     @file_put_contents($drapeau, gmdate('c'));
+}
+
+/** Ajoute les colonnes qui manquent (une autre demande peut les ajouter au même moment). */
+function ajouter_colonnes(PDO $bd, string $table, array $colonnes): void
+{
+    foreach ($colonnes as $col => $type) {
+        if (colonne_existe($bd, $table, $col)) continue;
+        try {
+            $bd->exec("ALTER TABLE $table ADD COLUMN $col $type");
+        } catch (PDOException $e) {
+            if (!colonne_existe($bd, $table, $col)) throw $e;
+        }
+    }
 }
 
 function colonne_existe(PDO $bd, string $table, string $colonne): bool

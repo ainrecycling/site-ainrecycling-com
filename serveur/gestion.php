@@ -92,10 +92,10 @@ try {
             exiger_admin();
             $b = corps_json();
             $action = (string) ($b['action'] ?? '');
-            if (!in_array($action, ['traite', 'remettre'], true)) refus('action');
-            $e = marquer_envoi((string) ($b['envoi'] ?? ''), $action, 'Malik (site)');
-            if (!$e) refus('introuvable', 404);
-            repondre(['envoi' => $e]);
+            if (!in_array($action, ['traite', 'remettre', 'recu', 'sans_recu', 'pese', 'sans_pese', 'paye', 'sans_paye'], true)) refus('action');
+            $e = marquer_envoi((string) ($b['envoi'] ?? ''), $action, 'Malik (site)', '', is_array($b['valeurs'] ?? null) ? $b['valeurs'] : []);
+            if (!$e) refus($action === 'pese' ? 'poids' : 'introuvable', $action === 'pese' ? 400 : 404);
+            repondre(['envoi' => $e, 'whatsapp' => prevenir_etape($e, $action)]);
 
         // Les réglages du site (8 nov. 2026) : prix et son historique, annonces, abonnés à l'alerte prix, pages vues,
         // dernière sauvegarde.

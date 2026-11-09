@@ -1018,19 +1018,200 @@
     if (f) { siVide(f.elements.adresse, x.adresse); siVide(f.elements.cp, x.cp); siVide(f.elements.ville, x.ville); }
   });
 
-  // Espace client : connexion par un code reçu par e-mail, puis le compte (coordonnées, pièce d'identité, RIB) et les
-  // demandes d'envoi par colis. Le serveur est celui du site chez OVH (serveur/espace.php, en PHP, joint par l'adresse
-  // /api/espace du .htaccess) : même adresse que le site, cookie du site. Les erreurs arrivent en codes courts, dits ici
-  // dans la langue de la page (ESPACE plus haut). Les photos de la pièce sont réduites ici en JPEG avant l'envoi.
+  // Mon compte (3e revue, 9 nov. 2026) : textes écrits par site.js, dans les 5 langues (les textes de la page elle-même
+  // sont traduits par outils/traduire.mjs)
+  var COMPTE = {
+    fr: { depuis: 'Client depuis {mois}', enCours: 'Ma demande en cours', etapes: ['Demande', 'Étiquette', 'Dépôt', 'Pesée', 'Paiement'],
+      etats: ['Demande reçue', 'Étiquette envoyée', 'Colis reçu', 'Pesé', 'Payé'],
+      longues: ['Demande reçue', 'Étiquette prépayée envoyée', 'Dépôt de votre colis', 'Réception et pesée filmée', 'Paiement'],
+      p0: ['Nous préparons votre étiquette', 'Elle vous est envoyée par e-mail sous 24 h ouvrées. Vous pouvez déjà imprimer le bordereau.'],
+      p1: ['À vous : déposez votre colis', 'Collez l\'étiquette reçue par e-mail et déposez le colis au plus tard le {date} pour garder votre prix.'],
+      p2: ['Nous pesons votre colis', 'Devant la caméra : le colis fermé, puis le carbure seul. La vidéo et votre bon d\'achat suivent.'],
+      p3: ['Votre paiement arrive', 'Sous 48 h ouvrées après la pesée, par {paiement}.'],
+      imprimer: 'Imprimer le bordereau', voirSuivi: 'Voir le suivi', prixGaranti: 'Votre prix garanti', encore: 'encore {n} jours', encore1: 'dernier jour',
+      garantiJusqu: 'Garanti jusqu\'au {date}, pour un colis déposé d\'ici là.', prixJour: 'Le prix du jour',
+      prixJourTexte: 'Garanti 7 jours dès votre demande, jusqu\'à la fin du mois au plus tard.', venduEn: 'Vendu en {annee}',
+      nVentes: 'ventes', nVente: 'vente', kgCarbure: 'de carbure', payes: 'payés', votreCompte: 'Votre compte', complet: 'Votre compte est complet à {p} %',
+      coord: 'Coordonnées', piece: 'Pièce d\'identité', ribVir: 'RIB, pour être payé par virement', completer: 'Compléter mon compte',
+      vide: ['Pas encore de demande', 'Préparez votre carbure dans un carton solide : en 3 minutes, la demande est faite et l\'étiquette est offerte.', 'Envoyer mon premier colis'],
+      videEtapes: ['<b>Demande en ligne</b> · 3 minutes', '<b>Étiquette offerte</b> · sous 24 h ouvrées', '<b>Payé sous 48 h ouvrées</b> après la pesée filmée'],
+      dernieres: 'Mes dernières ventes', toutVoir: 'Tout voir', ongletEnCours: 'En cours', ongletFinies: 'Terminées', aucuneEnCours: 'Aucune demande en cours.',
+      aucuneFinie: 'Aucune demande terminée pour le moment.', retour: 'Mes demandes', envoyeeLe: 'Envoyée le {date}', suivi: 'Le suivi', envoi: 'Votre envoi',
+      aFaire: 'À faire au plus tard le {date}', pesee: 'Le colis fermé, puis le carbure seul : la vidéo vous est envoyée',
+      paiementSous: 'Sous 48 h ouvrées après la pesée, avec votre bon d\'achat', net: 'Poids net : {kg} kg', question: 'Une question sur cette demande ?',
+      questionTexte: 'Malik vous répond du lundi au vendredi, de 8 h à 18 h.', questionWa: 'Bonjour, j\'ai une question sur ma demande {ref}.',
+      ventesVide: 'Vos ventes apparaîtront ici après le paiement de votre premier colis.', brut: 'Poids brut (colis fermé)', netL: 'Poids net (carbure)',
+      prix: 'Prix', montant: 'Montant', payeLe: 'Payé le {date}', bon: 'Bon d\'achat {n}', redemander: 'Redemander mon bon',
+      redemande: 'C\'est demandé : Malik vous renvoie votre bon.', deja: 'Déjà redemandé aujourd\'hui : Malik vous le renvoie.',
+      nom: 'Nom', entreprise: 'Entreprise', adresse: 'Adresse', tel: 'Téléphone', mail: 'E-mail', vide2: 'Non renseigné',
+      valide: 'Valide', bientot: 'Expire bientôt', expiree: 'Expirée', valideJusqu: '{type} · valide jusqu\'au {date}', deposee: '{type} · déposée le {date}',
+      titulaire: 'Titulaire : {nom}', voir: 'Voir en entier', cacher: 'Cacher', bulle: 'Enregistré', prevenirOk: 'Préférence enregistrée',
+      telephone_whatsapp: 'Ajoutez d\'abord votre numéro de téléphone dans vos informations.', lien_expire: 'Ce lien n\'est plus valable : demandez un nouveau code.',
+      supprimeGarde: 'Votre compte est fermé. Votre identité et votre pièce d\'identité restent gardées pour justifier vos ventes.',
+      creerNom: 'Indiquez votre prénom et votre nom.', creerSiret: 'Indiquez le nom de l\'entreprise et son SIRET (14 chiffres).',
+      cgu: 'Cochez la case pour accepter les conditions.', renvoyer: 'Renvoyer le code ({s} s)', renvoyerOk: 'Renvoyer le code',
+      rColis: 'Colis', rColisTexte: '{n} colis · {kg} kg à peu près', rPaiement: 'Paiement', rEtiquette: 'Expéditeur sur l\'étiquette',
+      rPrix: 'Prix garanti', rPrixTexte: '{prix} €/kg jusqu\'au {date}', modifier: 'Modifier', introuvable: 'Introuvable.', deja2: 'Déjà demandé aujourd\'hui.' },
+    de: { depuis: 'Kunde seit {mois}', enCours: 'Meine laufende Anfrage', etapes: ['Anfrage', 'Etikett', 'Abgabe', 'Wiegung', 'Zahlung'],
+      etats: ['Anfrage erhalten', 'Etikett verschickt', 'Paket erhalten', 'Gewogen', 'Bezahlt'],
+      longues: ['Anfrage erhalten', 'Vorausbezahltes Etikett verschickt', 'Abgabe Ihres Pakets', 'Eingang und gefilmte Wiegung', 'Zahlung'],
+      p0: ['Wir bereiten Ihr Etikett vor', 'Sie erhalten es innerhalb von 24 Std. (Werktage) per E-Mail. Den Versandschein können Sie schon drucken.'],
+      p1: ['Jetzt sind Sie dran: Paket abgeben', 'Kleben Sie das per E-Mail erhaltene Etikett auf und geben Sie das Paket spätestens am {date} ab, damit Ihr Preis gilt.'],
+      p2: ['Wir wiegen Ihr Paket', 'Vor der Kamera: das geschlossene Paket, dann das Hartmetall allein. Video und Ankaufsbeleg folgen.'],
+      p3: ['Ihre Zahlung kommt', 'Innerhalb von 48 Std. (Werktage) nach der Wiegung, per {paiement}.'],
+      imprimer: 'Versandschein drucken', voirSuivi: 'Verlauf ansehen', prixGaranti: 'Ihr garantierter Preis', encore: 'noch {n} Tage', encore1: 'letzter Tag',
+      garantiJusqu: 'Garantiert bis {date}, für ein bis dahin abgegebenes Paket.', prixJour: 'Der Tagespreis',
+      prixJourTexte: '7 Tage ab Ihrer Anfrage garantiert, längstens bis zum Monatsende.', venduEn: 'Verkauft {annee}',
+      nVentes: 'Verkäufe', nVente: 'Verkauf', kgCarbure: 'Hartmetall', payes: 'bezahlt', votreCompte: 'Ihr Konto', complet: 'Ihr Konto ist zu {p} % vollständig',
+      coord: 'Kontaktdaten', piece: 'Ausweis', ribVir: 'Bankverbindung, für eine Zahlung per Überweisung', completer: 'Konto vervollständigen',
+      vide: ['Noch keine Anfrage', 'Packen Sie Ihr Hartmetall in einen stabilen Karton: In 3 Minuten ist die Anfrage gestellt und das Etikett kostenlos.', 'Mein erstes Paket senden'],
+      videEtapes: ['<b>Online-Anfrage</b> · 3 Minuten', '<b>Kostenloses Etikett</b> · innerhalb von 24 Std. (Werktage)', '<b>Bezahlt innerhalb von 48 Std.</b> nach der gefilmten Wiegung'],
+      dernieres: 'Meine letzten Verkäufe', toutVoir: 'Alle ansehen', ongletEnCours: 'Laufend', ongletFinies: 'Abgeschlossen', aucuneEnCours: 'Keine laufende Anfrage.',
+      aucuneFinie: 'Noch keine abgeschlossene Anfrage.', retour: 'Meine Anfragen', envoyeeLe: 'Gesendet am {date}', suivi: 'Der Verlauf', envoi: 'Ihre Sendung',
+      aFaire: 'Spätestens am {date}', pesee: 'Das geschlossene Paket, dann das Hartmetall allein: Sie erhalten das Video',
+      paiementSous: 'Innerhalb von 48 Std. (Werktage) nach der Wiegung, mit Ihrem Ankaufsbeleg', net: 'Nettogewicht: {kg} kg', question: 'Eine Frage zu dieser Anfrage?',
+      questionTexte: 'Malik antwortet Ihnen montags bis freitags von 8 bis 18 Uhr.', questionWa: 'Guten Tag, ich habe eine Frage zu meiner Anfrage {ref}.',
+      ventesVide: 'Ihre Verkäufe erscheinen hier nach der Zahlung Ihres ersten Pakets.', brut: 'Bruttogewicht (geschlossenes Paket)', netL: 'Nettogewicht (Hartmetall)',
+      prix: 'Preis', montant: 'Betrag', payeLe: 'Bezahlt am {date}', bon: 'Ankaufsbeleg {n}', redemander: 'Beleg erneut anfordern',
+      redemande: 'Angefordert: Malik schickt Ihnen Ihren Beleg erneut.', deja: 'Heute schon angefordert: Malik schickt ihn Ihnen.',
+      nom: 'Name', entreprise: 'Unternehmen', adresse: 'Adresse', tel: 'Telefon', mail: 'E-Mail', vide2: 'Nicht angegeben',
+      valide: 'Gültig', bientot: 'Läuft bald ab', expiree: 'Abgelaufen', valideJusqu: '{type} · gültig bis {date}', deposee: '{type} · hochgeladen am {date}',
+      titulaire: 'Kontoinhaber: {nom}', voir: 'Vollständig anzeigen', cacher: 'Verbergen', bulle: 'Gespeichert', prevenirOk: 'Einstellung gespeichert',
+      telephone_whatsapp: 'Geben Sie zuerst Ihre Telefonnummer bei Ihren Angaben an.', lien_expire: 'Dieser Link ist nicht mehr gültig: Fordern Sie einen neuen Code an.',
+      supprimeGarde: 'Ihr Konto ist geschlossen. Ihre Identität und Ihr Ausweis bleiben zum Nachweis Ihrer Verkäufe gespeichert.',
+      creerNom: 'Geben Sie Ihren Vor- und Nachnamen an.', creerSiret: 'Geben Sie den Namen des Unternehmens und seine SIRET (14 Ziffern) an.',
+      cgu: 'Kreuzen Sie das Kästchen an, um die Bedingungen zu akzeptieren.', renvoyer: 'Code erneut senden ({s} s)', renvoyerOk: 'Code erneut senden',
+      rColis: 'Pakete', rColisTexte: '{n} Paket(e) · etwa {kg} kg', rPaiement: 'Zahlung', rEtiquette: 'Absender auf dem Etikett',
+      rPrix: 'Garantierter Preis', rPrixTexte: '{prix} €/kg bis {date}', modifier: 'Ändern', introuvable: 'Nicht gefunden.', deja2: 'Heute schon angefordert.' },
+    en: { depuis: 'Customer since {mois}', enCours: 'My current request', etapes: ['Request', 'Label', 'Drop-off', 'Weighing', 'Payment'],
+      etats: ['Request received', 'Label sent', 'Parcel received', 'Weighed', 'Paid'],
+      longues: ['Request received', 'Prepaid label sent', 'Dropping off your parcel', 'Receipt and filmed weighing', 'Payment'],
+      p0: ['We are preparing your label', 'It will be emailed to you within 24 h (working days). You can already print the shipping slip.'],
+      p1: ['Your turn: drop off your parcel', 'Stick on the label you received by email and drop the parcel off by {date} at the latest to keep your price.'],
+      p2: ['We are weighing your parcel', 'On camera: the closed parcel, then the carbide on its own. The video and your purchase receipt will follow.'],
+      p3: ['Your payment is on its way', 'Within 48 h (working days) after the weighing, by {paiement}.'],
+      imprimer: 'Print the shipping slip', voirSuivi: 'See the tracking', prixGaranti: 'Your guaranteed price', encore: '{n} days left', encore1: 'last day',
+      garantiJusqu: 'Guaranteed until {date}, for a parcel dropped off by then.', prixJour: 'Today\'s price',
+      prixJourTexte: 'Guaranteed for 7 days from your request, until the end of the month at the latest.', venduEn: 'Sold in {annee}',
+      nVentes: 'sales', nVente: 'sale', kgCarbure: 'of carbide', payes: 'paid', votreCompte: 'Your account', complet: 'Your account is {p}% complete',
+      coord: 'Contact details', piece: 'ID document', ribVir: 'Bank details, to be paid by bank transfer', completer: 'Complete my account',
+      vide: ['No request yet', 'Pack your carbide in a sturdy box: in 3 minutes the request is done and the label is free.', 'Send my first parcel'],
+      videEtapes: ['<b>Online request</b> · 3 minutes', '<b>Free label</b> · within 24 h (working days)', '<b>Paid within 48 h</b> after the filmed weighing'],
+      dernieres: 'My latest sales', toutVoir: 'See all', ongletEnCours: 'In progress', ongletFinies: 'Completed', aucuneEnCours: 'No request in progress.',
+      aucuneFinie: 'No completed request yet.', retour: 'My requests', envoyeeLe: 'Sent on {date}', suivi: 'Tracking', envoi: 'Your shipment',
+      aFaire: 'By {date} at the latest', pesee: 'The closed parcel, then the carbide on its own: the video is sent to you',
+      paiementSous: 'Within 48 h (working days) after the weighing, with your purchase receipt', net: 'Net weight: {kg} kg', question: 'A question about this request?',
+      questionTexte: 'Malik answers Monday to Friday, 8 am to 6 pm.', questionWa: 'Hello, I have a question about my request {ref}.',
+      ventesVide: 'Your sales will appear here once your first parcel has been paid.', brut: 'Gross weight (closed parcel)', netL: 'Net weight (carbide)',
+      prix: 'Price', montant: 'Amount', payeLe: 'Paid on {date}', bon: 'Purchase receipt {n}', redemander: 'Ask for my receipt again',
+      redemande: 'Done: Malik will send you your receipt again.', deja: 'Already asked today: Malik will send it to you.',
+      nom: 'Name', entreprise: 'Company', adresse: 'Address', tel: 'Phone', mail: 'Email', vide2: 'Not given',
+      valide: 'Valid', bientot: 'Expires soon', expiree: 'Expired', valideJusqu: '{type} · valid until {date}', deposee: '{type} · uploaded on {date}',
+      titulaire: 'Account holder: {nom}', voir: 'Show in full', cacher: 'Hide', bulle: 'Saved', prevenirOk: 'Preference saved',
+      telephone_whatsapp: 'First add your phone number to your details.', lien_expire: 'This link is no longer valid: ask for a new code.',
+      supprimeGarde: 'Your account is closed. Your identity and ID document are kept to justify your sales.',
+      creerNom: 'Enter your first name and last name.', creerSiret: 'Enter the company name and its SIRET (14 digits).',
+      cgu: 'Tick the box to accept the terms.', renvoyer: 'Send the code again ({s} s)', renvoyerOk: 'Send the code again',
+      rColis: 'Parcels', rColisTexte: '{n} parcel(s) · about {kg} kg', rPaiement: 'Payment', rEtiquette: 'Sender on the label',
+      rPrix: 'Guaranteed price', rPrixTexte: '{prix} €/kg until {date}', modifier: 'Change', introuvable: 'Not found.', deja2: 'Already asked today.' },
+    it: { depuis: 'Cliente dal {mois}', enCours: 'La mia richiesta in corso', etapes: ['Richiesta', 'Etichetta', 'Consegna', 'Pesatura', 'Pagamento'],
+      etats: ['Richiesta ricevuta', 'Etichetta inviata', 'Pacco ricevuto', 'Pesato', 'Pagato'],
+      longues: ['Richiesta ricevuta', 'Etichetta prepagata inviata', 'Consegna del pacco', 'Ricevimento e pesatura filmata', 'Pagamento'],
+      p0: ['Prepariamo la vostra etichetta', 'Vi viene inviata per e-mail entro 24 h (giorni lavorativi). Potete già stampare la distinta.'],
+      p1: ['Tocca a voi: consegnate il pacco', 'Incollate l\'etichetta ricevuta per e-mail e consegnate il pacco entro il {date} per mantenere il prezzo.'],
+      p2: ['Pesiamo il vostro pacco', 'Davanti alla telecamera: il pacco chiuso, poi il metallo duro da solo. Il video e il buono d\'acquisto seguono.'],
+      p3: ['Il pagamento sta arrivando', 'Entro 48 h (giorni lavorativi) dopo la pesatura, tramite {paiement}.'],
+      imprimer: 'Stampare la distinta', voirSuivi: 'Vedere il tracciamento', prixGaranti: 'Il vostro prezzo garantito', encore: 'ancora {n} giorni', encore1: 'ultimo giorno',
+      garantiJusqu: 'Garantito fino al {date}, per un pacco consegnato entro quella data.', prixJour: 'Il prezzo del giorno',
+      prixJourTexte: 'Garantito 7 giorni dalla richiesta, al più tardi fino alla fine del mese.', venduEn: 'Venduto nel {annee}',
+      nVentes: 'vendite', nVente: 'vendita', kgCarbure: 'di metallo duro', payes: 'pagati', votreCompte: 'Il vostro account', complet: 'Il vostro account è completo al {p}%',
+      coord: 'Recapiti', piece: 'Documento d\'identità', ribVir: 'IBAN, per essere pagati con bonifico', completer: 'Completare l\'account',
+      vide: ['Ancora nessuna richiesta', 'Preparate il metallo duro in una scatola robusta: in 3 minuti la richiesta è fatta e l\'etichetta è gratuita.', 'Inviare il mio primo pacco'],
+      videEtapes: ['<b>Richiesta online</b> · 3 minuti', '<b>Etichetta gratuita</b> · entro 24 h (giorni lavorativi)', '<b>Pagati entro 48 h</b> dopo la pesatura filmata'],
+      dernieres: 'Le mie ultime vendite', toutVoir: 'Vedere tutto', ongletEnCours: 'In corso', ongletFinies: 'Concluse', aucuneEnCours: 'Nessuna richiesta in corso.',
+      aucuneFinie: 'Ancora nessuna richiesta conclusa.', retour: 'Le mie richieste', envoyeeLe: 'Inviata il {date}', suivi: 'Il tracciamento', envoi: 'La vostra spedizione',
+      aFaire: 'Al più tardi il {date}', pesee: 'Il pacco chiuso, poi il metallo duro da solo: il video vi viene inviato',
+      paiementSous: 'Entro 48 h (giorni lavorativi) dopo la pesatura, con il buono d\'acquisto', net: 'Peso netto: {kg} kg', question: 'Una domanda su questa richiesta?',
+      questionTexte: 'Malik risponde dal lunedì al venerdì, dalle 8 alle 18.', questionWa: 'Buongiorno, ho una domanda sulla mia richiesta {ref}.',
+      ventesVide: 'Le vostre vendite appariranno qui dopo il pagamento del primo pacco.', brut: 'Peso lordo (pacco chiuso)', netL: 'Peso netto (metallo duro)',
+      prix: 'Prezzo', montant: 'Importo', payeLe: 'Pagato il {date}', bon: 'Buono d\'acquisto {n}', redemander: 'Richiedere di nuovo il buono',
+      redemande: 'Fatto: Malik vi rimanda il buono.', deja: 'Già richiesto oggi: Malik ve lo rimanda.',
+      nom: 'Nome', entreprise: 'Azienda', adresse: 'Indirizzo', tel: 'Telefono', mail: 'E-mail', vide2: 'Non indicato',
+      valide: 'Valido', bientot: 'Scade presto', expiree: 'Scaduto', valideJusqu: '{type} · valido fino al {date}', deposee: '{type} · caricato il {date}',
+      titulaire: 'Intestatario: {nom}', voir: 'Vedere per intero', cacher: 'Nascondere', bulle: 'Salvato', prevenirOk: 'Preferenza salvata',
+      telephone_whatsapp: 'Aggiungete prima il vostro numero di telefono nei vostri dati.', lien_expire: 'Questo link non è più valido: chiedete un nuovo codice.',
+      supprimeGarde: 'Il vostro account è chiuso. La vostra identità e il documento restano conservati per giustificare le vendite.',
+      creerNom: 'Indicate nome e cognome.', creerSiret: 'Indicate il nome dell\'azienda e il suo SIRET (14 cifre).',
+      cgu: 'Spuntate la casella per accettare le condizioni.', renvoyer: 'Rinviare il codice ({s} s)', renvoyerOk: 'Rinviare il codice',
+      rColis: 'Pacchi', rColisTexte: '{n} pacco/i · circa {kg} kg', rPaiement: 'Pagamento', rEtiquette: 'Mittente sull\'etichetta',
+      rPrix: 'Prezzo garantito', rPrixTexte: '{prix} €/kg fino al {date}', modifier: 'Modificare', introuvable: 'Non trovato.', deja2: 'Già richiesto oggi.' },
+    es: { depuis: 'Cliente desde {mois}', enCours: 'Mi solicitud en curso', etapes: ['Solicitud', 'Etiqueta', 'Entrega', 'Pesaje', 'Pago'],
+      etats: ['Solicitud recibida', 'Etiqueta enviada', 'Paquete recibido', 'Pesado', 'Pagado'],
+      longues: ['Solicitud recibida', 'Etiqueta prepagada enviada', 'Entrega de su paquete', 'Recepción y pesaje filmado', 'Pago'],
+      p0: ['Preparamos su etiqueta', 'Se la enviamos por correo electrónico en 24 h (días laborables). Ya puede imprimir la hoja de envío.'],
+      p1: ['Le toca: entregue su paquete', 'Pegue la etiqueta recibida por correo y entregue el paquete a más tardar el {date} para conservar su precio.'],
+      p2: ['Pesamos su paquete', 'Delante de la cámara: el paquete cerrado y luego el metal duro solo. El vídeo y su justificante de compra le llegarán.'],
+      p3: ['Su pago está en camino', 'En 48 h (días laborables) tras el pesaje, por {paiement}.'],
+      imprimer: 'Imprimir la hoja de envío', voirSuivi: 'Ver el seguimiento', prixGaranti: 'Su precio garantizado', encore: 'quedan {n} días', encore1: 'último día',
+      garantiJusqu: 'Garantizado hasta el {date}, para un paquete entregado antes de esa fecha.', prixJour: 'El precio del día',
+      prixJourTexte: 'Garantizado 7 días desde su solicitud, como máximo hasta final de mes.', venduEn: 'Vendido en {annee}',
+      nVentes: 'ventas', nVente: 'venta', kgCarbure: 'de metal duro', payes: 'pagados', votreCompte: 'Su cuenta', complet: 'Su cuenta está completa al {p} %',
+      coord: 'Datos de contacto', piece: 'Documento de identidad', ribVir: 'Datos bancarios, para cobrar por transferencia', completer: 'Completar mi cuenta',
+      vide: ['Aún no hay solicitudes', 'Prepare su metal duro en una caja resistente: en 3 minutos la solicitud está hecha y la etiqueta es gratuita.', 'Enviar mi primer paquete'],
+      videEtapes: ['<b>Solicitud en línea</b> · 3 minutos', '<b>Etiqueta gratuita</b> · en 24 h (días laborables)', '<b>Pagado en 48 h</b> tras el pesaje filmado'],
+      dernieres: 'Mis últimas ventas', toutVoir: 'Ver todo', ongletEnCours: 'En curso', ongletFinies: 'Terminadas', aucuneEnCours: 'Ninguna solicitud en curso.',
+      aucuneFinie: 'Aún no hay solicitudes terminadas.', retour: 'Mis solicitudes', envoyeeLe: 'Enviada el {date}', suivi: 'El seguimiento', envoi: 'Su envío',
+      aFaire: 'A más tardar el {date}', pesee: 'El paquete cerrado y luego el metal duro solo: le enviamos el vídeo',
+      paiementSous: 'En 48 h (días laborables) tras el pesaje, con su justificante de compra', net: 'Peso neto: {kg} kg', question: '¿Una pregunta sobre esta solicitud?',
+      questionTexte: 'Malik le responde de lunes a viernes, de 8 a 18 h.', questionWa: 'Hola, tengo una pregunta sobre mi solicitud {ref}.',
+      ventesVide: 'Sus ventas aparecerán aquí tras el pago de su primer paquete.', brut: 'Peso bruto (paquete cerrado)', netL: 'Peso neto (metal duro)',
+      prix: 'Precio', montant: 'Importe', payeLe: 'Pagado el {date}', bon: 'Justificante de compra {n}', redemander: 'Volver a pedir mi justificante',
+      redemande: 'Hecho: Malik le vuelve a enviar su justificante.', deja: 'Ya pedido hoy: Malik se lo envía.',
+      nom: 'Nombre', entreprise: 'Empresa', adresse: 'Dirección', tel: 'Teléfono', mail: 'Correo', vide2: 'Sin indicar',
+      valide: 'Válido', bientot: 'Caduca pronto', expiree: 'Caducado', valideJusqu: '{type} · válido hasta el {date}', deposee: '{type} · subido el {date}',
+      titulaire: 'Titular: {nom}', voir: 'Ver completo', cacher: 'Ocultar', bulle: 'Guardado', prevenirOk: 'Preferencia guardada',
+      telephone_whatsapp: 'Añada primero su número de teléfono en sus datos.', lien_expire: 'Este enlace ya no es válido: pida un código nuevo.',
+      supprimeGarde: 'Su cuenta está cerrada. Su identidad y su documento se conservan para justificar sus ventas.',
+      creerNom: 'Indique su nombre y apellidos.', creerSiret: 'Indique el nombre de la empresa y su SIRET (14 cifras).',
+      cgu: 'Marque la casilla para aceptar las condiciones.', renvoyer: 'Volver a enviar el código ({s} s)', renvoyerOk: 'Volver a enviar el código',
+      rColis: 'Paquetes', rColisTexte: '{n} paquete(s) · unos {kg} kg', rPaiement: 'Pago', rEtiquette: 'Remitente en la etiqueta',
+      rPrix: 'Precio garantizado', rPrixTexte: '{prix} €/kg hasta el {date}', modifier: 'Cambiar', introuvable: 'No encontrado.', deja2: 'Ya pedido hoy.' },
+  };
+
+  // Mon compte (anciennement « Espace client » ; 3e revue, 9 nov. 2026, propositions 69 à 93 choisies par Malik) :
+  // connexion par un code reçu par e-mail ou par le bouton « Me connecter » de l'e-mail, création du compte (prénom, nom,
+  // particulier ou entreprise), puis le compte : tableau de bord, demandes et leur suivi en 5 étapes (Delivery progress,
+  // 21st.dev), ventes, envoi d'un colis en 3 étapes, profil. Le serveur est celui du site (serveur/espace.php, en PHP,
+  // joint par /api/espace du .htaccess). Les photos de la pièce sont réduites ici en JPEG avant l'envoi.
   var connexion = document.getElementById('connexion');
   var espace = document.getElementById('espace-sections');
   if (connexion && espace) (function () {
-    var E = ESPACE[document.documentElement.lang] || ESPACE.fr;
+    var lang = document.documentElement.lang;
+    var E = Object.assign({}, ESPACE.fr, ESPACE[lang] || {}, COMPTE.fr, COMPTE[lang] || {});
     var ouverture = Date.now(), compte = null, envois = [], dernier = null, photos = {};
     var accueil = document.getElementById('espace-accueil'), avantages = document.getElementById('espace-avantages');
     var bandeau = document.getElementById('espace-connecte');
     var nombre = new Intl.NumberFormat(T.locale, { maximumFractionDigits: 1 });
+    var argent = new Intl.NumberFormat(T.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    var argentRond = new Intl.NumberFormat(T.locale, { maximumFractionDigits: 0 });
     var jour = function (iso) { return new Date(iso).toLocaleDateString(T.locale, { day: 'numeric', month: 'long', year: 'numeric' }); };
+    var heure = function (iso) { return new Date(iso).toLocaleTimeString(T.locale, { hour: '2-digit', minute: '2-digit' }); };
+    var x = function (s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; };
+    var ic = function (d) { return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="' + d + '"></path></svg>'; };
+    var P = {
+      check: 'M20 6 9 17l-5-5', box: 'M21 8 12 3 3 8v8l9 5 9-5V8zM3 8l9 5 9-5M12 13v8', chev: 'M9 18l6-6-6-6', back: 'M15 18l-6-6 6-6',
+      printer: 'M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z',
+      clock: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 6v6l4 2', circle: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z',
+      tag: 'M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4z',
+      scale: 'M12 3v18M5 7h14M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0zM8 21h8',
+      euro: 'M4 10h12M4 14h9M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12c0 4.4 3.5 8 7.8 8 2 0 3.8-.8 5.2-2',
+      chat: 'M21 11.5a8.4 8.4 0 0 1-9 8.4 8.6 8.6 0 0 1-3.9-.9L3 21l1.9-5.1A8.4 8.4 0 0 1 12 3a8.5 8.5 0 0 1 9 8.5z',
+      user: 'M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10z', pin: 'M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0zM12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+      phone: 'M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z',
+      mail: 'M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM22 6l-10 7L2 6',
+      building: 'M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18zM6 12H4a2 2 0 0 0-2 2v8h4M18 9h2a2 2 0 0 1 2 2v11h-4M10 6h4M10 10h4M10 14h4M10 18h4',
+      send: 'M22 2 11 13M22 2l-7 20-4-9-9-4z',
+    };
     var api = function (methode, chemin, corps) {
       var o = { method: methode, credentials: 'same-origin', headers: {} };
       if (corps instanceof FormData) o.body = corps;
@@ -1056,22 +1237,90 @@
     };
     var cocher = function (radio) { radio.checked = true; radio.dispatchEvent(new Event('change', { bubbles: true })); };
     var recharger = function (suite) { location.replace(location.pathname + (suite || '')); };
+    // bulle en bas de l'écran après un enregistrement (proposition 89)
+    var bulleEl = espace.querySelector('[data-bulle]'), bulleMinuteur = 0;
+    var bulle = function (texte) {
+      bulleEl.innerHTML = ic(P.check) + x(texte);
+      bulleEl.hidden = false;
+      clearTimeout(bulleMinuteur);
+      bulleMinuteur = setTimeout(function () { bulleEl.hidden = true; }, 3000);
+    };
+    var prixDuJour = function () { return infos && infos.prix && Number(infos.prix.kg) > 0 ? Number(infos.prix.kg) : PRIX_PAGES; };
 
-    // ---------- connexion : l'adresse, puis le code ----------
+    // ---------- connexion : se connecter ou créer un compte, l'adresse, puis le code ----------
     var etapeEmail = connexion.querySelector('[data-etape-connexion="email"]');
     var etapeCode = connexion.querySelector('[data-etape-connexion="code"]');
     var cxEmail = document.getElementById('cx-email'), cxCode = document.getElementById('cx-code'), msgCx = message(connexion);
+    var cases = connexion.querySelector('.code-cases'), boutonRenvoyer = connexion.querySelector('[data-renvoyer]');
+    var mode = 'connexion', compteARebours = 0;
+    function changerMode(m) {
+      mode = m;
+      connexion.querySelectorAll('[data-mode]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-mode') === m)); });
+      connexion.querySelectorAll('[data-creation]').forEach(function (el) { el.hidden = m !== 'creation'; });
+      ['titre', 'sous', 'bouton'].forEach(function (k) {
+        connexion.querySelector('[data-' + k + '-connexion]').hidden = m !== 'connexion';
+        connexion.querySelector('[data-' + k + '-creation]').hidden = m !== 'creation';
+      });
+      etapeCode.hidden = true;
+      etapeEmail.hidden = false;
+      dire(msgCx, '');
+    }
+    connexion.querySelectorAll('[data-mode]').forEach(function (b) { b.addEventListener('click', function () { changerMode(b.getAttribute('data-mode')); }); });
+    connexion.addEventListener('change', function (e) {
+      if (e.target.name === 'cr-profil') connexion.querySelector('[data-cr-pro]').hidden = e.target.value !== 'professionnel';
+    });
+    var invalide = function (champ, code) {
+      dire(msgCx, code);
+      champ.setAttribute('aria-invalid', 'true');
+      champ.focus();
+      return null;
+    };
+    // les informations du nouveau compte (« Créer un compte ») : prénom, nom, et pour une entreprise sa raison sociale et son SIRET
+    var lireCreation = function () {
+      var v = function (n) { return connexion.querySelector('[name="' + n + '"]'); };
+      connexion.querySelectorAll('[aria-invalid]').forEach(function (c) { c.removeAttribute('aria-invalid'); });
+      var cr = { prenom: v('cr-prenom').value.trim(), nom: v('cr-nom').value.trim(), profil: connexion.querySelector('[name=cr-profil]:checked').value,
+        entreprise: v('cr-entreprise').value.trim(), siret: v('cr-siret').value.replace(/\s/g, '') };
+      if (!cr.prenom) return invalide(v('cr-prenom'), 'creerNom');
+      if (!cr.nom) return invalide(v('cr-nom'), 'creerNom');
+      if (cr.profil === 'professionnel' && !cr.entreprise) return invalide(v('cr-entreprise'), 'creerSiret');
+      if (cr.profil === 'professionnel' && !/^\d{14}$/.test(cr.siret)) return invalide(v('cr-siret'), 'creerSiret');
+      return cr;
+    };
+    var majCases = function () {
+      var v = cxCode.value.replace(/\D/g, '').slice(0, 6);
+      if (cxCode.value !== v) cxCode.value = v;
+      cases.querySelectorAll('span').forEach(function (s, i) { s.textContent = v.charAt(i); s.classList.toggle('actif', i === Math.min(v.length, 5)); });
+      cases.classList.remove('erreur');
+      return v;
+    };
+    cxCode.addEventListener('input', function () { if (majCases().length === 6) connexion.requestSubmit ? connexion.requestSubmit() : connexion.dispatchEvent(new Event('submit', { cancelable: true })); });
+    cxCode.addEventListener('focus', function () { cases.classList.add('focus'); majCases(); });
+    cxCode.addEventListener('blur', function () { cases.classList.remove('focus'); });
+    var lancerRebours = function () {
+      var s = 30;
+      clearInterval(compteARebours);
+      boutonRenvoyer.disabled = true;
+      boutonRenvoyer.textContent = remplacer(E.renvoyer, { s: s });
+      compteARebours = setInterval(function () {
+        s--;
+        if (s > 0) { boutonRenvoyer.textContent = remplacer(E.renvoyer, { s: s }); return; }
+        clearInterval(compteARebours);
+        boutonRenvoyer.disabled = false;
+        boutonRenvoyer.textContent = E.renvoyerOk;
+      }, 1000);
+    };
     var demanderCode = function () {
-      var email = cxEmail.value.trim();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
-        dire(msgCx, 'email');
-        cxEmail.setAttribute('aria-invalid', 'true');
-        cxEmail.focus();
-        return;
+      var email = cxEmail.value.trim(), creation = null;
+      if (mode === 'creation') {
+        creation = lireCreation();
+        if (!creation) return;
       }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return invalide(cxEmail, 'email');
       cxEmail.removeAttribute('aria-invalid');
+      if (mode === 'creation' && !connexion.querySelector('[name=cgu]').checked) return invalide(connexion.querySelector('[name=cgu]'), 'cgu');
       occupe(connexion, true);
-      api('POST', 'code', { email: email, langue: document.documentElement.lang, site: connexion.querySelector('[name=site]').value, duree: Date.now() - ouverture })
+      api('POST', 'code', { email: email, langue: lang, site: connexion.querySelector('[name=site]').value, duree: Date.now() - ouverture, creation: creation })
         .then(function (r) {
           occupe(connexion, false);
           if (r.erreur) return dire(msgCx, r.erreur);
@@ -1080,61 +1329,270 @@
           etapeEmail.hidden = true;
           etapeCode.hidden = false;
           cxCode.value = '';
+          majCases();
+          lancerRebours();
           cxCode.focus();
         });
     };
     connexion.addEventListener('submit', function (e) {
       e.preventDefault();
       if (etapeCode.hidden) return demanderCode();
-      var code = cxCode.value.replace(/\s/g, '');
-      if (!/^\d{6}$/.test(code)) { dire(msgCx, 'code6'); cxCode.focus(); return; }
+      var code = majCases();
+      if (code.length !== 6) { dire(msgCx, 'code6'); cxCode.focus(); return; }
       occupe(connexion, true);
-      api('POST', 'connexion', { email: cxEmail.value.trim(), code: code, langue: document.documentElement.lang }).then(function (r) {
+      api('POST', 'connexion', { email: cxEmail.value.trim(), code: code, langue: lang }).then(function (r) {
         occupe(connexion, false);
-        if (r.erreur) { dire(msgCx, r.erreur); cxCode.select(); return; }
+        if (r.erreur) { dire(msgCx, r.erreur); cases.classList.add('erreur'); cxCode.value = ''; majCases(); cxCode.focus(); return; }
         dire(msgCx, '');
         afficher(r, true);
       });
     });
-    connexion.querySelector('[data-renvoyer]').addEventListener('click', demanderCode);
+    boutonRenvoyer.addEventListener('click', demanderCode);
     connexion.querySelector('[data-changer]').addEventListener('click', function () {
       etapeCode.hidden = true;
       etapeEmail.hidden = false;
       dire(msgCx, '');
       cxEmail.focus();
     });
+    if (location.hash === '#creer') changerMode('creation');
 
     // ---------- le compte ----------
     var sections = {};
     espace.querySelectorAll('[data-section]').forEach(function (d) { sections[d.getAttribute('data-section')] = d; });
     var fc = document.getElementById('f-coordonnees'), fp = document.getElementById('f-piece'), fr = document.getElementById('f-rib');
-    var fe = document.getElementById('f-envoi'), ok = espace.querySelector('[data-envoi-ok]');
-    var resume = function (nom, etat, texte) {
-      var d = sections[nom];
-      d.classList.toggle('fait', etat === 'fait');
-      d.classList.toggle('manque', etat === 'manque');
-      d.querySelector('.carte-espace-resume').textContent = texte;
-    };
+    var fe = document.getElementById('f-envoi'), ok = espace.querySelector('[data-envoi-ok]'), fpv = document.getElementById('f-prevenir');
     var nomType = function (valeur) { // le type de pièce dans la langue de la page
-      var o = [].filter.call(fp.elements.type.options, function (x) { return x.value === valeur; })[0];
+      var o = [].filter.call(fp.elements.type.options, function (y) { return y.value === valeur; })[0];
       return o ? o.textContent : valeur;
     };
     var majPro = function () { fc.querySelector('[data-pro]').hidden = !fc.querySelector('[name=profil][value=professionnel]').checked; };
     var majRib = function () {
       espace.querySelector('[data-sans-rib]').hidden = !(compte && !compte.rib && fe.querySelector('[name=paiement]:checked').value === 'Virement');
     };
+    var etapeDe = function (e) { return e.paye_le ? 5 : e.pese_le ? 4 : e.recu_le ? 3 : e.traite_le ? 2 : 1; };
+    var initiales = function (c) { return ((c.prenom || '').charAt(0) + (c.nom || '').charAt(0)).toUpperCase() || '?'; };
+    var joursRestants = function (ymd) { return Math.round((dateDe(ymd) - dateDe(jourParis())) / 864e5) + 1; };
+    var pourcentComplet = function () {
+      var m = compte.manque, n = 0, fait = 0;
+      n++; if (m.indexOf('coordonnees') < 0) fait++;
+      if (compte.profil === 'particulier') { n++; if (m.indexOf('piece') < 0 && m.indexOf('piece_expiree') < 0) fait++; }
+      n++; if (compte.rib) fait++;
+      return Math.round(fait / n * 100);
+    };
+    // le suivi en 5 étapes (barre et noms), comme le composant Delivery progress de 21st.dev
+    var suiviHtml = function (n) {
+      var b = '', t = '';
+      for (var k = 0; k < 5; k++) {
+        var cl = k < n ? 'fait' : (k === n ? 'encours' : '');
+        b += '<span class="' + cl + '"></span>';
+        t += '<span class="' + cl + '">' + x(E.etapes[k]) + '</span>';
+      }
+      return '<div class="suivi" role="progressbar" aria-label="' + x(E.suivi) + '" aria-valuemin="1" aria-valuemax="5" aria-valuenow="' + n
+        + '" aria-valuetext="' + x(E.etats[n - 1]) + '">' + b + '</div><div class="suivi-noms" aria-hidden="true">' + t + '</div>';
+    };
+    var pastilleEtat = function (e) {
+      var n = etapeDe(e);
+      return '<span class="pastille-etat' + (n === 5 ? ' ok' : '') + '">' + ic(n === 5 ? P.check : n === 1 ? P.clock : P.tag) + x(E.etats[n - 1]) + '</span>';
+    };
+    var prochaine = function (e) {
+      var n = etapeDe(e);
+      if (n >= 5) return '';
+      var p = E['p' + (n - 1)], icone = [P.tag, P.box, P.scale, P.euro][n - 1];
+      var texte = remplacer(p[1], { date: e.garanti_jusqu ? dateLongue(e.garanti_jusqu) : '', paiement: e.paiement === 'Chèque' ? E.cheque.toLowerCase() : E.virement.toLowerCase() });
+      return '<div class="prochaine"><span class="rond">' + ic(icone) + '</span><div><b>' + x(p[0]) + '</b><p>' + x(texte) + '</p></div></div>';
+    };
+    var boutonsDemande = function (e, suivi) {
+      return '<div class="boutons-carte"><button type="button" class="btn btn-primaire" data-imprimer-ref="' + x(e.reference) + '">' + ic(P.printer) + x(E.imprimer) + '</button>'
+        + (suivi ? '<a class="btn btn-contour" href="#demande-' + encodeURIComponent(e.reference) + '">' + x(E.voirSuivi) + ic(P.chev) + '</a>' : '') + '</div>';
+    };
+
+    // tableau de bord (propositions 75 à 79, 83, 87, 97)
+    function tableau() {
+      var g = espace.querySelector('[data-tableau]'), h = '';
+      var enCours = envois.filter(function (e) { return !e.paye_le; }), payes = envois.filter(function (e) { return e.paye_le; });
+      var e = enCours[0];
+      if (e) {
+        h += '<section class="carte-compte carte-large"><div class="carte-compte-tete"><div><p class="sur-carte">' + x(E.enCours) + '</p><p class="ref-col">'
+          + x(e.reference) + '</p></div>' + pastilleEtat(e) + '</div>' + suiviHtml(etapeDe(e)) + prochaine(e) + boutonsDemande(e, true) + '</section>';
+      }
+      // prix garanti de la demande en cours, en jours ; sans demande : le prix du jour
+      if (e && e.prix_kg && e.garanti_jusqu && joursRestants(e.garanti_jusqu) > 0) {
+        var reste = joursRestants(e.garanti_jusqu), fin = reste <= 2;
+        h += '<section class="carte-compte"><p class="sur-carte">' + x(E.prixGaranti) + '</p><div class="carte-compte-tete" style="align-items:center">'
+          + '<p class="gros-prix">' + x(ecrirePrix(e.prix_kg)) + ' €<small>/kg</small></p><span class="pastille-etat ' + (fin ? 'attente' : 'ok') + '">' + ic(P.clock)
+          + x(reste === 1 ? E.encore1 : remplacer(E.encore, { n: reste })) + '</span></div><div class="barre-jours' + (fin ? ' fin' : '') + '"><span style="width:'
+          + Math.max(6, Math.min(100, Math.round((7 - reste + 1) / 7 * 100))) + '%"></span></div><p class="petit-gris">'
+          + x(remplacer(E.garantiJusqu, { date: dateLongue(e.garanti_jusqu) })) + '</p></section>';
+      } else {
+        h += '<section class="carte-compte"><p class="sur-carte">' + x(E.prixJour) + '</p><p class="gros-prix">' + x(ecrirePrix(prixDuJour())) + ' €<small>/kg</small></p>'
+          + '<p class="petit-gris">' + x(E.prixJourTexte) + '</p></section>';
+      }
+      var annee = String(new Date().getFullYear()), cetteAnnee = payes.filter(function (v) { return String(v.paye_le).slice(0, 4) === annee; });
+      if (cetteAnnee.length) {
+        var kg = 0, euros = 0;
+        cetteAnnee.forEach(function (v) { kg += v.poids_net || 0; euros += v.montant || 0; });
+        h += '<section class="carte-compte carte-large"><div class="carte-compte-tete" style="align-items:center"><p class="sur-carte">' + x(remplacer(E.venduEn, { annee: annee }))
+          + '</p><a class="lien-bouton" href="#ventes">' + x(E.mesVentes || E.toutVoir) + '</a></div><div class="chiffres-compte"><div><b>' + cetteAnnee.length + '</b><span>'
+          + x(cetteAnnee.length > 1 ? E.nVentes : E.nVente) + '</span></div><div><b>' + x(nombre.format(kg)) + ' kg</b><span>' + x(E.kgCarbure) + '</span></div><div><b>'
+          + x(argentRond.format(euros)) + ' €</b><span>' + x(E.payes) + '</span></div></div></section>';
+      }
+      var pc = pourcentComplet();
+      if (pc < 100) {
+        var m = compte.manque, li = function (fait, texte) { return '<li class="' + (fait ? 'fait' : '') + '">' + ic(fait ? P.check : P.circle) + x(texte) + '</li>'; };
+        h += '<section class="carte-compte"><div class="carte-compte-tete" style="align-items:center"><p class="sur-carte">' + x(E.votreCompte) + '</p><b style="color:var(--marine)">'
+          + pc + ' %</b></div><div class="barre-jours"><span style="width:' + pc + '%;background:var(--marine)"></span></div><ul class="coches">'
+          + li(m.indexOf('coordonnees') < 0, E.coord) + (compte.profil === 'particulier' ? li(m.indexOf('piece') < 0 && m.indexOf('piece_expiree') < 0, E.piece) : '')
+          + li(!!compte.rib, E.ribVir) + '</ul><a class="btn btn-contour" href="#profil">' + x(E.completer) + '</a></section>';
+      }
+      if (!envois.length) {
+        h += '<section class="carte-compte carte-toute"><div class="vide-compte"><span class="illus">' + ic(P.box) + '</span><h2>' + x(E.vide[0]) + '</h2><p>' + x(E.vide[1])
+          + '</p><a class="btn btn-primaire" href="#envoi">' + ic(P.send) + x(E.vide[2]) + '</a></div><ol class="etapes-courtes">'
+          + E.videEtapes.map(function (t) { return '<li><span>' + t + '</span></li>'; }).join('') + '</ol></section>';
+      }
+      if (payes.length) {
+        h += '<section class="carte-compte carte-toute"><div class="carte-compte-tete" style="align-items:center"><h2>' + x(E.dernieres) + '</h2><a class="lien-bouton" href="#ventes">'
+          + x(E.toutVoir) + '</a></div><div class="rangs-ventes">' + payes.slice(0, 3).map(rangVente).join('') + '</div></section>';
+      }
+      g.innerHTML = h;
+    }
+    var rangVente = function (v) {
+      return '<div class="rang-vente"><span class="prochaine" style="padding:0;background:none"><span class="rond" style="background:var(--vert-50);color:var(--vert)">' + ic(P.check)
+        + '</span></span><div class="t"><b>' + x(jour(v.paye_le)) + (v.poids_net ? ' · ' + x(nombre.format(v.poids_net)) + ' kg' : '') + '</b><span>'
+        + x(v.bon_numero ? remplacer(E.bon, { n: v.bon_numero }) : v.reference) + ' · ' + x(v.paiement === 'Chèque' ? E.cheque : E.virement) + '</span></div><div class="v">'
+        + (v.montant ? x(argent.format(v.montant)) + ' €' : '') + '<small>' + x(remplacer(E.payeLe, { date: new Date(v.paye_le).toLocaleDateString(T.locale) })) + '</small></div></div>';
+    };
+
+    // demandes : la liste (en cours, terminées) et le détail daté de chacune (propositions 77, 78, 85)
+    function vueDemandes(ref) {
+      var zone = espace.querySelector('[data-demandes]');
+      espace.querySelector('[data-aucun-envoi]').hidden = envois.length > 0;
+      if (ref) {
+        var d = envois.filter(function (v) { return v.reference === ref; })[0];
+        if (d) { zone.innerHTML = detailHtml(d); return; }
+      }
+      var enCours = envois.filter(function (v) { return !v.paye_le; }), finies = envois.filter(function (v) { return v.paye_le; });
+      var carte = function (v) {
+        return '<section class="carte-compte"><div class="carte-compte-tete"><div><p class="ref-col">' + x(v.reference) + '</p><p class="petit-gris">'
+          + x(remplacer(E.envoyeeLe, { date: jour(v.cree_le) })) + ' · ' + x(E.colisKg.replace('{n}', v.colis.length).replace('{kg}', nombre.format(v.total))) + '</p></div>'
+          + pastilleEtat(v) + '</div>' + suiviHtml(etapeDe(v)) + (v.paye_le ? '<div class="boutons-carte"><a class="btn btn-contour" href="#demande-' + encodeURIComponent(v.reference)
+          + '">' + x(E.voirSuivi) + ic(P.chev) + '</a></div>' : boutonsDemande(v, true)) + '</section>';
+      };
+      if (!envois.length) { zone.innerHTML = ''; return; }
+      zone.innerHTML = '<div class="liste-demandes">' + (enCours.length ? enCours.map(carte).join('') : '<p class="espace-aide">' + x(E.aucuneEnCours) + '</p>')
+        + (finies.length ? '<h2 class="compte-sous-titre">' + x(E.ongletFinies) + '</h2>' + finies.map(carte).join('') : '') + '</div>';
+    }
+    function detailHtml(e) {
+      var n = etapeDe(e), etape = function (k, quand, extra) {
+        var cl = k < n ? 'fait' : (k === n ? 'encours' : '');
+        return '<li class="' + cl + '"><span class="etape-point">' + (k < n ? ic(P.check) : (k + 1)) + '</span><div><b>' + x(E.longues[k]) + '</b><span class="quand">'
+          + x(quand) + '</span>' + (extra || '') + '</div></li>';
+      };
+      var quand = function (iso) { return jour(iso) + ' · ' + heure(iso); };
+      var wa = 'https://wa.me/33761119523?text=' + encodeURIComponent(remplacer(E.questionWa, { ref: e.reference }));
+      return '<a class="retour-liste" href="#demandes">' + ic(P.back) + x(E.retour) + '</a>'
+        + '<div class="carte-compte-tete"><div><p class="ref-col" style="font-size:18px">' + x(e.reference) + '</p><p class="petit-gris">' + x(remplacer(E.envoyeeLe, { date: jour(e.cree_le) }))
+        + '</p></div>' + pastilleEtat(e) + '</div>'
+        + '<section class="carte-compte"><h2>' + x(E.suivi) + '</h2><ol class="ligne-temps">'
+        + etape(0, quand(e.cree_le) + (e.prix_kg ? ' · ' + ecrirePrix(e.prix_kg) + ' €/kg' : ''))
+        + etape(1, e.traite_le ? quand(e.traite_le) : E.p0[1].split('.')[0] + '.')
+        + etape(2, e.recu_le ? quand(e.recu_le) : (e.garanti_jusqu ? remplacer(E.aFaire, { date: dateLongue(e.garanti_jusqu) }) : ''),
+          n === 2 || n === 1 ? '<button type="button" class="btn btn-primaire" data-imprimer-ref="' + x(e.reference) + '">' + ic(P.printer) + x(E.imprimer) + '</button>' : '')
+        + etape(3, e.pese_le ? quand(e.pese_le) + (e.poids_net ? ' · ' + remplacer(E.net, { kg: nombre.format(e.poids_net) }) : '') : E.pesee)
+        + etape(4, e.paye_le ? quand(e.paye_le) + (e.montant ? ' · ' + argent.format(e.montant) + ' €' : '') : E.paiementSous)
+        + '</ol></section>'
+        + '<section class="carte-compte"><h2>' + x(E.envoi) + '</h2><dl class="infos-envoi"><dt>' + x(E.rColis) + '</dt><dd>' + x(remplacer(E.rColisTexte, { n: e.colis.length, kg: nombre.format(e.total) }))
+        + '</dd><dt>' + x(E.matiere) + '</dt><dd>' + e.colis.map(function (c) { return x(c.matiere) + ' (' + x(nombre.format(c.poids)) + ' kg)'; }).join('<br>') + '</dd><dt>'
+        + x(E.rPaiement) + '</dt><dd>' + x(e.paiement === 'Chèque' ? E.cheque : E.virement) + '</dd>'
+        + (e.prix_kg && e.garanti_jusqu ? '<dt>' + x(E.rPrix) + '</dt><dd>' + x(remplacer(E.rPrixTexte, { prix: ecrirePrix(e.prix_kg), date: dateLongue(e.garanti_jusqu) })) + '</dd>' : '')
+        + '</dl></section>'
+        + '<section class="carte-compte question-envoi"><span class="prochaine" style="padding:0;background:none"><span class="rond" style="background:var(--vert-50);color:var(--vert)">'
+        + ic(P.chat) + '</span></span><div><b>' + x(E.question) + '</b><p class="petit-gris">' + x(E.questionTexte) + '</p></div><a class="btn btn-contour" href="' + x(wa) + '">WhatsApp</a></section>';
+    }
+
+    // ventes : celles payées, avec poids brut, poids net, montant, et le bon à redemander (propositions 96, 97, 98)
+    function vueVentes() {
+      var zone = espace.querySelector('[data-ventes]'), payes = envois.filter(function (v) { return v.paye_le; });
+      if (!payes.length) { zone.innerHTML = '<section class="carte-compte"><p class="espace-aide">' + x(E.ventesVide) + '</p></section>'; return; }
+      var kg = 0, euros = 0;
+      payes.forEach(function (v) { kg += v.poids_net || 0; euros += v.montant || 0; });
+      zone.innerHTML = '<section class="carte-compte"><div class="chiffres-compte"><div><b>' + payes.length + '</b><span>' + x(payes.length > 1 ? E.nVentes : E.nVente)
+        + '</span></div><div><b>' + x(nombre.format(kg)) + ' kg</b><span>' + x(E.kgCarbure) + '</span></div><div><b>' + x(argent.format(euros)) + ' €</b><span>' + x(E.payes)
+        + '</span></div></div></section>' + payes.map(function (v) {
+          return '<section class="carte-compte"><div class="carte-compte-tete"><div><p class="sur-carte">' + x(jour(v.paye_le)) + '</p><p class="ref-col">'
+            + x(v.bon_numero ? remplacer(E.bon, { n: v.bon_numero }) : v.reference) + '</p></div><span class="pastille-etat ok">' + ic(P.check)
+            + x(remplacer(E.payeLe, { date: new Date(v.paye_le).toLocaleDateString(T.locale) })) + '</span></div><dl class="infos-envoi">'
+            + (v.poids_brut ? '<dt>' + x(E.brut) + '</dt><dd>' + x(nombre.format(v.poids_brut)) + ' kg</dd>' : '')
+            + (v.poids_net ? '<dt>' + x(E.netL) + '</dt><dd>' + x(nombre.format(v.poids_net)) + ' kg</dd>' : '')
+            + (v.prix_kg ? '<dt>' + x(E.prix) + '</dt><dd>' + x(ecrirePrix(v.prix_kg)) + ' €/kg</dd>' : '')
+            + (v.montant ? '<dt>' + x(E.montant) + '</dt><dd style="font-size:18px">' + x(argent.format(v.montant)) + ' €</dd>' : '')
+            + '<dt>' + x(E.rPaiement) + '</dt><dd>' + x(v.paiement === 'Chèque' ? E.cheque : E.virement) + '</dd></dl>'
+            + (v.bon_numero ? '<div class="boutons-carte"><button type="button" class="btn btn-contour" data-redemander="' + x(v.reference) + '">' + x(E.redemander) + '</button></div>'
+              + '<p class="petit-gris" data-redemande-msg="' + x(v.reference) + '" role="status"></p>' : '') + '</section>';
+        }).join('');
+    }
+
+    // profil : la fiche, la pièce (date de fin), le RIB caché (Voir en entier), être prévenu, supprimer (80 à 82, 86, 95)
+    function remplirProfil() {
+      var c = compte, p = c.piece, m = c.manque;
+      var lignes = [[P.user, E.nom, (c.prenom + ' ' + (c.nom || '').toUpperCase()).trim()]];
+      if (c.profil === 'professionnel') lignes.push([P.building, E.entreprise, [c.entreprise, c.siret ? 'SIRET ' + c.siret : ''].filter(Boolean).join(' · ')]);
+      lignes.push([P.pin, E.adresse, [c.adresse, ((c.cp || '') + ' ' + (c.ville || '')).trim()].filter(Boolean).join(', ')]);
+      lignes.push([P.phone, E.tel, c.telephone], [P.mail, E.mail, c.email]);
+      espace.querySelector('[data-fiche]').innerHTML = lignes.map(function (l) {
+        return '<div><dt>' + ic(l[0]) + x(l[1]) + '</dt><dd>' + (l[2] ? x(l[2]) : '<span class="petit-gris">' + x(E.vide2) + '</span>') + '</dd></div>';
+      }).join('');
+      sections.coordonnees.classList.toggle('manque', m.indexOf('coordonnees') >= 0);
+      sections.coordonnees.querySelector('.carte-espace-resume').textContent = m.indexOf('coordonnees') >= 0 ? E.aCompleter : '';
+      // pièce : type, date de fin et pastille (valide, expire bientôt, expirée)
+      var rp = sections.piece.querySelector('.carte-espace-resume');
+      if (p) {
+        var fin = p.expiration, jours = fin ? joursRestants(fin) : null;
+        var etat = !fin ? '' : jours <= 0 ? '<span class="pastille-etat attente">' + x(E.expiree) + '</span>' : jours <= 31 ? '<span class="pastille-etat attente">'
+          + x(E.bientot) + '</span>' : '<span class="pastille-etat ok">' + ic(P.check) + x(E.valide) + '</span>';
+        rp.innerHTML = x(fin ? remplacer(E.valideJusqu, { type: nomType(p.type), date: jour(fin + 'T12:00:00') }) : remplacer(E.deposee, { type: nomType(p.type), date: jour(p.depose_le) })) + ' ' + etat;
+      } else rp.textContent = c.profil === 'particulier' ? E.aCompleter : '';
+      sections.piece.classList.toggle('manque', c.profil === 'particulier' && (m.indexOf('piece') >= 0 || m.indexOf('piece_expiree') >= 0));
+      // RIB : les 4 derniers chiffres seulement, « Voir en entier » sur demande (le serveur le renvoie à la personne seule)
+      var rr = sections.rib.querySelector('.carte-espace-resume'), voir = sections.rib.querySelector('[data-voir-rib]');
+      rr.innerHTML = c.rib ? '<span class="iban-cache">' + x(c.rib.iban) + '</span><br><span class="petit-gris">' + x(remplacer(E.titulaire, { nom: c.rib.titulaire })) + '</span>' : x(E.pourVirement);
+      voir.hidden = !c.rib;
+      voir.textContent = E.voir;
+      voir.setAttribute('aria-pressed', 'false');
+      fpv.querySelectorAll('[name=prevenir]').forEach(function (r) { r.checked = r.value === (c.prevenir || 'email'); });
+    }
+    sections.rib.querySelector('[data-voir-rib]').addEventListener('click', function () {
+      var b = this, cache = sections.rib.querySelector('.iban-cache');
+      if (b.getAttribute('aria-pressed') === 'true') { cache.textContent = compte.rib.iban; b.textContent = E.voir; b.setAttribute('aria-pressed', 'false'); return; }
+      api('GET', 'rib').then(function (r) {
+        if (!r.iban) return;
+        cache.textContent = r.iban.replace(/(.{4})/g, '$1 ').trim();
+        b.textContent = E.cacher;
+        b.setAttribute('aria-pressed', 'true');
+        setTimeout(function () { if (b.getAttribute('aria-pressed') === 'true') b.click(); }, 30000);
+      });
+    });
+    fpv.addEventListener('change', function (ev) {
+      if (ev.target.name !== 'prevenir') return;
+      var msg = message(fpv), avant = compte.prevenir;
+      api('PUT', 'compte', { section: 'prevenir', prevenir: ev.target.value }).then(function (r) {
+        if (r.status === 401) return recharger();
+        if (r.erreur) {
+          dire(msg, r.erreur);
+          fpv.querySelectorAll('[name=prevenir]').forEach(function (b) { b.checked = b.value === avant; });
+          return;
+        }
+        dire(msg, '');
+        compte = r.compte;
+        bulle(E.prevenirOk);
+      });
+    });
+
     function remplir() {
       var c = compte, m = c.manque, p = c.piece;
       ['nom', 'prenom', 'entreprise', 'siret', 'adresse', 'cp', 'ville', 'telephone'].forEach(function (k) { fc.elements[k].value = c[k] || ''; });
       cocher(fc.querySelector('[name=profil][value="' + c.profil + '"]'));
       majPro();
-      var coordOk = m.indexOf('coordonnees') < 0;
-      resume('coordonnees', coordOk ? 'fait' : 'manque', coordOk ? [c.prenom + ' ' + c.nom.toUpperCase(), c.cp + ' ' + c.ville].join(' · ') : E.aCompleter);
-
       if (p) { fp.elements.type.value = p.type; fp.elements.numero.value = p.numero; fp.elements.expiration.value = p.expiration || ''; }
-      var expiree = m.indexOf('piece_expiree') >= 0, pieceOk = p && m.indexOf('piece') < 0 && !expiree;
-      resume('piece', pieceOk ? 'fait' : (c.profil === 'professionnel' && !p ? '' : 'manque'),
-        p ? E.deposee.replace('{type}', nomType(p.type)).replace('{date}', jour(p.depose_le)) + (expiree ? ' · ' + E.piece_expiree : '') : E.aCompleter);
       ['recto', 'verso'].forEach(function (face) {
         var depot = fp.querySelector('[data-face="' + face + '"]'), img = depot.querySelector('.depot-apercu');
         if (photos[face] || !(p && p[face])) return;
@@ -1142,71 +1600,70 @@
         img.hidden = false;
         depot.classList.add('rempli');
       });
-
       fr.elements.titulaire.value = c.rib ? c.rib.titulaire : '';
       fr.elements.iban.value = '';
       fr.elements.iban.placeholder = c.rib ? c.rib.iban : 'FR76 …';
-      resume('rib', c.rib ? 'fait' : '', c.rib ? c.rib.iban : E.pourVirement);
-
+      // en-tête du compte : initiales, nom, e-mail, « client depuis »
+      espace.querySelectorAll('[data-initiales]').forEach(function (el) { el.textContent = initiales(c); });
       bandeau.querySelector('.prenom').textContent = c.prenom || '';
-      memoCompte(c); // prénom et initiale pour l'en-tête des autres pages
+      bandeau.querySelector('[data-nom]').textContent = (c.nom || '').toUpperCase();
       bandeau.querySelector('[data-email]').textContent = c.email;
-      bandeau.querySelector('[data-etat-compte]').textContent = m.length ? E.reste : E.pret;
+      espace.querySelector('[data-prenom]').textContent = c.prenom || '';
+      espace.querySelector('[data-depuis]').textContent = remplacer(E.depuis, { mois: new Date(c.cree_le || Date.now()).toLocaleDateString(T.locale, { month: 'long', year: 'numeric' }) });
+      memoCompte(c); // prénom et initiale pour l'en-tête des autres pages
+      var nEnCours = envois.filter(function (v) { return !v.paye_le; }).length, badge = espace.querySelector('[data-n-demandes]');
+      badge.textContent = nEnCours;
+      badge.hidden = !nEnCours;
       espace.querySelector('[data-envoi-bloque]').hidden = !m.length;
       fe.hidden = m.length > 0 || !ok.hidden;
+      espace.querySelector('[data-pas-indicateur]').hidden = fe.hidden;
       majRib();
-      lister();
+      remplirProfil();
+      tableau();
     }
-    function ouvrirSuivante() { // la première partie à compléter s'ouvre, les autres se referment
+    function ouvrirSuivante() { // la première partie du profil à compléter s'ouvre, les autres se referment
       var m = compte.manque, suivante = m.indexOf('coordonnees') >= 0 ? 'coordonnees' : (m.length ? 'piece' : null);
-      Object.keys(sections).forEach(function (k) { sections[k].open = k === suivante; });
+      Object.keys(sections).forEach(function (k) { var d = sections[k].querySelector('details'); if (d) d.open = k === suivante; });
     }
-    function lister() {
-      var ul = espace.querySelector('[data-envois]');
-      ul.textContent = '';
-      envois.forEach(function (e) {
-        var li = document.createElement('li'), tete = document.createElement('div'), ref = document.createElement('b');
-        var etat = document.createElement('span'), detail = document.createElement('p');
-        li.className = 'mon-envoi' + (e.traite_le ? ' traite' : '');
-        tete.className = 'mon-envoi-tete';
-        ref.textContent = e.reference;
-        etat.className = 'mon-envoi-etat';
-        etat.textContent = e.traite_le ? E.etiquetteEnvoyee.replace('{date}', jour(e.traite_le)) : E.demandeRecue;
-        detail.textContent = [jour(e.cree_le), E.colisKg.replace('{n}', e.colis.length).replace('{kg}', nombre.format(e.total)),
-          e.paiement === 'Chèque' ? E.cheque : E.virement].join(' · ');
-        tete.appendChild(ref);
-        tete.appendChild(etat);
-        li.appendChild(tete);
-        li.appendChild(detail);
-        // prix garanti de la demande (proposition 50) : jusqu'à sa date de fin, pour un colis déposé au plus tard ce jour-là
-        if (e.prix_kg && e.garanti_jusqu) {
-          var g = document.createElement('p'), fini = e.garanti_jusqu < jourParis();
-          g.className = 'mon-envoi-garanti' + (fini ? ' fini' : '');
-          g.textContent = fini ? remplacer(S.garantiFini, { date: dateLongue(e.garanti_jusqu) })
-            : remplacer(S.garanti, { prix: ecrirePrix(e.prix_kg), date: dateLongue(e.garanti_jusqu) });
-          li.appendChild(g);
-        }
-        ul.appendChild(li);
+    // les vues du compte, d'après l'adresse (#accueil, #demandes, #demande-COL-…, #ventes, #envoi, #profil)
+    var VUES = ['accueil', 'demandes', 'ventes', 'envoi', 'profil'];
+    function montrer() {
+      if (!compte) return;
+      var h = decodeURIComponent(location.hash.replace('#', '')), ref = '';
+      if (h.indexOf('demande-') === 0) { ref = h.slice(8); h = 'demandes'; }
+      if (VUES.indexOf(h) < 0) h = 'accueil';
+      espace.querySelectorAll('[data-vue]').forEach(function (v) { v.hidden = v.getAttribute('data-vue') !== h; });
+      espace.querySelectorAll('[data-vue-lien]').forEach(function (a) {
+        if (a.getAttribute('data-vue-lien') === h) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
       });
-      espace.querySelector('[data-aucun-envoi]').hidden = envois.length > 0;
+      if (h === 'demandes') vueDemandes(ref);
+      if (h === 'ventes') vueVentes();
+      if (h === 'profil' && compte.manque.length) ouvrirSuivante();
     }
+    window.addEventListener('hashchange', function () {
+      if (!compte || location.hash === '#creer') return;
+      montrer();
+      var t = espace.querySelector('[data-vue]:not([hidden]) h1');
+      if (t) { t.tabIndex = -1; t.focus({ preventScroll: true }); }
+      window.scrollTo(0, Math.max(0, espace.getBoundingClientRect().top + window.scrollY - 80));
+    });
     function afficher(r, arrivee) {
       compte = r.compte;
       if (r.envois) envois = r.envois;
       accueil.hidden = avantages.hidden = true;
-      bandeau.hidden = espace.hidden = false;
+      espace.hidden = false;
       remplir();
+      montrer();
+      reprendreBrouillon();
       chargerQr(); // le QR code du bordereau, prêt avant l'impression
+      infosPretes.then(function () { if (compte) tableau(); }); // le prix du jour, arrivé après
       if (!arrivee) return;
-      ouvrirSuivante();
-      var h1 = bandeau.querySelector('h1');
-      h1.tabIndex = -1;
-      if (location.hash === '#envoi' && !compte.manque.length) document.getElementById('envoi').scrollIntoView();
-      else window.scrollTo(0, 0);
-      h1.focus({ preventScroll: true });
+      var t = espace.querySelector('[data-vue]:not([hidden]) h1');
+      window.scrollTo(0, 0);
+      if (t) { t.tabIndex = -1; t.focus({ preventScroll: true }); }
     }
 
-    // une partie du compte enregistrée : le serveur renvoie le compte à jour
+    // une partie du profil enregistrée : le serveur renvoie le compte à jour
     var enregistrer = function (form, preparer) {
       form.addEventListener('submit', function (ev) {
         ev.preventDefault();
@@ -1218,10 +1675,12 @@
           if (r.erreur) return dire(msg, r.erreur);
           compte = r.compte;
           if (form === fp) photos = {};
+          dire(msg, '');
           remplir();
-          dire(msg, 'enregistre', true);
-          var avant = compte.manque.length;
-          if (avant) setTimeout(function () { dire(msg, ''); ouvrirSuivante(); }, 900);
+          bulle(E.bulle);
+          var details = form.closest('details');
+          if (details) details.open = false;
+          if (compte.manque.length) ouvrirSuivante();
         });
       });
     };
@@ -1273,14 +1732,16 @@
       return { methode: 'PUT', chemin: 'compte', corps: { section: 'rib', titulaire: fr.elements.titulaire.value, iban: fr.elements.iban.value } };
     });
 
-    // ---------- demande d'envoi par colis : 1 à 5 colis de 20 kg au plus ----------
-    var liste = fe.querySelector('[data-colis]'), modele = document.getElementById('modele-colis');
+    // ---------- envoyer un colis : 3 étapes (colis, paiement, vérification), demande commencée gardée (90 à 93) ----------
+    var liste = fe.querySelector('[data-colis]'), modele = document.getElementById('modele-colis'), pas = 1;
     var lirePoids = function (v) { var n = parseFloat(String(v).replace(',', '.')); return isFinite(n) ? n : 0; };
-    var majTotal = function () {
-      var t = 0;
-      liste.querySelectorAll('[name=poids]').forEach(function (i) { t += lirePoids(i.value); });
-      fe.querySelector('[data-total]').textContent = nombre.format(Math.round(t * 10) / 10) + ' kg';
+    var lireColis = function () {
+      return [].map.call(liste.children, function (el) {
+        return { matiere: el.querySelector('[name=matiere]').value, poids: lirePoids(el.querySelector('[name=poids]').value) };
+      });
     };
+    var totalColis = function () { var t = 0; lireColis().forEach(function (c) { t += c.poids; }); return Math.round(t * 10) / 10; };
+    var majTotal = function () { fe.querySelector('[data-total]').textContent = nombre.format(totalColis()) + ' kg'; };
     var numeroter = function () {
       [].forEach.call(liste.children, function (el, i) {
         var champs = el.querySelectorAll('.champ');
@@ -1297,26 +1758,95 @@
       liste.appendChild(modele.content.firstElementChild.cloneNode(true));
       numeroter();
     };
-    liste.addEventListener('input', majTotal);
+    var BROUILLON = 'ain-brouillon-colis';
+    var garderBrouillon = function () {
+      try {
+        localStorage.setItem(BROUILLON, JSON.stringify({ colis: lireColis(), paiement: fe.querySelector('[name=paiement]:checked').value, message: fe.elements.message.value }));
+      } catch (e) { /* navigateur sans mémoire */ }
+    };
+    var oublierBrouillon = function () { try { localStorage.removeItem(BROUILLON); } catch (e) { /* rien */ } espace.querySelector('[data-brouillon]').hidden = true; };
+    function reprendreBrouillon() {
+      var b = null;
+      try { b = JSON.parse(localStorage.getItem(BROUILLON) || 'null'); } catch (e) { b = null; }
+      if (!b || !b.colis || !b.colis.length || !b.colis.some(function (c) { return c.poids > 0; })) return;
+      liste.textContent = '';
+      b.colis.slice(0, 5).forEach(function (c) {
+        ajouterColis();
+        var el = liste.lastElementChild;
+        el.querySelector('[name=matiere]').value = c.matiere;
+        el.querySelector('[name=poids]').value = c.poids ? String(c.poids).replace('.', T.locale.indexOf('en') === 0 ? '.' : ',') : '';
+      });
+      numeroter();
+      var r = fe.querySelector('[name=paiement][value="' + b.paiement + '"]');
+      if (r) cocher(r);
+      fe.elements.message.value = b.message || '';
+      espace.querySelector('[data-brouillon]').hidden = false;
+    }
+    espace.querySelector('[data-oublier]').addEventListener('click', function () {
+      oublierBrouillon();
+      fe.reset();
+      liste.textContent = '';
+      ajouterColis();
+      allerPas(1);
+    });
+    function allerPas(n) {
+      pas = n;
+      fe.querySelectorAll('[data-pas]').forEach(function (d) { d.hidden = Number(d.getAttribute('data-pas')) !== n; });
+      espace.querySelectorAll('[data-pas-num]').forEach(function (li) {
+        var k = Number(li.getAttribute('data-pas-num'));
+        li.classList.toggle('fait', k < n);
+        if (k === n) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
+      });
+      if (n === 3) resumer();
+      var t = fe.querySelector('[data-pas="' + n + '"] input, [data-pas="' + n + '"] select');
+      if (t && n !== 1) t.focus({ preventScroll: true });
+    }
+    function verifierPas(n) {
+      var msg = message(fe);
+      if (!compte) return false;
+      if (n === 1 && lireColis().some(function (c) { return !(c.poids > 0) || c.poids > 20; })) { dire(msg, 'colis'); return false; }
+      if (n === 2 && fe.querySelector('[name=paiement]:checked').value === 'Virement' && !compte.rib) { dire(msg, 'rib'); return false; }
+      dire(msg, '');
+      return true;
+    }
+    function resumer() {
+      if (!compte) return;
+      var colis = lireColis(), c = compte, paiement = fe.querySelector('[name=paiement]:checked').value;
+      var ligne = function (titre, texte, retour) {
+        return '<div><dt>' + x(titre) + '</dt><dd>' + texte + (retour ? ' <button type="button" class="lien-bouton modifier" data-aller-pas="' + retour + '">' + x(E.modifier) + '</button>' : '') + '</dd></div>';
+      };
+      fe.querySelector('[data-resume]').innerHTML = '<dl class="resume-envoi">'
+        + ligne(E.rColis, x(remplacer(E.rColisTexte, { n: colis.length, kg: nombre.format(totalColis()) })) + '<br><span class="petit-gris">'
+          + colis.map(function (k) { return x(k.matiere) + ' : ' + x(nombre.format(k.poids)) + ' kg'; }).join('<br>') + '</span>', 1)
+        + ligne(E.rPaiement, x(paiement === 'Chèque' ? E.cheque : E.virement) + (paiement === 'Virement' && c.rib ? '<br><span class="petit-gris">' + x(c.rib.iban) + '</span>' : ''), 2)
+        + ligne(E.rEtiquette, x((c.prenom + ' ' + (c.nom || '').toUpperCase()).trim()) + '<br><span class="petit-gris">' + x([c.adresse, (c.cp + ' ' + c.ville).trim()].join(', ')) + '</span>')
+        + ligne(E.rPrix, x(remplacer(E.rPrixTexte, { prix: ecrirePrix(prixDuJour()), date: dateLongue(garantiJusqu(jourParis())) })))
+        + '</dl>';
+    }
+    liste.addEventListener('input', function () { majTotal(); garderBrouillon(); });
     liste.addEventListener('click', function (e) {
       var b = e.target.closest('.bouton-retirer');
-      if (b) { b.closest('.colis').remove(); numeroter(); }
+      if (b) { b.closest('.colis').remove(); numeroter(); garderBrouillon(); }
     });
     fe.querySelector('[data-ajouter-colis]').addEventListener('click', function () {
       ajouterColis();
       liste.lastElementChild.querySelector('[name=poids]').focus();
     });
-    fe.addEventListener('change', function (e) { if (e.target.name === 'paiement') majRib(); });
+    fe.addEventListener('change', function (e) { if (e.target.name === 'paiement') majRib(); garderBrouillon(); });
+    fe.addEventListener('click', function (ev) {
+      if (ev.target.closest('[data-pas-suivant]')) { if (verifierPas(pas)) allerPas(pas + 1); return; }
+      if (ev.target.closest('[data-pas-retour]')) { dire(message(fe), ''); allerPas(pas - 1); return; }
+      var m = ev.target.closest('[data-aller-pas]');
+      if (m) allerPas(Number(m.getAttribute('data-aller-pas')));
+    });
     ajouterColis();
     fe.addEventListener('submit', function (ev) {
       ev.preventDefault();
-      var msg = message(fe);
-      var colis = [].map.call(liste.children, function (el) {
-        return { matiere: el.querySelector('[name=matiere]').value, poids: lirePoids(el.querySelector('[name=poids]').value) };
-      });
-      if (colis.some(function (x) { return !(x.poids > 0) || x.poids > 20; })) return dire(msg, 'colis');
+      var msg = message(fe), colis = lireColis();
+      if (pas !== 3) { if (verifierPas(pas)) allerPas(pas + 1); return; }
+      if (colis.some(function (c) { return !(c.poids > 0) || c.poids > 20; })) { allerPas(1); return dire(msg, 'colis'); }
       var paiement = fe.querySelector('[name=paiement]:checked').value;
-      if (paiement === 'Virement' && !compte.rib) return dire(msg, 'rib');
+      if (paiement === 'Virement' && !compte.rib) { allerPas(2); return dire(msg, 'rib'); }
       if (!fe.elements.attestation.checked) return dire(msg, 'attestation');
       occupe(fe, true);
       api('POST', 'envoi', { colis: colis, paiement: paiement, message: fe.elements.message.value, attestation: true }).then(function (r) {
@@ -1324,12 +1854,15 @@
         if (r.status === 401) return recharger();
         if (r.erreur) return dire(msg, r.erreur);
         dire(msg, '');
+        oublierBrouillon();
         dernier = r.envoi;
         envois.unshift(r.envoi);
-        lister();
         fe.hidden = true;
+        espace.querySelector('[data-pas-indicateur]').hidden = true;
         ok.querySelector('[data-reference]').textContent = r.envoi.reference;
+        ok.querySelector('[data-garanti-fin]').textContent = r.envoi.garanti_jusqu ? dateLongue(r.envoi.garanti_jusqu) : '';
         ok.hidden = false;
+        remplir();
         ok.focus();
       });
     });
@@ -1340,8 +1873,11 @@
       liste.textContent = '';
       ajouterColis();
       fe.hidden = false;
+      espace.querySelector('[data-pas-indicateur]').hidden = false;
+      allerPas(1);
       liste.querySelector('[name=poids]').focus();
     });
+
     // bordereau : une page à glisser dans le colis, avec la référence en gros, le prix garanti et un QR code que Malik
     // scanne à l'arrivée : il ouvre la demande sur sa page /gestion/ (proposition 52). Styles d'impression de #bordereau ;
     // le QR code est dessiné ici par qrcode-generator (Kazuhiko Arase, licence MIT, vendor/qrcode/), chargé à la demande.
@@ -1355,9 +1891,9 @@
         document.head.appendChild(s);
       });
     };
-    espace.querySelector('[data-imprimer]').addEventListener('click', function () {
-      var e = dernier, c = compte, b = document.getElementById('bordereau');
-      var x = function (s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
+    var imprimer = function (e) {
+      var c = compte, b = document.getElementById('bordereau');
+      if (!e) return;
       chargerQr().then(function (qrcode) {
         var lignes = e.colis.map(function (l, i) {
           return '<tr><td>' + x(E.colisN.replace('{n}', i + 1)) + '</td><td>' + x(l.matiere) + '</td><td>' + x(nombre.format(l.poids)) + ' kg</td></tr>';
@@ -1382,27 +1918,59 @@
         window.addEventListener('afterprint', function () { document.body.classList.remove('impression-bordereau'); }, { once: true });
         window.print();
       });
+    };
+    espace.querySelector('[data-imprimer]').addEventListener('click', function () { imprimer(dernier); });
+    espace.addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-imprimer-ref]');
+      if (b) { imprimer(envois.filter(function (v) { return v.reference === b.getAttribute('data-imprimer-ref'); })[0]); return; }
+      var r = ev.target.closest('[data-redemander]');
+      if (r) {
+        var ref = r.getAttribute('data-redemander'), msg = espace.querySelector('[data-redemande-msg="' + ref + '"]');
+        r.disabled = true;
+        api('POST', 'bon', { reference: ref }).then(function (j) {
+          if (j.status === 401) return recharger();
+          msg.textContent = j.erreur === 'deja' ? E.deja : j.erreur ? (E[j.erreur] || E.serveur) : E.redemande;
+          if (j.erreur && j.erreur !== 'deja') r.disabled = false;
+        });
+      }
     });
 
-    // ---------- se déconnecter, supprimer le compte ----------
-    bandeau.querySelector('[data-deconnexion]').addEventListener('click', function () {
-      api('DELETE', 'connexion').then(function () { memoCompte(null); recharger(); });
+    // ---------- se déconnecter, supprimer le compte (en tapant le mot demandé : proposition 86) ----------
+    espace.querySelectorAll('[data-deconnexion]').forEach(function (b) {
+      b.addEventListener('click', function () { api('DELETE', 'connexion').then(function () { memoCompte(null); recharger(); }); });
     });
-    espace.querySelector('[data-supprimer]').addEventListener('click', function () {
-      if (!window.confirm(E.confirmer)) return;
+    var confirmer = document.getElementById('x-confirmer'), boutonSupprimer = espace.querySelector('[data-supprimer]');
+    var motAttendu = ((confirmer.labels && confirmer.labels[0] ? confirmer.labels[0].textContent : '').match(/[A-ZÀ-ÖØ-Þ]{5,}/) || ['SUPPRIMER'])[0];
+    boutonSupprimer.disabled = true;
+    confirmer.addEventListener('input', function () { boutonSupprimer.disabled = confirmer.value.trim().toUpperCase() !== motAttendu; });
+    boutonSupprimer.addEventListener('click', function () {
+      if (confirmer.value.trim().toUpperCase() !== motAttendu) return;
+      boutonSupprimer.disabled = true;
       api('DELETE', 'compte').then(function (r) {
-        if (r.erreur && r.status !== 401) return window.alert(E[r.erreur] || E.serveur);
+        if (r.erreur && r.status !== 401) { boutonSupprimer.disabled = false; return bulle(E[r.erreur] || E.serveur); }
         memoCompte(null);
-        recharger('?compte=supprime');
+        oublierBrouillon();
+        recharger('?compte=' + (r.garde ? 'ferme' : 'supprime'));
       });
     });
 
-    // à l'ouverture : déjà connecté ? (cookie du site, lu par le serveur seulement)
-    if (new URLSearchParams(location.search).get('compte') === 'supprime') dire(msgCx, 'supprime', true);
-    api('GET', 'compte').then(function (r) {
-      if (!r.erreur && r.compte) afficher(r, true);
-      else if (r.status === 401) memoCompte(null); // plus connecté : l'en-tête redit « Se connecter »
-    });
+    // à l'ouverture : lien « Me connecter » de l'e-mail, sinon déjà connecté ? (cookie du site, lu par le serveur seulement)
+    var params = new URLSearchParams(location.search);
+    if (params.get('compte') === 'supprime') dire(msgCx, 'supprime', true);
+    if (params.get('compte') === 'ferme') dire(msgCx, 'supprimeGarde', true);
+    var jeton = params.get('lien');
+    if (jeton) {
+      history.replaceState(history.state, '', location.pathname + location.hash); // le jeton ne reste pas dans l'adresse
+      api('POST', 'lien', { jeton: jeton, langue: lang }).then(function (r) {
+        if (!r.erreur && r.compte) return afficher(r, true);
+        dire(msgCx, r.erreur || 'serveur');
+      });
+    } else {
+      api('GET', 'compte').then(function (r) {
+        if (!r.erreur && r.compte) afficher(r, true);
+        else if (r.status === 401 || (!r.erreur && !r.compte)) memoCompte(null); // plus connecté : l'en-tête redit « Se connecter »
+      });
+    }
   })();
 
   var annee = document.getElementById('annee');

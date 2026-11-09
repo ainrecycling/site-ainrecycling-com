@@ -95,6 +95,12 @@ function kg_texte(float $kg, string $langue = 'fr'): string
     return $langue === 'en' ? $s : str_replace('.', ',', $s);
 }
 
+/** Somme d'argent, toujours avec les centimes : « 1 470,20 » (« 1,470.20 » en anglais). */
+function montant_texte(float $m, string $langue = 'fr'): string
+{
+    return $langue === 'en' ? number_format($m, 2, '.', ',') : number_format($m, 2, ',', " ");
+}
+
 /** Prix au kilo : « 47 », « 47,5 » (« 47.5 » en anglais). */
 function prix_texte(float $prix, string $langue = 'fr'): string
 {
@@ -162,7 +168,7 @@ const MAIL_CODE = [
 ];
 
 /** Code à 6 chiffres envoyé à la personne (espace client) ou à Malik (page de gestion, en français). */
-function mail_code(string $email, string $code, string $langue, string $espace): void
+function mail_code(string $email, string $code, string $langue, string $espace, ?string $lien = null): void
 {
     $gestion = $espace === 'gestion';
     $m = $gestion
@@ -170,10 +176,15 @@ function mail_code(string $email, string $code, string $langue, string $espace):
         : (MAIL_CODE[$langue] ?? MAIL_CODE['fr']);
     $langue = $gestion ? 'fr' : $langue;
     $lisible = substr($code, 0, 3) . ' ' . substr($code, 3);
+    // bouton « Me connecter » (lien de 10 minutes, une seule fois : proposition 72), puis le code pour qui préfère le taper
+    $url = $lien && !$gestion ? lien_page($langue, 'espace-client.html') . '?lien=' . $lien : '';
+    $l = MAIL_LIEN[$langue] ?? MAIL_LIEN['fr'];
     $contenu = '<p style="margin:0 0 6px">' . echapper(rtrim($m[1], ' :')) . '</p>'
+        . ($url ? bouton_mail($l[0], $url) . '<p style="margin:16px 0 0;color:#475467;font-size:14px">' . echapper($l[1]) . '</p>' : '')
         . '<p style="margin:14px 0;font-family:\'Courier New\',monospace;font-size:34px;font-weight:bold;letter-spacing:6px;color:#0e3c8a">' . $lisible . '</p>'
-        . '<p style="margin:0;color:#475467;font-size:14px">' . echapper($m[2]) . '</p>';
-    envoyer_mail($email, $m[0], mail_cadre($langue, $contenu), $m[1] . $lisible . "\n\n" . $m[2] . "\n\n" . pied_texte($langue));
+        . '<p style="margin:0;color:#475467;font-size:14px">' . echapper($url ? $l[2] : $m[2]) . '</p>';
+    envoyer_mail($email, $m[0], mail_cadre($langue, $contenu),
+        $m[1] . $lisible . "\n\n" . ($url ? $l[0] . ' : ' . $url . "\n\n" . $l[2] : $m[2]) . "\n\n" . pied_texte($langue));
 }
 
 // ---------- demande d'envoi par colis : confirmation à la personne (jamais de pièce d'identité dedans) ----------
@@ -382,4 +393,184 @@ function mail_resume_mois(string $a, string $sujet, array $lignes, string $lien)
         . implode('', array_map(fn ($l) => '<li style="margin:0 0 6px">' . echapper($l) . '</li>', $lignes)) . '</ul>'
         . bouton_mail('Ouvrir ma page du site', $lien);
     envoyer_mail($a, $sujet, mail_cadre('fr', $html), $sujet . "\n\n- " . implode("\n- ", $lignes) . "\n\n" . $lien);
+}
+
+// ---------- 3e revue (9 nov. 2026) : bouton « Me connecter », e-mail à chaque étape, pièce qui expire, bon redemandé ----------
+const MAIL_LIEN = [
+    'fr' => ['Me connecter', 'ou tapez ce code sur le site :', "Le bouton et le code sont valables 10 minutes, une seule fois. Si vous n'avez rien demandé, ignorez ce message."],
+    'de' => ['Anmelden', 'oder geben Sie diesen Code auf der Website ein:', 'Schaltfläche und Code sind 10 Minuten lang einmal gültig. Wenn Sie nichts angefordert haben, ignorieren Sie diese Nachricht.'],
+    'en' => ['Sign me in', 'or type this code on the website:', 'The button and the code work once, for 10 minutes. If you did not ask for it, please ignore this message.'],
+    'it' => ['Accedi', 'oppure digitate questo codice sul sito:', 'Il pulsante e il codice valgono una sola volta, per 10 minuti. Se non avete richiesto nulla, ignorate questo messaggio.'],
+    'es' => ['Iniciar sesión', 'o escriba este código en el sitio:', 'El botón y el código son válidos una sola vez, durante 10 minutos. Si no ha solicitado nada, ignore este mensaje.'],
+];
+
+const MAIL_ETAPE = [
+    'fr' => [
+        'bonjour' => 'Bonjour {prenom},',
+        'traite' => ['Votre étiquette prépayée est partie ({ref})', "Votre étiquette de transport prépayée vous a été envoyée par e-mail. Collez-la sur le colis, glissez le bordereau dedans et déposez-le au plus tard le {date} pour garder votre prix de {prix} €/kg."],
+        'recu' => ['Votre colis est bien arrivé ({ref})', "Votre colis est bien arrivé. Nous le pesons devant la caméra : le colis fermé (poids brut), puis le carbure seul (poids net). La vidéo et votre bon d'achat suivent."],
+        'pese' => ['Votre carbure est pesé : {net} kg ({ref})', 'Poids net, le carbure seul : {net} kg{brut}. Au prix garanti de {prix} €/kg, cela fait {montant} €. Votre paiement part sous 48 h (jours ouvrés).'],
+        'brut' => ' (colis fermé : {brut} kg)',
+        'paye' => ['Votre paiement de {montant} € est parti ({ref})', 'Votre paiement de {montant} € est parti par {paiement}. Merci pour votre confiance !'],
+        'virement' => 'virement', 'cheque' => 'chèque', 'bouton' => 'Voir ma demande',
+        'etapes' => ['Demande', 'Étiquette', 'Dépôt', 'Pesée', 'Paiement'],
+        'wa' => [
+            'traite' => 'Bonjour {prenom}, ici Ain Recycling : votre étiquette prépayée pour la demande {ref} vous a été envoyée par e-mail. À déposer au plus tard le {date}.',
+            'recu' => 'Bonjour {prenom}, ici Ain Recycling : votre colis {ref} est bien arrivé. Nous le pesons, la vidéo suit.',
+            'pese' => 'Bonjour {prenom}, ici Ain Recycling : votre carbure est pesé, {net} kg net, soit {montant} € au prix garanti. Paiement sous 48 h (jours ouvrés).',
+            'paye' => 'Bonjour {prenom}, ici Ain Recycling : votre paiement de {montant} € est parti par {paiement}. Merci !',
+        ],
+    ],
+    'de' => [
+        'bonjour' => 'Guten Tag {prenom},',
+        'traite' => ['Ihr vorausbezahltes Etikett ist unterwegs ({ref})', 'Ihr vorausbezahltes Versandetikett wurde Ihnen per E-Mail geschickt. Kleben Sie es auf das Paket, legen Sie den Versandschein hinein und geben Sie es spätestens am {date} ab, damit Ihr Preis von {prix} €/kg gilt.'],
+        'recu' => ['Ihr Paket ist angekommen ({ref})', 'Ihr Paket ist gut angekommen. Wir wiegen es vor der Kamera: zuerst das geschlossene Paket (Bruttogewicht), dann das Hartmetall allein (Nettogewicht). Das Video und Ihr Ankaufsbeleg folgen.'],
+        'pese' => ['Ihr Hartmetall ist gewogen: {net} kg ({ref})', 'Nettogewicht, das Hartmetall allein: {net} kg{brut}. Zum garantierten Preis von {prix} €/kg sind das {montant} €. Ihre Zahlung erfolgt innerhalb von 48 Std. (Werktage).'],
+        'brut' => ' (geschlossenes Paket: {brut} kg)',
+        'paye' => ['Ihre Zahlung von {montant} € ist unterwegs ({ref})', 'Ihre Zahlung von {montant} € wurde per {paiement} veranlasst. Vielen Dank für Ihr Vertrauen!'],
+        'virement' => 'Überweisung', 'cheque' => 'Scheck', 'bouton' => 'Meine Anfrage ansehen',
+        'etapes' => ['Anfrage', 'Etikett', 'Abgabe', 'Wiegung', 'Zahlung'],
+        'wa' => [
+            'traite' => 'Guten Tag {prenom}, hier Ain Recycling: Ihr vorausbezahltes Etikett für die Anfrage {ref} wurde Ihnen per E-Mail geschickt. Bitte spätestens am {date} abgeben.',
+            'recu' => 'Guten Tag {prenom}, hier Ain Recycling: Ihr Paket {ref} ist gut angekommen. Wir wiegen es, das Video folgt.',
+            'pese' => 'Guten Tag {prenom}, hier Ain Recycling: Ihr Hartmetall ist gewogen, {net} kg netto, also {montant} € zum garantierten Preis. Zahlung innerhalb von 48 Std. (Werktage).',
+            'paye' => 'Guten Tag {prenom}, hier Ain Recycling: Ihre Zahlung von {montant} € wurde per {paiement} veranlasst. Danke!',
+        ],
+    ],
+    'en' => [
+        'bonjour' => 'Hello {prenom},',
+        'traite' => ['Your prepaid label is on its way ({ref})', 'Your prepaid shipping label has been emailed to you. Stick it on the parcel, put the shipping slip inside and drop it off by {date} at the latest to keep your price of {prix} €/kg.'],
+        'recu' => ['Your parcel has arrived ({ref})', 'Your parcel has arrived safely. We weigh it on camera: first the closed parcel (gross weight), then the carbide on its own (net weight). The video and your purchase receipt will follow.'],
+        'pese' => ['Your carbide has been weighed: {net} kg ({ref})', 'Net weight, the carbide on its own: {net} kg{brut}. At the guaranteed price of {prix} €/kg, that comes to {montant} €. Your payment will be sent within 48 h (working days).'],
+        'brut' => ' (closed parcel: {brut} kg)',
+        'paye' => ['Your payment of {montant} € has been sent ({ref})', 'Your payment of {montant} € has been sent by {paiement}. Thank you for your trust!'],
+        'virement' => 'bank transfer', 'cheque' => 'cheque', 'bouton' => 'View my request',
+        'etapes' => ['Request', 'Label', 'Drop-off', 'Weighing', 'Payment'],
+        'wa' => [
+            'traite' => 'Hello {prenom}, this is Ain Recycling: your prepaid label for request {ref} has been emailed to you. Please drop the parcel off by {date}.',
+            'recu' => 'Hello {prenom}, this is Ain Recycling: your parcel {ref} has arrived safely. We are weighing it, the video will follow.',
+            'pese' => 'Hello {prenom}, this is Ain Recycling: your carbide has been weighed, {net} kg net, i.e. {montant} € at the guaranteed price. Payment within 48 h (working days).',
+            'paye' => 'Hello {prenom}, this is Ain Recycling: your payment of {montant} € has been sent by {paiement}. Thank you!',
+        ],
+    ],
+    'it' => [
+        'bonjour' => 'Buongiorno {prenom},',
+        'traite' => ['La vostra etichetta prepagata è partita ({ref})', 'La vostra etichetta di trasporto prepagata vi è stata inviata per e-mail. Incollatela sul pacco, inserite la distinta e consegnatelo entro il {date} per mantenere il prezzo di {prix} €/kg.'],
+        'recu' => ['Il vostro pacco è arrivato ({ref})', "Il vostro pacco è arrivato. Lo pesiamo davanti alla telecamera: prima il pacco chiuso (peso lordo), poi il metallo duro da solo (peso netto). Il video e il buono d'acquisto seguiranno."],
+        'pese' => ['Il vostro metallo duro è pesato: {net} kg ({ref})', 'Peso netto, il metallo duro da solo: {net} kg{brut}. Al prezzo garantito di {prix} €/kg, fanno {montant} €. Il pagamento parte entro 48 h (giorni lavorativi).'],
+        'brut' => ' (pacco chiuso: {brut} kg)',
+        'paye' => ['Il vostro pagamento di {montant} € è partito ({ref})', 'Il vostro pagamento di {montant} € è partito tramite {paiement}. Grazie per la fiducia!'],
+        'virement' => 'bonifico', 'cheque' => 'assegno', 'bouton' => 'Vedere la mia richiesta',
+        'etapes' => ['Richiesta', 'Etichetta', 'Consegna', 'Pesatura', 'Pagamento'],
+        'wa' => [
+            'traite' => "Buongiorno {prenom}, qui Ain Recycling: l'etichetta prepagata per la richiesta {ref} vi è stata inviata per e-mail. Da consegnare entro il {date}.",
+            'recu' => 'Buongiorno {prenom}, qui Ain Recycling: il vostro pacco {ref} è arrivato. Lo stiamo pesando, il video segue.',
+            'pese' => 'Buongiorno {prenom}, qui Ain Recycling: il vostro metallo duro è pesato, {net} kg netti, cioè {montant} € al prezzo garantito. Pagamento entro 48 h (giorni lavorativi).',
+            'paye' => 'Buongiorno {prenom}, qui Ain Recycling: il vostro pagamento di {montant} € è partito tramite {paiement}. Grazie!',
+        ],
+    ],
+    'es' => [
+        'bonjour' => 'Hola {prenom}:',
+        'traite' => ['Su etiqueta prepagada ya está enviada ({ref})', 'Le hemos enviado por correo electrónico su etiqueta de transporte prepagada. Péguela en el paquete, meta la hoja de envío dentro y entréguelo a más tardar el {date} para conservar su precio de {prix} €/kg.'],
+        'recu' => ['Su paquete ha llegado ({ref})', 'Su paquete ha llegado bien. Lo pesamos delante de la cámara: primero el paquete cerrado (peso bruto) y luego el metal duro solo (peso neto). El vídeo y su justificante de compra le llegarán después.'],
+        'pese' => ['Su metal duro está pesado: {net} kg ({ref})', 'Peso neto, el metal duro solo: {net} kg{brut}. Al precio garantizado de {prix} €/kg, son {montant} €. Su pago sale en 48 h (días laborables).'],
+        'brut' => ' (paquete cerrado: {brut} kg)',
+        'paye' => ['Su pago de {montant} € ya está enviado ({ref})', 'Su pago de {montant} € se ha enviado por {paiement}. ¡Gracias por su confianza!'],
+        'virement' => 'transferencia', 'cheque' => 'cheque', 'bouton' => 'Ver mi solicitud',
+        'etapes' => ['Solicitud', 'Etiqueta', 'Entrega', 'Pesaje', 'Pago'],
+        'wa' => [
+            'traite' => 'Hola {prenom}, le escribe Ain Recycling: le hemos enviado por correo electrónico la etiqueta prepagada de la solicitud {ref}. Entréguela a más tardar el {date}.',
+            'recu' => 'Hola {prenom}, le escribe Ain Recycling: su paquete {ref} ha llegado bien. Lo estamos pesando, el vídeo le llegará después.',
+            'pese' => 'Hola {prenom}, le escribe Ain Recycling: su metal duro está pesado, {net} kg netos, es decir {montant} € al precio garantizado. Pago en 48 h (días laborables).',
+            'paye' => 'Hola {prenom}, le escribe Ain Recycling: su pago de {montant} € se ha enviado por {paiement}. ¡Gracias!',
+        ],
+    ],
+];
+
+/** Les valeurs d'une étape (référence, date de garantie, prix, poids, montant) mises en forme dans la langue du compte. */
+function valeurs_etape(array $c, array $e, string $langue): array
+{
+    $m = MAIL_ETAPE[$langue] ?? MAIL_ETAPE['fr'];
+    $montant = $e['montant'] ?? null;
+    if (!$montant && !empty($e['poids_net']) && !empty($e['prix_kg'])) $montant = round((float) $e['poids_net'] * (float) $e['prix_kg'], 2);
+    return [
+        'prenom' => $c['prenom'], 'ref' => $e['reference'],
+        'date' => !empty($e['garanti_jusqu']) ? date_longue((string) $e['garanti_jusqu'], $langue) : '',
+        'prix' => !empty($e['prix_kg']) ? prix_texte((float) $e['prix_kg'], $langue) : '',
+        'net' => !empty($e['poids_net']) ? kg_texte((float) $e['poids_net'], $langue) : '',
+        'brut' => !empty($e['poids_brut']) ? remplir($m['brut'], ['brut' => kg_texte((float) $e['poids_brut'], $langue)]) : '',
+        'montant' => $montant ? montant_texte((float) $montant, $langue) : '',
+        'paiement' => $e['paiement'] === 'Chèque' ? $m['cheque'] : $m['virement'],
+    ];
+}
+
+/** Le suivi en 5 cases dans l'e-mail (tableau : lu par toutes les messageries). */
+function suivi_mail(int $faites, string $langue): string
+{
+    $noms = (MAIL_ETAPE[$langue] ?? MAIL_ETAPE['fr'])['etapes'];
+    $barres = $textes = '';
+    foreach ($noms as $i => $nom) {
+        $fait = $i < $faites;
+        $barres .= '<td style="padding:0 2px"><div style="height:6px;border-radius:6px;background:' . ($fait ? '#187a4e' : '#e0e7e3') . '"></div></td>';
+        $textes .= '<td style="padding:6px 2px 0;font-size:11px;text-align:center;color:' . ($i === $faites - 1 ? '#0e3c8a;font-weight:bold' : '#5b6763') . '">' . echapper($nom) . '</td>';
+    }
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 6px;table-layout:fixed"><tr>' . $barres . '</tr><tr>' . $textes . '</tr></table>';
+}
+
+/** E-mail à la personne quand Malik coche une étape (étiquette envoyée, colis reçu, pesé, payé) : proposition 95. */
+function mail_etape(array $c, array $e, string $etape): void
+{
+    $langue = langue_mail($c['langue']);
+    $m = MAIL_ETAPE[$langue] ?? MAIL_ETAPE['fr'];
+    if (!isset($m[$etape])) return;
+    if ($etape === 'pese' && empty($e['poids_net'])) return;
+    $v = valeurs_etape($c, $e, $langue);
+    [$sujet, $texte] = [remplir($m[$etape][0], $v), remplir($m[$etape][1], $v)];
+    $faites = ['traite' => 2, 'recu' => 3, 'pese' => 4, 'paye' => 5][$etape];
+    $lien = lien_page($langue, 'espace-client.html') . '#demandes';
+    $html = '<p style="margin:0 0 10px">' . echapper(remplir($m['bonjour'], $v)) . '</p>'
+        . '<p style="margin:0 0 4px">' . echapper($texte) . '</p>' . suivi_mail($faites, $langue) . bouton_mail($m['bouton'], $lien);
+    envoyer_mail($c['email'], $sujet, mail_cadre($langue, $html), remplir($m['bonjour'], $v) . "\n\n" . $texte . "\n\n" . $m['bouton'] . ' : ' . $lien . "\n\n" . pied_texte($langue));
+}
+
+/** Le message WhatsApp déjà écrit pour une étape, dans la langue de la personne (Malik l'envoie lui-même d'un appui). */
+function texte_whatsapp_etape(array $c, array $e, string $etape): string
+{
+    $langue = langue_mail($c['langue']);
+    $m = MAIL_ETAPE[$langue] ?? MAIL_ETAPE['fr'];
+    return remplir($m['wa'][$etape] ?? '', valeurs_etape($c, $e, $langue));
+}
+
+const MAIL_PIECE = [
+    'fr' => ["Votre pièce d'identité expire bientôt", 'Bonjour {prenom}, votre {type} enregistrée sur votre compte Ain Recycling expire le {date}.', 'Pour vos prochaines ventes, remplacez-la en une minute depuis votre compte.', 'Mettre à jour ma pièce'],
+    'de' => ['Ihr Ausweis läuft bald ab', 'Guten Tag {prenom}, das in Ihrem Ain-Recycling-Konto gespeicherte Dokument ({type}) läuft am {date} ab.', 'Für Ihre nächsten Verkäufe ersetzen Sie es in einer Minute in Ihrem Konto.', 'Ausweis aktualisieren'],
+    'en' => ['Your ID document expires soon', 'Hello {prenom}, the ID document ({type}) saved in your Ain Recycling account expires on {date}.', 'For your next sales, replace it in one minute from your account.', 'Update my ID'],
+    'it' => ["Il vostro documento d'identità scade presto", 'Buongiorno {prenom}, il documento ({type}) registrato nel vostro account Ain Recycling scade il {date}.', 'Per le prossime vendite, sostituitelo in un minuto dal vostro account.', 'Aggiornare il documento'],
+    'es' => ['Su documento de identidad caduca pronto', 'Hola {prenom}: el documento ({type}) guardado en su cuenta de Ain Recycling caduca el {date}.', 'Para sus próximas ventas, sustitúyalo en un minuto desde su cuenta.', 'Actualizar mi documento'],
+];
+
+/** Rappel un mois avant la fin de la pièce d'identité (proposition 81). */
+function mail_piece_bientot(array $c): void
+{
+    if (!$c['piece'] || $c['piece']['expiration'] === '') return;
+    $langue = langue_mail($c['langue']);
+    $m = MAIL_PIECE[$langue] ?? MAIL_PIECE['fr'];
+    $type = $langue === 'fr' ? mb_strtolower($c['piece']['type']) : $c['piece']['type'];
+    $v = ['prenom' => $c['prenom'], 'type' => $type, 'date' => date_longue($c['piece']['expiration'], $langue)];
+    $lien = lien_page($langue, 'espace-client.html') . '#profil';
+    $html = '<p style="margin:0 0 10px">' . echapper(remplir($m[1], $v)) . '</p><p style="margin:0">' . echapper($m[2]) . '</p>' . bouton_mail($m[3], $lien);
+    envoyer_mail($c['email'], $m[0], mail_cadre($langue, $html), remplir($m[1], $v) . "\n\n" . $m[2] . "\n\n" . $m[3] . ' : ' . $lien . "\n\n" . pied_texte($langue));
+}
+
+/** Le bon d'achat redemandé depuis le compte : e-mail à Malik, qui le renvoie lui-même (proposition 98, sa version). */
+function mail_bon_redemande(array $c, array $e): void
+{
+    $a = (string) reglage('mail_admin', '');
+    if ($a === '') return;
+    $nom = $c['prenom'] . ' ' . majuscules($c['nom']);
+    $l1 = "$nom redemande son bon d'achat " . $e['bon_numero'] . ' (demande ' . $e['reference'] . ').';
+    $l2 = 'Renvoie-le-lui par e-mail (' . $c['email'] . ')' . ($c['telephone'] !== '' ? ' ou par WhatsApp (' . $c['telephone'] . ')' : '') . '.';
+    $html = '<p style="margin:0 0 10px">' . echapper($l1) . '</p><p style="margin:0">' . echapper($l2) . '</p>'
+        . bouton_mail('Voir la demande', adresse_site() . '/gestion/#' . $e['reference']);
+    envoyer_mail($a, '🧾 Bon redemandé : ' . $nom . ' (' . $e['bon_numero'] . ')', mail_cadre('fr', $html), $l1 . "\n\n" . $l2);
 }

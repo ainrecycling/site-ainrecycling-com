@@ -4,8 +4,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Kundenbereich – Ain Recycling</title>
-  <meta name="description" content="Ihr Kundenbereich bei Ain Recycling: Ausweis, Kontaktdaten und Bankverbindung nur einmal und vertraulich gespeichert, damit Sie Ihr Hartmetall schneller verkaufen.">
+  <title>Mein Konto – Ain Recycling</title>
+  <meta name="description" content="Ihr Ain-Recycling-Konto: Ausweis, Kontaktdaten und Bankverbindung einmal und vertraulich gespeichert, damit Sie Ihr Hartmetall schneller verkaufen.">
   <link rel="canonical" href="https://ainrecycling.com/de/espace-client.html">
   <link rel="alternate" hreflang="fr" href="https://ainrecycling.com/espace-client.html">
   <link rel="alternate" hreflang="de" href="https://ainrecycling.com/de/espace-client.html">
@@ -18,7 +18,7 @@
   <meta property="og:locale" content="de_DE">
   <meta property="og:site_name" content="Ain Recycling">
   <meta property="og:title" content="Kundenbereich – Ain Recycling">
-  <meta property="og:description" content="Ihr Kundenbereich bei Ain Recycling: Ausweis, Kontaktdaten und Bankverbindung nur einmal und vertraulich gespeichert, damit Sie Ihr Hartmetall schneller verkaufen.">
+  <meta property="og:description" content="Ihr Ain-Recycling-Konto: Ausweis, Kontaktdaten und Bankverbindung einmal und vertraulich gespeichert, damit Sie Ihr Hartmetall schneller verkaufen.">
   <meta property="og:url" content="https://ainrecycling.com/de/espace-client.html">
   <meta property="og:image" content="https://ainrecycling.com/images/partage-de.jpg">
   <meta property="og:image:alt" content="Ain Recycling, Ankauf von Hartmetall: ein Behälter mit dem Logo von Ain Recycling voller gebrauchtem Hartmetall">
@@ -100,57 +100,85 @@
 
 <main id="contenu">
 
-  <!-- ============ PAS CONNECTÉ : se connecter ou créer un compte ============ -->
-  <section class="page-hero page-compte" id="espace-accueil">
-    <div class="conteneur">
-      <div class="page-hero-in">
-        <div class="page-hero-texte">
-          <nav class="fil" aria-label="Brotkrumennavigation"><a href="index.html">Startseite</a><span aria-hidden="true">/</span><span>Kundenbereich</span></nav>
-          <p class="sur-titre">Kundenbereich</p>
-          <h1>Ihr Ausweis, <span>nur ein einziges Mal geschickt.</span></h1>
-          <p class="chapo">Legen Sie Ihr Konto in einer Minute an: Ihr Ausweis, Ihre Kontaktdaten und Ihre Bankverbindung werden vertraulich gespeichert. Ihre nächsten Verkäufe erledigen Sie mit wenigen Klicks.</p>
-          <ul class="garanties-contact">
-            <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>Kein Passwort zum Merken</li>
-            <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>Ihre Dokumente bleiben vertraulich</li>
-            <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>Konto auf einfache Anfrage gelöscht</li>
-          </ul>
-        </div>
+  <!-- ============ PAS CONNECTÉ : se connecter ou créer un compte (3e revue, 9 nov. 2026 : propositions 69 à 72) ============ -->
+  <section class="auth" id="espace-accueil">
+    <div class="auth-gauche">
+      <nav class="fil" aria-label="Brotkrumennavigation"><a href="index.html">Startseite</a><span aria-hidden="true">/</span><span>Mein Konto</span></nav>
+      <h1>Verkaufen Sie Ihr Hartmetall mit wenigen Klicks.</h1>
+      <ul class="auth-promesses">
+        <li><span class="icone"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4z"></path><circle cx="7.5" cy="7.5" r="1.5"></circle></svg></span><span><b>Kostenloses Etikett</b>Der Transport geht auf unsere Kosten.</span></li>
+        <li><span class="icone"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg></span><span><b>Preisgarantie 7 Tage</b>Der Tagespreis Ihrer Anfrage, längstens bis zum Monatsende.</span></li>
+        <li><span class="icone"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18"></path><path d="M5 21V10M9.5 21V10M14.5 21V10M19 21V10"></path><path d="M2 10h20L12 3z"></path></svg></span><span><b>Bezahlt innerhalb von 48 Std. (Werktage)</b>Per Überweisung oder Scheck, nach der gefilmten Wiegung.</span></li>
+      </ul>
+      <p class="auth-prive"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 11h14v10H5zM8 11V7a4 4 0 0 1 8 0v4"></path></svg>Ihre Dokumente bleiben vertraulich: nur Sie und Ain Recycling sehen sie.</p>
+    </div>
 
-        <!-- Connexion par code reçu par e-mail : d'abord l'adresse, puis le code (site.js, serveur : l'appli) -->
-        <form class="formulaire connexion" id="connexion" novalidate aria-labelledby="t-connexion">
-          <h2 id="t-connexion">Anmelden oder Konto anlegen</h2>
-          <div class="connexion-etape" data-etape-connexion="email">
+    <div class="auth-droite">
+      <!-- Connexion par un code reçu par e-mail (ou le bouton « Me connecter » de l'e-mail) ; « Créer un compte » demande
+           en plus le prénom, le nom et, pour une entreprise, la raison sociale et le SIRET (site.js, serveur/espace.php) -->
+      <form class="formulaire connexion boite-auth" id="connexion" novalidate aria-labelledby="t-connexion">
+        <div class="auth-onglets" role="group" aria-label="Anmelden oder Konto anlegen">
+          <button type="button" data-mode="connexion" aria-pressed="true">Anmelden</button>
+          <button type="button" data-mode="creation" aria-pressed="false">Konto erstellen</button>
+        </div>
+        <h2 id="t-connexion" data-titre-connexion>Anmelden</h2>
+        <h2 data-titre-creation hidden>Konto erstellen</h2>
+        <p class="auth-sous" data-sous-connexion>Um ein Paket zu senden und Ihre Verkäufe zu verfolgen.</p>
+        <p class="auth-sous" data-sous-creation hidden>Nur einmal: Ihre nächsten Verkäufe erledigen Sie in 3 Minuten.</p>
+        <div class="connexion-etape" data-etape-connexion="email">
+          <div class="auth-creation" data-creation hidden>
             <div class="champ">
-              <label for="cx-email">Ihre E-Mail-Adresse</label>
-              <input id="cx-email" name="email" type="email" autocomplete="email" required>
+              <span class="label" id="cr-profil-label">Sie sind</span>
+              <div class="choix" role="radiogroup" aria-labelledby="cr-profil-label">
+                <label><input type="radio" name="cr-profil" value="particulier" checked><span>Privatperson</span></label>
+                <label><input type="radio" name="cr-profil" value="professionnel"><span>Unternehmen</span></label>
+              </div>
             </div>
-            <div class="pot" aria-hidden="true"><label>Website <input name="site" tabindex="-1" autocomplete="off"></label></div>
-            <button type="submit" class="btn btn-primaire btn-large">Code erhalten
-              <svg class="ic ic-fleche" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"></path></svg></button>
-          </div>
-          <div class="connexion-etape" data-etape-connexion="code" hidden>
-            <p class="connexion-envoye"><span>Code gesendet an</span> <b data-email></b></p>
-            <div class="champ">
-              <label for="cx-code">Per E-Mail erhaltener Code</label>
-              <input id="cx-code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="6 Ziffern">
+            <div class="champ-ligne">
+              <div class="champ"><label for="cr-prenom">Vorname</label><input id="cr-prenom" name="cr-prenom" autocomplete="given-name" autocapitalize="words"></div>
+              <div class="champ"><label for="cr-nom">Nachname</label><input id="cr-nom" name="cr-nom" autocomplete="family-name" autocapitalize="words"></div>
             </div>
-            <button type="submit" class="btn btn-primaire btn-large">Anmelden
-              <svg class="ic ic-fleche" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"></path></svg></button>
-            <p class="connexion-liens"><button type="button" class="lien-bouton" data-renvoyer>Code erneut senden</button>
-              <button type="button" class="lien-bouton" data-changer>E-Mail-Adresse ändern</button></p>
+            <div class="champ-ligne" data-cr-pro hidden>
+              <div class="champ"><label for="cr-entreprise">Unternehmen</label><input id="cr-entreprise" name="cr-entreprise" autocomplete="organization"></div>
+              <div class="champ"><label for="cr-siret">SIRET</label><input id="cr-siret" name="cr-siret" inputmode="numeric" placeholder="14 Ziffern"></div>
+            </div>
           </div>
-          <p class="msg-espace" role="alert" hidden></p>
-          <p class="aide">Sie erhalten per E-Mail einen Einmalcode. Noch kein Konto? Es wird bei Ihrer ersten Anmeldung angelegt.</p>
-        </form>
-      </div>
+          <div class="champ">
+            <label for="cx-email">E-Mail-Adresse</label>
+            <input id="cx-email" name="email" type="email" autocomplete="email" required placeholder="sie@beispiel.de">
+          </div>
+          <label class="case" data-creation hidden><input type="checkbox" name="cgu">
+            <span>Ich akzeptiere die <a href="conditions-utilisation.html">Nutzungs- und Ankaufsbedingungen</a>.</span></label>
+          <div class="pot" aria-hidden="true"><label>Website <input name="site" tabindex="-1" autocomplete="off"></label></div>
+          <button type="submit" class="btn btn-primaire btn-large"><span data-bouton-connexion>Code erhalten</span><span data-bouton-creation hidden>Mein Konto erstellen</span>
+            <svg class="ic ic-fleche" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"></path></svg></button>
+        </div>
+        <div class="connexion-etape" data-etape-connexion="code" hidden>
+          <p class="connexion-envoye"><span>Code gesendet an</span> <b data-email></b></p>
+          <div class="champ">
+            <label for="cx-code">6-stelliger Code</label>
+            <div class="code-cases">
+              <input id="cx-code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" spellcheck="false">
+              <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+            </div>
+          </div>
+          <p class="aide">Oder tippen Sie in der E-Mail auf „Anmelden“. Auf dem iPhone erscheint der Code über der Tastatur.</p>
+          <button type="submit" class="btn btn-primaire btn-large">Anmelden
+            <svg class="ic ic-fleche" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"></path></svg></button>
+          <p class="connexion-liens"><button type="button" class="lien-bouton" data-renvoyer>Code erneut senden</button>
+            <button type="button" class="lien-bouton" data-changer>E-Mail-Adresse ändern</button></p>
+        </div>
+        <p class="msg-espace" role="alert" hidden></p>
+        <p class="aide auth-pied">Kein Passwort: Sie erhalten einen 6-stelligen Code per E-Mail.</p>
+      </form>
     </div>
   </section>
 
-  <!-- ============ CE QUE CONTIENT L'ESPACE ============ -->
+  <!-- ============ CE QUE CONTIENT LE COMPTE ============ -->
   <section class="bloc bloc-gris" id="espace-avantages">
     <div class="conteneur">
       <div class="titre-bloc titre-centre apparait">
-        <p class="sur-titre">Ihr Bereich</p>
+        <p class="sur-titre">Ihr Konto</p>
         <h2>Alles ist bereit für Ihren nächsten Verkauf.</h2>
       </div>
       <ul class="engagements engagements-3">
@@ -166,8 +194,8 @@
         </li>
         <li class="engagement apparait">
           <span class="icone"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4M10 9H8M16 13H8M16 17H8"></path></svg></span>
-          <h3>Ihre Anfragen an einem Ort</h3>
-          <p>Jeder Versand per Paket, seine Referenz und sein Stand.</p>
+          <h3>Ihre Anfragen und Verkäufe an einem Ort</h3>
+          <p>Jede Paketsendung, ihre Referenz, ihr Stand und Ihre bisherigen Verkäufe.</p>
         </li>
       </ul>
       <div class="hors-france encart-donnees apparait">
@@ -177,135 +205,235 @@
     </div>
   </section>
 
-  <!-- ============ CONNECTÉ : mon espace ============ -->
-  <section class="page-hero page-hero-simple" id="espace-connecte" hidden>
-    <div class="conteneur">
-      <nav class="fil" aria-label="Brotkrumennavigation"><a href="index.html">Startseite</a><span aria-hidden="true">/</span><span>Kundenbereich</span></nav>
-      <p class="sur-titre">Kundenbereich</p>
-      <h1>Guten Tag <span class="prenom"></span></h1>
-      <p class="chapo" data-etat-compte></p>
-      <p class="connecte-email"><span>Angemeldet mit</span> <b data-email></b> <button type="button" class="lien-bouton" data-deconnexion>Abmelden</button></p>
-    </div>
-  </section>
-
-  <section class="bloc bloc-gris bloc-suite" id="espace-sections" hidden>
-    <div class="conteneur espace">
-      <div class="espace-col">
-        <h2 class="espace-titre">Mein Konto</h2>
-
-        <details class="carte-espace" data-section="coordonnees">
-          <summary><span class="etat-rond" aria-hidden="true"></span><span class="carte-espace-titre">Meine Kontaktdaten</span><span class="carte-espace-resume"></span></summary>
-          <form class="form-espace" id="f-coordonnees" novalidate>
-            <div class="champ">
-              <span class="label" id="x-profil-label">Sie sind</span>
-              <div class="choix" role="radiogroup" aria-labelledby="x-profil-label">
-                <label><input type="radio" name="profil" value="particulier" checked><span>Privatperson</span></label>
-                <label><input type="radio" name="profil" value="professionnel"><span>Gewerblich</span></label>
-              </div>
-            </div>
-            <div class="champ-ligne" data-pro hidden>
-              <div class="champ"><label for="x-entreprise">Unternehmen</label><input id="x-entreprise" name="entreprise" autocomplete="organization"></div>
-              <div class="champ"><label for="x-siret">SIRET</label><input id="x-siret" name="siret" inputmode="numeric" placeholder="14 Ziffern"></div>
-            </div>
-            <div class="champ-ligne">
-              <div class="champ"><label for="x-nom">Nachname</label><input id="x-nom" name="nom" autocomplete="family-name"></div>
-              <div class="champ"><label for="x-prenom">Vorname</label><input id="x-prenom" name="prenom" autocomplete="given-name"></div>
-            </div>
-            <div class="champ"><label for="x-adresse">Adresse</label><input id="x-adresse" name="adresse" autocomplete="street-address"></div>
-            <div class="champ-ligne">
-              <div class="champ"><label for="x-cp">Postleitzahl</label><input id="x-cp" name="cp" inputmode="numeric" autocomplete="postal-code"></div>
-              <div class="champ"><label for="x-ville">Ort</label><input id="x-ville" name="ville" autocomplete="address-level2"></div>
-            </div>
-            <div class="champ"><label for="x-tel">Telefon <span class="facultatif">(optional)</span></label><input id="x-tel" name="telephone" type="tel" autocomplete="tel"></div>
-            <p class="msg-espace" role="alert" hidden></p>
-            <button type="submit" class="btn btn-primaire">Speichern</button>
-          </form>
-        </details>
-
-        <details class="carte-espace" data-section="piece">
-          <summary><span class="etat-rond" aria-hidden="true"></span><span class="carte-espace-titre">Mein Ausweis</span><span class="carte-espace-resume"></span></summary>
-          <form class="form-espace" id="f-piece" novalidate>
-            <p class="espace-aide">Bei Privatpersonen schreibt das Gesetz vor, die Identität des Verkäufers zu prüfen. Der Ausweis wird vertraulich aufbewahrt und nie weitergegeben.</p>
-            <div class="champ-ligne">
-              <div class="champ"><label for="x-type">Art des Ausweises</label>
-                <select id="x-type" name="type"><option value="Carte d'identité">Personalausweis</option><option value="Passeport">Reisepass</option><option value="Titre de séjour">Aufenthaltstitel</option><option value="Permis de conduire">Führerschein</option></select></div>
-              <div class="champ"><label for="x-numero">Ausweisnummer</label><input id="x-numero" name="numero" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
-            </div>
-            <div class="champ"><label for="x-expiration">Gültig bis <span class="facultatif">(freiwillig)</span></label><input id="x-expiration" name="expiration" type="date"></div>
-            <div class="depots">
-              <label class="depot" data-face="recto">
-                <input type="file" name="recto" accept="image/*">
-                <img class="depot-apercu" alt="Ausweis Vorderseite" hidden>
-                <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg><b>Vorderseite</b><br><span class="depot-photo">Foto</span></span>
-              </label>
-              <label class="depot" data-face="verso">
-                <input type="file" name="verso" accept="image/*">
-                <img class="depot-apercu" alt="Ausweis Rückseite" hidden>
-                <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg><b>Rückseite</b><br><span class="depot-photo">Foto</span></span>
-              </label>
-            </div>
-            <p class="msg-espace" role="alert" hidden></p>
-            <button type="submit" class="btn btn-primaire">Speichern</button>
-          </form>
-        </details>
-
-        <details class="carte-espace" data-section="rib">
-          <summary><span class="etat-rond" aria-hidden="true"></span><span class="carte-espace-titre">Meine Bankverbindung</span><span class="carte-espace-resume"></span></summary>
-          <form class="form-espace" id="f-rib" novalidate>
-            <div class="champ-ligne">
-              <div class="champ"><label for="x-titulaire">Kontoinhaber</label><input id="x-titulaire" name="titulaire" autocomplete="name"></div>
-              <div class="champ"><label for="x-iban">IBAN</label><input id="x-iban" name="iban" autocomplete="off" spellcheck="false" placeholder="FR76 …"></div>
-            </div>
-            <p class="msg-espace" role="alert" hidden></p>
-            <button type="submit" class="btn btn-primaire">Speichern</button>
-          </form>
-        </details>
-
+  <!-- ============ CONNECTÉ : mon compte (3e revue, propositions 75 à 93 ; d'après outils/propositions-3/ecrans.mjs) ============ -->
+  <section class="compte" id="espace-sections" hidden>
+    <div class="conteneur compte-cadre">
+      <div class="compte-cote">
+        <div class="compte-moi" id="espace-connecte">
+          <span class="initiales" data-initiales aria-hidden="true"></span>
+          <div><b><span class="prenom"></span> <span data-nom></span></b><span data-email></span></div>
+        </div>
+        <nav class="compte-nav" aria-label="Mein Konto">
+          <a href="#accueil" data-vue-lien="accueil"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"></path></svg>Übersicht</a>
+          <a href="#demandes" data-vue-lien="demandes"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5V8zM3 8l9 5 9-5M12 13v8"></path></svg>Meine Anfragen<span class="n" data-n-demandes hidden></span></a>
+          <a href="#ventes" data-vue-lien="ventes"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h12M4 14h9M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12c0 4.4 3.5 8 7.8 8 2 0 3.8-.8 5.2-2"></path></svg>Meine Verkäufe</a>
+          <a href="#envoi" data-vue-lien="envoi"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"></path></svg>Ein Paket schicken</a>
+          <a href="#profil" data-vue-lien="profil"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"></path></svg>Mein Profil</a>
+          <span class="sep" aria-hidden="true"></span>
+          <a href="https://wa.me/33761119523?text=Guten%20Tag%2C%20ich%20habe%20eine%20Frage%20zu%20meinem%20Konto." data-question><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.6 8.6 0 0 1-3.9-.9L3 21l1.9-5.1A8.4 8.4 0 0 1 12 3a8.5 8.5 0 0 1 9 8.5z"></path></svg>Eine Frage?</a>
+          <button type="button" data-deconnexion><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path></svg>Abmelden</button>
+        </nav>
       </div>
 
-      <div class="espace-col">
-        <h2 class="espace-titre" id="envoi">Ein Paket schicken</h2>
-        <div class="formulaire envoi-carte">
-          <p class="encart" data-envoi-bloque hidden>Vervollständigen Sie zuerst Ihre Kontaktdaten und Ihren Ausweis.</p>
-          <form class="form-espace" id="f-envoi" novalidate>
-            <div class="colis-liste" data-colis></div>
-            <button type="button" class="bouton-ajouter" data-ajouter-colis>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Paket hinzufügen
-            </button>
-            <div class="total"><span>Geschätztes Gesamtgewicht</span><strong data-total>0 kg</strong></div>
-            <div class="champ">
-              <span class="label" id="x-paiement-label">Zahlungsart</span>
-              <div class="choix" role="radiogroup" aria-labelledby="x-paiement-label">
-                <label><input type="radio" name="paiement" value="Virement" checked><span>Überweisung</span></label>
-                <label><input type="radio" name="paiement" value="Chèque"><span>Scheck</span></label>
+      <div class="compte-main">
+        <nav class="compte-onglets" aria-label="Mein Konto, auf dem Handy">
+          <a href="#accueil" data-vue-lien="accueil">Startseite</a>
+          <a href="#demandes" data-vue-lien="demandes">Anfragen</a>
+          <a href="#ventes" data-vue-lien="ventes">Verkäufe</a>
+          <a href="#envoi" data-vue-lien="envoi">Senden</a>
+          <a href="#profil" data-vue-lien="profil">Profil</a>
+        </nav>
+
+        <!-- Tableau de bord : rempli par site.js (demande en cours, prix garanti, vendu cette année, compte à compléter) -->
+        <div class="compte-vue" data-vue="accueil">
+          <div class="compte-bonjour">
+            <span class="initiales grand" data-initiales aria-hidden="true"></span>
+            <div><h1>Guten Tag <span data-prenom></span></h1><p data-depuis></p></div>
+            <a href="#envoi" class="btn btn-primaire compte-envoyer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"></path></svg>Ein Paket schicken</a>
+          </div>
+          <div class="compte-grille" data-tableau aria-live="polite">
+            <div class="carte-compte squelette" aria-hidden="true"><span></span><span></span><span class="gros"></span></div>
+            <div class="carte-compte squelette" aria-hidden="true"><span></span><span class="gros"></span></div>
+          </div>
+        </div>
+
+        <div class="compte-vue" data-vue="demandes" hidden>
+          <h1 class="compte-titre">Meine Anfragen</h1>
+          <div data-demandes></div>
+          <p class="espace-aide" data-aucun-envoi hidden>Noch keine Anfrage.</p>
+          <ul class="mes-envois" data-envois hidden></ul>
+        </div>
+
+        <div class="compte-vue" data-vue="ventes" hidden>
+          <h1 class="compte-titre">Meine Verkäufe</h1>
+          <div data-ventes></div>
+        </div>
+
+        <div class="compte-vue" data-vue="envoi" hidden>
+          <h1 class="compte-titre" id="envoi">Ein Paket schicken</h1>
+          <div class="formulaire envoi-carte">
+            <p class="encart" data-envoi-bloque hidden>Ergänzen Sie zuerst Ihre Kontaktdaten und Ihren Ausweis unter <a href="#profil">Mein Profil</a>.</p>
+            <ol class="pas-indicateur" data-pas-indicateur aria-label="Schritte der Anfrage">
+              <li data-pas-num="1" aria-current="step"><i>1</i><span>Pakete</span></li>
+              <li data-pas-num="2"><i>2</i><span>Zahlung</span></li>
+              <li data-pas-num="3"><i>3</i><span>Prüfung</span></li>
+            </ol>
+            <p class="brouillon" data-brouillon hidden><span>Ihre begonnene Anfrage wurde gespeichert.</span> <button type="button" class="lien-bouton" data-oublier>Alles löschen</button></p>
+            <form class="form-espace" id="f-envoi" novalidate>
+              <div class="pas-envoi" data-pas="1">
+                <div class="colis-liste" data-colis></div>
+                <button type="button" class="bouton-ajouter" data-ajouter-colis>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Paket hinzufügen
+                </button>
+                <div class="total"><span>Geschätztes Gesamtgewicht</span><strong data-total>0 kg</strong></div>
+                <div class="pas-boutons"><button type="button" class="btn btn-primaire btn-large" data-pas-suivant>Weiter
+                  <svg class="ic ic-fleche" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"></path></svg></button></div>
               </div>
-            </div>
-            <p class="encart" data-sans-rib hidden>Für die Zahlung per Überweisung speichern Sie zuerst Ihre Bankverbindung.</p>
-            <div class="champ"><label for="x-message">Nachricht <span class="facultatif">(optional)</span></label><textarea id="x-message" name="message" rows="3"></textarea></div>
-            <label class="case"><input type="checkbox" name="attestation">
-              <span>Ich erkläre ehrenwörtlich, dass diese Waren mein Eigentum sind und rechtmäßig erworben wurden.</span></label>
-            <p class="msg-espace" role="alert" hidden></p>
-            <button type="submit" class="btn btn-primaire btn-large">Anfrage senden
-              <svg class="ic ic-fleche" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"></path></svg></button>
-          </form>
-          <div class="envoi-ok" data-envoi-ok hidden tabindex="-1">
-            <span class="succes-icone"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span>
-            <h3>Anfrage gesendet</h3>
-            <p class="reference" data-reference></p>
-            <p>Wir schicken Ihnen das vorausbezahlte Etikett per E-Mail. Legen Sie in jedes Paket einen Zettel mit dieser Referenz oder Ihren Versandschein.</p>
-            <div class="envoi-ok-actions">
-              <button type="button" class="btn btn-primaire" data-imprimer>Versandschein drucken</button>
-              <button type="button" class="btn btn-contour" data-nouvel-envoi>Neue Anfrage</button>
+              <div class="pas-envoi" data-pas="2" hidden>
+                <div class="champ">
+                  <span class="label" id="x-paiement-label">Zahlungsart</span>
+                  <div class="choix" role="radiogroup" aria-labelledby="x-paiement-label">
+                    <label><input type="radio" name="paiement" value="Virement" checked><span>Überweisung</span></label>
+                    <label><input type="radio" name="paiement" value="Chèque"><span>Scheck</span></label>
+                  </div>
+                </div>
+                <p class="encart" data-sans-rib hidden>Für eine Zahlung per Überweisung speichern Sie zuerst Ihre Bankverbindung unter <a href="#profil">Mein Profil</a>.</p>
+                <div class="champ"><label for="x-message">Nachricht <span class="facultatif">(optional)</span></label><textarea id="x-message" name="message" rows="3"></textarea></div>
+                <div class="pas-boutons"><button type="button" class="btn btn-contour" data-pas-retour>Zurück</button>
+                  <button type="button" class="btn btn-primaire" data-pas-suivant>Weiter
+                  <svg class="ic ic-fleche" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"></path></svg></button></div>
+              </div>
+              <div class="pas-envoi" data-pas="3" hidden>
+                <div class="resume-envoi" data-resume></div>
+                <label class="case"><input type="checkbox" name="attestation">
+                  <span>Ich erkläre ehrenwörtlich, dass diese Waren mein Eigentum sind und rechtmäßig erworben wurden.</span></label>
+                <div class="pas-boutons"><button type="button" class="btn btn-contour" data-pas-retour>Zurück</button>
+                  <button type="submit" class="btn btn-primaire">Anfrage senden
+                  <svg class="ic ic-fleche" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"></path></svg></button></div>
+              </div>
+              <p class="msg-espace" role="alert" hidden></p>
+            </form>
+            <div class="envoi-ok" data-envoi-ok hidden tabindex="-1">
+              <span class="succes-icone"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span>
+              <h2>Anfrage gesendet</h2>
+              <p class="reference" data-reference></p>
+              <p>Eine Bestätigungs-E-Mail wurde gerade verschickt.</p>
+              <h3>Und jetzt?</h3>
+              <ol class="suite-envoi">
+                <li><b>Sie erhalten das vorausbezahlte Etikett</b> per E-Mail, innerhalb von 24 Std. (Werktage).</li>
+                <li><b>Drucken Sie den Versandschein</b> aus und legen Sie ihn in das Paket.</li>
+                <li><b>Geben Sie das Paket ab</b>, bevor Ihre Preisgarantie endet: <span data-garanti-fin></span>.</li>
+              </ol>
+              <div class="envoi-ok-actions">
+                <button type="button" class="btn btn-primaire" data-imprimer>Versandschein drucken</button>
+                <a href="#accueil" class="btn btn-contour">Zurück zu meinem Konto</a>
+                <button type="button" class="lien-bouton" data-nouvel-envoi>Neue Anfrage</button>
+              </div>
             </div>
           </div>
         </div>
 
-        <h2 class="espace-titre">Meine Anfragen</h2>
-        <ul class="mes-envois" data-envois></ul>
-        <p class="espace-aide" data-aucun-envoi>Noch keine Anfrage.</p>
-        <p class="espace-supprimer"><button type="button" class="lien-bouton lien-danger" data-supprimer>Mein Konto löschen</button></p>
+        <div class="compte-vue" data-vue="profil" hidden>
+          <h1 class="compte-titre">Mein Profil</h1>
+
+          <section class="carte-compte" data-section="coordonnees" aria-labelledby="t-infos">
+            <div class="carte-compte-tete"><h2 id="t-infos">Meine Angaben</h2><span class="carte-espace-resume"></span></div>
+            <dl class="fiche" data-fiche></dl>
+            <details class="modif">
+              <summary>Ändern</summary>
+              <form class="form-espace" id="f-coordonnees" novalidate>
+                <div class="champ">
+                  <span class="label" id="x-profil-label">Sie sind</span>
+                  <div class="choix" role="radiogroup" aria-labelledby="x-profil-label">
+                    <label><input type="radio" name="profil" value="particulier" checked><span>Privatperson</span></label>
+                    <label><input type="radio" name="profil" value="professionnel"><span>Gewerblich</span></label>
+                  </div>
+                </div>
+                <div class="champ-ligne" data-pro hidden>
+                  <div class="champ"><label for="x-entreprise">Unternehmen</label><input id="x-entreprise" name="entreprise" autocomplete="organization"></div>
+                  <div class="champ"><label for="x-siret">SIRET</label><input id="x-siret" name="siret" inputmode="numeric" placeholder="14 Ziffern"></div>
+                </div>
+                <div class="champ-ligne">
+                  <div class="champ"><label for="x-nom">Nachname</label><input id="x-nom" name="nom" autocomplete="family-name"></div>
+                  <div class="champ"><label for="x-prenom">Vorname</label><input id="x-prenom" name="prenom" autocomplete="given-name"></div>
+                </div>
+                <div class="champ"><label for="x-adresse">Adresse</label><input id="x-adresse" name="adresse" autocomplete="street-address"></div>
+                <div class="champ-ligne">
+                  <div class="champ"><label for="x-cp">Postleitzahl</label><input id="x-cp" name="cp" inputmode="numeric" autocomplete="postal-code"></div>
+                  <div class="champ"><label for="x-ville">Ort</label><input id="x-ville" name="ville" autocomplete="address-level2"></div>
+                </div>
+                <div class="champ"><label for="x-tel">Telefon <span class="facultatif">(optional)</span></label><input id="x-tel" name="telephone" type="tel" autocomplete="tel"></div>
+                <p class="msg-espace" role="alert" hidden></p>
+                <button type="submit" class="btn btn-primaire">Speichern</button>
+              </form>
+            </details>
+          </section>
+
+          <section class="carte-compte" data-section="piece" aria-labelledby="t-piece">
+            <div class="carte-compte-tete"><h2 id="t-piece">Mein Ausweis</h2><span class="carte-espace-resume"></span></div>
+            <details class="modif">
+              <summary>Ersetzen</summary>
+              <form class="form-espace" id="f-piece" novalidate>
+                <p class="espace-aide">Bei Privatpersonen schreibt das Gesetz vor, die Identität des Verkäufers zu prüfen. Der Ausweis wird vertraulich aufbewahrt und nie weitergegeben.</p>
+                <div class="champ-ligne">
+                  <div class="champ"><label for="x-type">Art des Ausweises</label>
+                    <select id="x-type" name="type"><option value="Carte d'identité">Personalausweis</option><option value="Passeport">Reisepass</option><option value="Titre de séjour">Aufenthaltstitel</option><option value="Permis de conduire">Führerschein</option></select></div>
+                  <div class="champ"><label for="x-numero">Ausweisnummer</label><input id="x-numero" name="numero" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
+                </div>
+                <div class="champ"><label for="x-expiration">Gültig bis <span class="facultatif">(freiwillig)</span></label><input id="x-expiration" name="expiration" type="date"></div>
+                <div class="depots">
+                  <label class="depot" data-face="recto">
+                    <input type="file" name="recto" accept="image/*">
+                    <img class="depot-apercu" alt="Ausweis Vorderseite" hidden>
+                    <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg><b>Vorderseite</b><br><span class="depot-photo">Foto</span></span>
+                  </label>
+                  <label class="depot" data-face="verso">
+                    <input type="file" name="verso" accept="image/*">
+                    <img class="depot-apercu" alt="Ausweis Rückseite" hidden>
+                    <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg><b>Rückseite</b><br><span class="depot-photo">Foto</span></span>
+                  </label>
+                </div>
+                <p class="msg-espace" role="alert" hidden></p>
+                <button type="submit" class="btn btn-primaire">Speichern</button>
+              </form>
+            </details>
+          </section>
+
+          <section class="carte-compte" data-section="rib" aria-labelledby="t-rib">
+            <div class="carte-compte-tete"><h2 id="t-rib">Meine Bankverbindung</h2><span class="carte-espace-resume"></span>
+              <button type="button" class="lien-bouton" data-voir-rib hidden>Vollständig anzeigen</button></div>
+            <details class="modif">
+              <summary>Ersetzen</summary>
+              <form class="form-espace" id="f-rib" novalidate>
+                <div class="champ-ligne">
+                  <div class="champ"><label for="x-titulaire">Kontoinhaber</label><input id="x-titulaire" name="titulaire" autocomplete="name"></div>
+                  <div class="champ"><label for="x-iban">IBAN</label><input id="x-iban" name="iban" autocomplete="off" spellcheck="false" placeholder="FR76 …"></div>
+                </div>
+                <p class="msg-espace" role="alert" hidden></p>
+                <button type="submit" class="btn btn-primaire">Speichern</button>
+              </form>
+            </details>
+          </section>
+
+          <section class="carte-compte" aria-labelledby="t-prevenir">
+            <div class="carte-compte-tete"><h2 id="t-prevenir">Bei jedem Schritt benachrichtigt werden</h2></div>
+            <form class="form-espace" id="f-prevenir" novalidate>
+              <div class="choix choix-3" role="radiogroup" aria-labelledby="t-prevenir">
+                <label><input type="radio" name="prevenir" value="email" checked><span>E-Mail</span></label>
+                <label><input type="radio" name="prevenir" value="whatsapp"><span>WhatsApp</span></label>
+                <label><input type="radio" name="prevenir" value="les-deux"><span>Beides</span></label>
+              </div>
+              <p class="espace-aide">WhatsApp: an die Telefonnummer in Ihren Angaben.</p>
+              <p class="msg-espace" role="alert" hidden></p>
+            </form>
+          </section>
+
+          <section class="carte-compte carte-danger" aria-labelledby="t-supprimer">
+            <div class="carte-compte-tete"><h2 id="t-supprimer">Mein Konto löschen</h2></div>
+            <p class="espace-aide">Ihre Kontaktdaten, Ihre Bankverbindung und Ihre Anfragen werden gelöscht. Wenn Sie uns bereits Hartmetall verkauft haben, bleiben Ihre Identität und Ihr Ausweis zum Nachweis des Ankaufs gespeichert, so lange das Gesetz es verlangt.</p>
+            <details class="modif">
+              <summary>Mein Konto löschen…</summary>
+              <div class="confirmer-suppression">
+                <label for="x-confirmer">Zur Bestätigung LÖSCHEN eingeben</label>
+                <input id="x-confirmer" autocomplete="off" autocapitalize="characters" spellcheck="false">
+                <button type="button" class="btn btn-danger" data-supprimer>Endgültig löschen</button>
+              </div>
+            </details>
+          </section>
+        </div>
       </div>
     </div>
+    <div class="bulle-compte" data-bulle role="status" hidden></div>
   </section>
 </main>
 

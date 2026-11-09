@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Espace client – Ain Recycling</title>
-  <meta name="description" content="Votre espace client Ain Recycling : pièce d'identité, coordonnées et RIB enregistrés une seule fois, en privé, pour vendre votre carbure plus vite.">
+  <title>Mon compte – Ain Recycling</title>
+  <meta name="description" content="Votre compte Ain Recycling : pièce d'identité, coordonnées et RIB enregistrés une seule fois, en privé, pour vendre votre carbure plus vite.">
   <link rel="canonical" href="https://ainrecycling.com/espace-client.html">
   <link rel="alternate" hreflang="fr" href="https://ainrecycling.com/espace-client.html">
   <link rel="alternate" hreflang="de" href="https://ainrecycling.com/de/espace-client.html">
@@ -17,7 +17,7 @@
   <meta property="og:locale" content="fr_FR">
   <meta property="og:site_name" content="Ain Recycling">
   <meta property="og:title" content="Espace client – Ain Recycling">
-  <meta property="og:description" content="Votre espace client Ain Recycling : pièce d'identité, coordonnées et RIB enregistrés une seule fois, en privé, pour vendre votre carbure plus vite.">
+  <meta property="og:description" content="Votre compte Ain Recycling : pièce d'identité, coordonnées et RIB enregistrés une seule fois, en privé, pour vendre votre carbure plus vite.">
   <meta property="og:url" content="https://ainrecycling.com/espace-client.html">
   <meta property="og:image" content="https://ainrecycling.com/images/partage.jpg">
   <meta property="og:image:alt" content="Ain Recycling, rachat de carbure de tungstène : un bac au logo Ain Recycling rempli de carbure usagé">
@@ -99,58 +99,85 @@
 
 <main id="contenu">
 
-  <!-- ============ PAS CONNECTÉ : se connecter ou créer un compte ============ -->
-  <section class="page-hero page-compte" id="espace-accueil">
-    <div class="conteneur">
-      <div class="page-hero-in">
-        <div class="page-hero-texte">
-          <nav class="fil" aria-label="Fil d'Ariane"><a href="index.html">Accueil</a><span aria-hidden="true">/</span><span>Espace client</span></nav>
-          <p class="sur-titre">Espace client</p>
-          <h1>Votre pièce d'identité, <span>envoyée une seule fois.</span></h1>
-          <p class="chapo">Créez votre compte en une minute : votre pièce d'identité, vos coordonnées et votre RIB sont enregistrés
-            en privé. Vos ventes suivantes se font en quelques clics.</p>
-          <ul class="garanties-contact">
-            <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>Pas de mot de passe à retenir</li>
-            <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>Vos documents restent privés</li>
-            <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>Compte supprimé sur simple demande</li>
-          </ul>
-        </div>
+  <!-- ============ PAS CONNECTÉ : se connecter ou créer un compte (3e revue, 9 nov. 2026 : propositions 69 à 72) ============ -->
+  <section class="auth" id="espace-accueil">
+    <div class="auth-gauche">
+      <nav class="fil" aria-label="Fil d'Ariane"><a href="index.html">Accueil</a><span aria-hidden="true">/</span><span>Mon compte</span></nav>
+      <h1>Vendez votre carbure en quelques clics.</h1>
+      <ul class="auth-promesses">
+        <li><span class="icone"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4z"></path><circle cx="7.5" cy="7.5" r="1.5"></circle></svg></span><span><b>Étiquette offerte</b>Le transport est à notre charge.</span></li>
+        <li><span class="icone"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg></span><span><b>Prix garanti 7 jours</b>Le prix du jour de votre demande, jusqu'à la fin du mois au plus tard.</span></li>
+        <li><span class="icone"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18"></path><path d="M5 21V10M9.5 21V10M14.5 21V10M19 21V10"></path><path d="M2 10h20L12 3z"></path></svg></span><span><b>Payé sous 48 h ouvrées</b>Par virement ou chèque, après la pesée filmée.</span></li>
+      </ul>
+      <p class="auth-prive"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 11h14v10H5zM8 11V7a4 4 0 0 1 8 0v4"></path></svg>Vos documents restent privés : vus seulement par vous et par Ain Recycling.</p>
+    </div>
 
-        <!-- Connexion par code reçu par e-mail : d'abord l'adresse, puis le code (site.js, serveur : l'appli) -->
-        <form class="formulaire connexion" id="connexion" novalidate aria-labelledby="t-connexion">
-          <h2 id="t-connexion">Se connecter ou créer un compte</h2>
-          <div class="connexion-etape" data-etape-connexion="email">
+    <div class="auth-droite">
+      <!-- Connexion par un code reçu par e-mail (ou le bouton « Me connecter » de l'e-mail) ; « Créer un compte » demande
+           en plus le prénom, le nom et, pour une entreprise, la raison sociale et le SIRET (site.js, serveur/espace.php) -->
+      <form class="formulaire connexion boite-auth" id="connexion" novalidate aria-labelledby="t-connexion">
+        <div class="auth-onglets" role="group" aria-label="Se connecter ou créer un compte">
+          <button type="button" data-mode="connexion" aria-pressed="true">Se connecter</button>
+          <button type="button" data-mode="creation" aria-pressed="false">Créer un compte</button>
+        </div>
+        <h2 id="t-connexion" data-titre-connexion>Se connecter</h2>
+        <h2 data-titre-creation hidden>Créer un compte</h2>
+        <p class="auth-sous" data-sous-connexion>Pour envoyer un colis et suivre vos ventes.</p>
+        <p class="auth-sous" data-sous-creation hidden>Une seule fois : vos ventes suivantes se font en 3 minutes.</p>
+        <div class="connexion-etape" data-etape-connexion="email">
+          <div class="auth-creation" data-creation hidden>
             <div class="champ">
-              <label for="cx-email">Votre adresse e-mail</label>
-              <input id="cx-email" name="email" type="email" autocomplete="email" required>
+              <span class="label" id="cr-profil-label">Vous êtes</span>
+              <div class="choix" role="radiogroup" aria-labelledby="cr-profil-label">
+                <label><input type="radio" name="cr-profil" value="particulier" checked><span>Particulier</span></label>
+                <label><input type="radio" name="cr-profil" value="professionnel"><span>Entreprise</span></label>
+              </div>
             </div>
-            <div class="pot" aria-hidden="true"><label>Site web <input name="site" tabindex="-1" autocomplete="off"></label></div>
-            <button type="submit" class="btn btn-primaire btn-large">Recevoir mon code
-              <svg class="ic ic-fleche" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"></path></svg></button>
-          </div>
-          <div class="connexion-etape" data-etape-connexion="code" hidden>
-            <p class="connexion-envoye"><span>Code envoyé à</span> <b data-email></b></p>
-            <div class="champ">
-              <label for="cx-code">Code reçu par e-mail</label>
-              <input id="cx-code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="6 chiffres">
+            <div class="champ-ligne">
+              <div class="champ"><label for="cr-prenom">Prénom</label><input id="cr-prenom" name="cr-prenom" autocomplete="given-name" autocapitalize="words"></div>
+              <div class="champ"><label for="cr-nom">Nom</label><input id="cr-nom" name="cr-nom" autocomplete="family-name" autocapitalize="words"></div>
             </div>
-            <button type="submit" class="btn btn-primaire btn-large">Se connecter
-              <svg class="ic ic-fleche" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"></path></svg></button>
-            <p class="connexion-liens"><button type="button" class="lien-bouton" data-renvoyer>Renvoyer le code</button>
-              <button type="button" class="lien-bouton" data-changer>Changer d'adresse e-mail</button></p>
+            <div class="champ-ligne" data-cr-pro hidden>
+              <div class="champ"><label for="cr-entreprise">Entreprise</label><input id="cr-entreprise" name="cr-entreprise" autocomplete="organization"></div>
+              <div class="champ"><label for="cr-siret">SIRET</label><input id="cr-siret" name="cr-siret" inputmode="numeric" placeholder="14 chiffres"></div>
+            </div>
           </div>
-          <p class="msg-espace" role="alert" hidden></p>
-          <p class="aide">Un code à usage unique vous est envoyé par e-mail. Pas encore de compte ? Il est créé à votre première connexion.</p>
-        </form>
-      </div>
+          <div class="champ">
+            <label for="cx-email">Adresse e-mail</label>
+            <input id="cx-email" name="email" type="email" autocomplete="email" required placeholder="vous@exemple.fr">
+          </div>
+          <label class="case" data-creation hidden><input type="checkbox" name="cgu">
+            <span>J'accepte les <a href="conditions-utilisation.html">conditions d'utilisation et de rachat</a>.</span></label>
+          <div class="pot" aria-hidden="true"><label>Site web <input name="site" tabindex="-1" autocomplete="off"></label></div>
+          <button type="submit" class="btn btn-primaire btn-large"><span data-bouton-connexion>Recevoir mon code</span><span data-bouton-creation hidden>Créer mon compte</span>
+            <svg class="ic ic-fleche" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"></path></svg></button>
+        </div>
+        <div class="connexion-etape" data-etape-connexion="code" hidden>
+          <p class="connexion-envoye"><span>Code envoyé à</span> <b data-email></b></p>
+          <div class="champ">
+            <label for="cx-code">Code à 6 chiffres</label>
+            <div class="code-cases">
+              <input id="cx-code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" spellcheck="false">
+              <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+            </div>
+          </div>
+          <p class="aide">Ou touchez « Me connecter » dans l'e-mail. Sur iPhone, le code se propose au-dessus du clavier.</p>
+          <button type="submit" class="btn btn-primaire btn-large">Se connecter
+            <svg class="ic ic-fleche" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"></path></svg></button>
+          <p class="connexion-liens"><button type="button" class="lien-bouton" data-renvoyer>Renvoyer le code</button>
+            <button type="button" class="lien-bouton" data-changer>Changer d'adresse e-mail</button></p>
+        </div>
+        <p class="msg-espace" role="alert" hidden></p>
+        <p class="aide auth-pied">Pas de mot de passe : un code à 6 chiffres vous est envoyé par e-mail.</p>
+      </form>
     </div>
   </section>
 
-  <!-- ============ CE QUE CONTIENT L'ESPACE ============ -->
+  <!-- ============ CE QUE CONTIENT LE COMPTE ============ -->
   <section class="bloc bloc-gris" id="espace-avantages">
     <div class="conteneur">
       <div class="titre-bloc titre-centre apparait">
-        <p class="sur-titre">Votre espace</p>
+        <p class="sur-titre">Votre compte</p>
         <h2>Tout est prêt pour votre prochaine vente.</h2>
       </div>
       <ul class="engagements engagements-3">
@@ -167,8 +194,8 @@
         </li>
         <li class="engagement apparait">
           <span class="icone"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4M10 9H8M16 13H8M16 17H8"></path></svg></span>
-          <h3>Vos demandes au même endroit</h3>
-          <p>Chaque envoi par colis, sa référence et où il en est.</p>
+          <h3>Vos demandes et vos ventes au même endroit</h3>
+          <p>Chaque envoi par colis, sa référence, où il en est, et vos ventes passées.</p>
         </li>
       </ul>
       <div class="hors-france encart-donnees apparait">
@@ -180,135 +207,236 @@
     </div>
   </section>
 
-  <!-- ============ CONNECTÉ : mon espace ============ -->
-  <section class="page-hero page-hero-simple" id="espace-connecte" hidden>
-    <div class="conteneur">
-      <nav class="fil" aria-label="Fil d'Ariane"><a href="index.html">Accueil</a><span aria-hidden="true">/</span><span>Espace client</span></nav>
-      <p class="sur-titre">Espace client</p>
-      <h1>Bonjour <span class="prenom"></span></h1>
-      <p class="chapo" data-etat-compte></p>
-      <p class="connecte-email"><span>Connecté avec</span> <b data-email></b> <button type="button" class="lien-bouton" data-deconnexion>Se déconnecter</button></p>
-    </div>
-  </section>
-
-  <section class="bloc bloc-gris bloc-suite" id="espace-sections" hidden>
-    <div class="conteneur espace">
-      <div class="espace-col">
-        <h2 class="espace-titre">Mon compte</h2>
-
-        <details class="carte-espace" data-section="coordonnees">
-          <summary><span class="etat-rond" aria-hidden="true"></span><span class="carte-espace-titre">Mes coordonnées</span><span class="carte-espace-resume"></span></summary>
-          <form class="form-espace" id="f-coordonnees" novalidate>
-            <div class="champ">
-              <span class="label" id="x-profil-label">Vous êtes</span>
-              <div class="choix" role="radiogroup" aria-labelledby="x-profil-label">
-                <label><input type="radio" name="profil" value="particulier" checked><span>Particulier</span></label>
-                <label><input type="radio" name="profil" value="professionnel"><span>Professionnel</span></label>
-              </div>
-            </div>
-            <div class="champ-ligne" data-pro hidden>
-              <div class="champ"><label for="x-entreprise">Entreprise</label><input id="x-entreprise" name="entreprise" autocomplete="organization"></div>
-              <div class="champ"><label for="x-siret">SIRET</label><input id="x-siret" name="siret" inputmode="numeric" placeholder="14 chiffres"></div>
-            </div>
-            <div class="champ-ligne">
-              <div class="champ"><label for="x-nom">Nom</label><input id="x-nom" name="nom" autocomplete="family-name"></div>
-              <div class="champ"><label for="x-prenom">Prénom</label><input id="x-prenom" name="prenom" autocomplete="given-name"></div>
-            </div>
-            <div class="champ"><label for="x-adresse">Adresse</label><input id="x-adresse" name="adresse" autocomplete="street-address"></div>
-            <div class="champ-ligne">
-              <div class="champ"><label for="x-cp">Code postal</label><input id="x-cp" name="cp" inputmode="numeric" autocomplete="postal-code"></div>
-              <div class="champ"><label for="x-ville">Ville</label><input id="x-ville" name="ville" autocomplete="address-level2"></div>
-            </div>
-            <div class="champ"><label for="x-tel">Téléphone <span class="facultatif">(facultatif)</span></label><input id="x-tel" name="telephone" type="tel" autocomplete="tel"></div>
-            <p class="msg-espace" role="alert" hidden></p>
-            <button type="submit" class="btn btn-primaire">Enregistrer</button>
-          </form>
-        </details>
-
-        <details class="carte-espace" data-section="piece">
-          <summary><span class="etat-rond" aria-hidden="true"></span><span class="carte-espace-titre">Ma pièce d'identité</span><span class="carte-espace-resume"></span></summary>
-          <form class="form-espace" id="f-piece" novalidate>
-            <p class="espace-aide">Pour un particulier, la loi impose de vérifier l'identité du vendeur. Elle est conservée de façon privée et n'est jamais diffusée.</p>
-            <div class="champ-ligne">
-              <div class="champ"><label for="x-type">Type de pièce</label>
-                <select id="x-type" name="type"><option value="Carte d'identité">Carte d'identité</option><option value="Passeport">Passeport</option><option value="Titre de séjour">Titre de séjour</option><option value="Permis de conduire">Permis de conduire</option></select></div>
-              <div class="champ"><label for="x-numero">Numéro de la pièce</label><input id="x-numero" name="numero" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
-            </div>
-            <div class="champ"><label for="x-expiration">Valable jusqu'au <span class="facultatif">(facultatif)</span></label><input id="x-expiration" name="expiration" type="date"></div>
-            <div class="depots">
-              <label class="depot" data-face="recto">
-                <input type="file" name="recto" accept="image/*">
-                <img class="depot-apercu" alt="Pièce d'identité recto" hidden>
-                <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg><b>Recto</b><br><span class="depot-photo">photo</span></span>
-              </label>
-              <label class="depot" data-face="verso">
-                <input type="file" name="verso" accept="image/*">
-                <img class="depot-apercu" alt="Pièce d'identité verso" hidden>
-                <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg><b>Verso</b><br><span class="depot-photo">photo</span></span>
-              </label>
-            </div>
-            <p class="msg-espace" role="alert" hidden></p>
-            <button type="submit" class="btn btn-primaire">Enregistrer</button>
-          </form>
-        </details>
-
-        <details class="carte-espace" data-section="rib">
-          <summary><span class="etat-rond" aria-hidden="true"></span><span class="carte-espace-titre">Mon RIB</span><span class="carte-espace-resume"></span></summary>
-          <form class="form-espace" id="f-rib" novalidate>
-            <div class="champ-ligne">
-              <div class="champ"><label for="x-titulaire">Titulaire du compte</label><input id="x-titulaire" name="titulaire" autocomplete="name"></div>
-              <div class="champ"><label for="x-iban">IBAN</label><input id="x-iban" name="iban" autocomplete="off" spellcheck="false" placeholder="FR76 …"></div>
-            </div>
-            <p class="msg-espace" role="alert" hidden></p>
-            <button type="submit" class="btn btn-primaire">Enregistrer</button>
-          </form>
-        </details>
-
+  <!-- ============ CONNECTÉ : mon compte (3e revue, propositions 75 à 93 ; d'après outils/propositions-3/ecrans.mjs) ============ -->
+  <section class="compte" id="espace-sections" hidden>
+    <div class="conteneur compte-cadre">
+      <div class="compte-cote">
+        <div class="compte-moi" id="espace-connecte">
+          <span class="initiales" data-initiales aria-hidden="true"></span>
+          <div><b><span class="prenom"></span> <span data-nom></span></b><span data-email></span></div>
+        </div>
+        <nav class="compte-nav" aria-label="Mon compte">
+          <a href="#accueil" data-vue-lien="accueil"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"></path></svg>Tableau de bord</a>
+          <a href="#demandes" data-vue-lien="demandes"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5V8zM3 8l9 5 9-5M12 13v8"></path></svg>Mes demandes<span class="n" data-n-demandes hidden></span></a>
+          <a href="#ventes" data-vue-lien="ventes"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h12M4 14h9M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12c0 4.4 3.5 8 7.8 8 2 0 3.8-.8 5.2-2"></path></svg>Mes ventes</a>
+          <a href="#envoi" data-vue-lien="envoi"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"></path></svg>Envoyer un colis</a>
+          <a href="#profil" data-vue-lien="profil"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"></path></svg>Mon profil</a>
+          <span class="sep" aria-hidden="true"></span>
+          <a href="https://wa.me/33761119523?text=Bonjour%2C%20j%27ai%20une%20question%20sur%20mon%20compte." data-question><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.6 8.6 0 0 1-3.9-.9L3 21l1.9-5.1A8.4 8.4 0 0 1 12 3a8.5 8.5 0 0 1 9 8.5z"></path></svg>Une question ?</a>
+          <button type="button" data-deconnexion><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path></svg>Se déconnecter</button>
+        </nav>
       </div>
 
-      <div class="espace-col">
-        <h2 class="espace-titre" id="envoi">Envoyer un colis</h2>
-        <div class="formulaire envoi-carte">
-          <p class="encart" data-envoi-bloque hidden>Complétez d'abord vos coordonnées et votre pièce d'identité.</p>
-          <form class="form-espace" id="f-envoi" novalidate>
-            <div class="colis-liste" data-colis></div>
-            <button type="button" class="bouton-ajouter" data-ajouter-colis>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Ajouter un colis
-            </button>
-            <div class="total"><span>Poids total estimé</span><strong data-total>0 kg</strong></div>
-            <div class="champ">
-              <span class="label" id="x-paiement-label">Mode de paiement</span>
-              <div class="choix" role="radiogroup" aria-labelledby="x-paiement-label">
-                <label><input type="radio" name="paiement" value="Virement" checked><span>Virement</span></label>
-                <label><input type="radio" name="paiement" value="Chèque"><span>Chèque</span></label>
+      <div class="compte-main">
+        <nav class="compte-onglets" aria-label="Mon compte, sur téléphone">
+          <a href="#accueil" data-vue-lien="accueil">Accueil</a>
+          <a href="#demandes" data-vue-lien="demandes">Demandes</a>
+          <a href="#ventes" data-vue-lien="ventes">Ventes</a>
+          <a href="#envoi" data-vue-lien="envoi">Envoyer</a>
+          <a href="#profil" data-vue-lien="profil">Profil</a>
+        </nav>
+
+        <!-- Tableau de bord : rempli par site.js (demande en cours, prix garanti, vendu cette année, compte à compléter) -->
+        <div class="compte-vue" data-vue="accueil">
+          <div class="compte-bonjour">
+            <span class="initiales grand" data-initiales aria-hidden="true"></span>
+            <div><h1>Bonjour <span data-prenom></span></h1><p data-depuis></p></div>
+            <a href="#envoi" class="btn btn-primaire compte-envoyer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"></path></svg>Envoyer un colis</a>
+          </div>
+          <div class="compte-grille" data-tableau aria-live="polite">
+            <div class="carte-compte squelette" aria-hidden="true"><span></span><span></span><span class="gros"></span></div>
+            <div class="carte-compte squelette" aria-hidden="true"><span></span><span class="gros"></span></div>
+          </div>
+        </div>
+
+        <div class="compte-vue" data-vue="demandes" hidden>
+          <h1 class="compte-titre">Mes demandes</h1>
+          <div data-demandes></div>
+          <p class="espace-aide" data-aucun-envoi hidden>Aucune demande pour le moment.</p>
+          <ul class="mes-envois" data-envois hidden></ul>
+        </div>
+
+        <div class="compte-vue" data-vue="ventes" hidden>
+          <h1 class="compte-titre">Mes ventes</h1>
+          <div data-ventes></div>
+        </div>
+
+        <div class="compte-vue" data-vue="envoi" hidden>
+          <h1 class="compte-titre" id="envoi">Envoyer un colis</h1>
+          <div class="formulaire envoi-carte">
+            <p class="encart" data-envoi-bloque hidden>Complétez d'abord vos coordonnées et votre pièce d'identité, dans <a href="#profil">Mon profil</a>.</p>
+            <ol class="pas-indicateur" data-pas-indicateur aria-label="Étapes de la demande">
+              <li data-pas-num="1" aria-current="step"><i>1</i><span>Colis</span></li>
+              <li data-pas-num="2"><i>2</i><span>Paiement</span></li>
+              <li data-pas-num="3"><i>3</i><span>Vérification</span></li>
+            </ol>
+            <p class="brouillon" data-brouillon hidden><span>Votre demande commencée a été gardée.</span> <button type="button" class="lien-bouton" data-oublier>Tout effacer</button></p>
+            <form class="form-espace" id="f-envoi" novalidate>
+              <div class="pas-envoi" data-pas="1">
+                <div class="colis-liste" data-colis></div>
+                <button type="button" class="bouton-ajouter" data-ajouter-colis>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Ajouter un colis
+                </button>
+                <div class="total"><span>Poids total estimé</span><strong data-total>0 kg</strong></div>
+                <div class="pas-boutons"><button type="button" class="btn btn-primaire btn-large" data-pas-suivant>Continuer
+                  <svg class="ic ic-fleche" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"></path></svg></button></div>
               </div>
-            </div>
-            <p class="encart" data-sans-rib hidden>Pour être payé par virement, enregistrez d'abord votre RIB.</p>
-            <div class="champ"><label for="x-message">Message <span class="facultatif">(facultatif)</span></label><textarea id="x-message" name="message" rows="3"></textarea></div>
-            <label class="case"><input type="checkbox" name="attestation">
-              <span>J'atteste sur l'honneur que ces produits sont ma propriété et ont été acquis légalement.</span></label>
-            <p class="msg-espace" role="alert" hidden></p>
-            <button type="submit" class="btn btn-primaire btn-large">Envoyer ma demande
-              <svg class="ic ic-fleche" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"></path></svg></button>
-          </form>
-          <div class="envoi-ok" data-envoi-ok hidden tabindex="-1">
-            <span class="succes-icone"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span>
-            <h3>Demande envoyée</h3>
-            <p class="reference" data-reference></p>
-            <p>Nous vous envoyons l'étiquette prépayée par e-mail. Glissez dans chaque colis un papier avec cette référence, ou votre bordereau.</p>
-            <div class="envoi-ok-actions">
-              <button type="button" class="btn btn-primaire" data-imprimer>Imprimer mon bordereau</button>
-              <button type="button" class="btn btn-contour" data-nouvel-envoi>Nouvelle demande</button>
+              <div class="pas-envoi" data-pas="2" hidden>
+                <div class="champ">
+                  <span class="label" id="x-paiement-label">Mode de paiement</span>
+                  <div class="choix" role="radiogroup" aria-labelledby="x-paiement-label">
+                    <label><input type="radio" name="paiement" value="Virement" checked><span>Virement</span></label>
+                    <label><input type="radio" name="paiement" value="Chèque"><span>Chèque</span></label>
+                  </div>
+                </div>
+                <p class="encart" data-sans-rib hidden>Pour être payé par virement, enregistrez d'abord votre RIB dans <a href="#profil">Mon profil</a>.</p>
+                <div class="champ"><label for="x-message">Message <span class="facultatif">(facultatif)</span></label><textarea id="x-message" name="message" rows="3"></textarea></div>
+                <div class="pas-boutons"><button type="button" class="btn btn-contour" data-pas-retour>Retour</button>
+                  <button type="button" class="btn btn-primaire" data-pas-suivant>Continuer
+                  <svg class="ic ic-fleche" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"></path></svg></button></div>
+              </div>
+              <div class="pas-envoi" data-pas="3" hidden>
+                <div class="resume-envoi" data-resume></div>
+                <label class="case"><input type="checkbox" name="attestation">
+                  <span>J'atteste sur l'honneur que ces produits sont ma propriété et ont été acquis légalement.</span></label>
+                <div class="pas-boutons"><button type="button" class="btn btn-contour" data-pas-retour>Retour</button>
+                  <button type="submit" class="btn btn-primaire">Envoyer ma demande
+                  <svg class="ic ic-fleche" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"></path></svg></button></div>
+              </div>
+              <p class="msg-espace" role="alert" hidden></p>
+            </form>
+            <div class="envoi-ok" data-envoi-ok hidden tabindex="-1">
+              <span class="succes-icone"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span>
+              <h2>Demande envoyée</h2>
+              <p class="reference" data-reference></p>
+              <p>Un e-mail de confirmation vient de partir.</p>
+              <h3>Et maintenant ?</h3>
+              <ol class="suite-envoi">
+                <li><b>Vous recevez l'étiquette prépayée</b> par e-mail, sous 24 h ouvrées.</li>
+                <li><b>Imprimez le bordereau</b> et glissez-le dans le colis.</li>
+                <li><b>Déposez le colis</b> avant la fin de votre prix garanti : <span data-garanti-fin></span>.</li>
+              </ol>
+              <div class="envoi-ok-actions">
+                <button type="button" class="btn btn-primaire" data-imprimer>Imprimer mon bordereau</button>
+                <a href="#accueil" class="btn btn-contour">Retour à mon compte</a>
+                <button type="button" class="lien-bouton" data-nouvel-envoi>Nouvelle demande</button>
+              </div>
             </div>
           </div>
         </div>
 
-        <h2 class="espace-titre">Mes demandes</h2>
-        <ul class="mes-envois" data-envois></ul>
-        <p class="espace-aide" data-aucun-envoi>Aucune demande pour le moment.</p>
-        <p class="espace-supprimer"><button type="button" class="lien-bouton lien-danger" data-supprimer>Supprimer mon compte</button></p>
+        <div class="compte-vue" data-vue="profil" hidden>
+          <h1 class="compte-titre">Mon profil</h1>
+
+          <section class="carte-compte" data-section="coordonnees" aria-labelledby="t-infos">
+            <div class="carte-compte-tete"><h2 id="t-infos">Mes informations</h2><span class="carte-espace-resume"></span></div>
+            <dl class="fiche" data-fiche></dl>
+            <details class="modif">
+              <summary>Modifier</summary>
+              <form class="form-espace" id="f-coordonnees" novalidate>
+                <div class="champ">
+                  <span class="label" id="x-profil-label">Vous êtes</span>
+                  <div class="choix" role="radiogroup" aria-labelledby="x-profil-label">
+                    <label><input type="radio" name="profil" value="particulier" checked><span>Particulier</span></label>
+                    <label><input type="radio" name="profil" value="professionnel"><span>Professionnel</span></label>
+                  </div>
+                </div>
+                <div class="champ-ligne" data-pro hidden>
+                  <div class="champ"><label for="x-entreprise">Entreprise</label><input id="x-entreprise" name="entreprise" autocomplete="organization"></div>
+                  <div class="champ"><label for="x-siret">SIRET</label><input id="x-siret" name="siret" inputmode="numeric" placeholder="14 chiffres"></div>
+                </div>
+                <div class="champ-ligne">
+                  <div class="champ"><label for="x-nom">Nom</label><input id="x-nom" name="nom" autocomplete="family-name"></div>
+                  <div class="champ"><label for="x-prenom">Prénom</label><input id="x-prenom" name="prenom" autocomplete="given-name"></div>
+                </div>
+                <div class="champ"><label for="x-adresse">Adresse</label><input id="x-adresse" name="adresse" autocomplete="street-address"></div>
+                <div class="champ-ligne">
+                  <div class="champ"><label for="x-cp">Code postal</label><input id="x-cp" name="cp" inputmode="numeric" autocomplete="postal-code"></div>
+                  <div class="champ"><label for="x-ville">Ville</label><input id="x-ville" name="ville" autocomplete="address-level2"></div>
+                </div>
+                <div class="champ"><label for="x-tel">Téléphone <span class="facultatif">(facultatif)</span></label><input id="x-tel" name="telephone" type="tel" autocomplete="tel"></div>
+                <p class="msg-espace" role="alert" hidden></p>
+                <button type="submit" class="btn btn-primaire">Enregistrer</button>
+              </form>
+            </details>
+          </section>
+
+          <section class="carte-compte" data-section="piece" aria-labelledby="t-piece">
+            <div class="carte-compte-tete"><h2 id="t-piece">Ma pièce d'identité</h2><span class="carte-espace-resume"></span></div>
+            <details class="modif">
+              <summary>Remplacer</summary>
+              <form class="form-espace" id="f-piece" novalidate>
+                <p class="espace-aide">Pour un particulier, la loi impose de vérifier l'identité du vendeur. Elle est conservée de façon privée et n'est jamais diffusée.</p>
+                <div class="champ-ligne">
+                  <div class="champ"><label for="x-type">Type de pièce</label>
+                    <select id="x-type" name="type"><option value="Carte d'identité">Carte d'identité</option><option value="Passeport">Passeport</option><option value="Titre de séjour">Titre de séjour</option><option value="Permis de conduire">Permis de conduire</option></select></div>
+                  <div class="champ"><label for="x-numero">Numéro de la pièce</label><input id="x-numero" name="numero" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
+                </div>
+                <div class="champ"><label for="x-expiration">Valable jusqu'au <span class="facultatif">(facultatif)</span></label><input id="x-expiration" name="expiration" type="date"></div>
+                <div class="depots">
+                  <label class="depot" data-face="recto">
+                    <input type="file" name="recto" accept="image/*">
+                    <img class="depot-apercu" alt="Pièce d'identité recto" hidden>
+                    <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg><b>Recto</b><br><span class="depot-photo">photo</span></span>
+                  </label>
+                  <label class="depot" data-face="verso">
+                    <input type="file" name="verso" accept="image/*">
+                    <img class="depot-apercu" alt="Pièce d'identité verso" hidden>
+                    <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg><b>Verso</b><br><span class="depot-photo">photo</span></span>
+                  </label>
+                </div>
+                <p class="msg-espace" role="alert" hidden></p>
+                <button type="submit" class="btn btn-primaire">Enregistrer</button>
+              </form>
+            </details>
+          </section>
+
+          <section class="carte-compte" data-section="rib" aria-labelledby="t-rib">
+            <div class="carte-compte-tete"><h2 id="t-rib">Mon RIB</h2><span class="carte-espace-resume"></span>
+              <button type="button" class="lien-bouton" data-voir-rib hidden>Voir en entier</button></div>
+            <details class="modif">
+              <summary>Remplacer</summary>
+              <form class="form-espace" id="f-rib" novalidate>
+                <div class="champ-ligne">
+                  <div class="champ"><label for="x-titulaire">Titulaire du compte</label><input id="x-titulaire" name="titulaire" autocomplete="name"></div>
+                  <div class="champ"><label for="x-iban">IBAN</label><input id="x-iban" name="iban" autocomplete="off" spellcheck="false" placeholder="FR76 …"></div>
+                </div>
+                <p class="msg-espace" role="alert" hidden></p>
+                <button type="submit" class="btn btn-primaire">Enregistrer</button>
+              </form>
+            </details>
+          </section>
+
+          <section class="carte-compte" aria-labelledby="t-prevenir">
+            <div class="carte-compte-tete"><h2 id="t-prevenir">Être prévenu à chaque étape</h2></div>
+            <form class="form-espace" id="f-prevenir" novalidate>
+              <div class="choix choix-3" role="radiogroup" aria-labelledby="t-prevenir">
+                <label><input type="radio" name="prevenir" value="email" checked><span>E-mail</span></label>
+                <label><input type="radio" name="prevenir" value="whatsapp"><span>WhatsApp</span></label>
+                <label><input type="radio" name="prevenir" value="les-deux"><span>Les deux</span></label>
+              </div>
+              <p class="espace-aide">WhatsApp : au numéro de téléphone de vos informations.</p>
+              <p class="msg-espace" role="alert" hidden></p>
+            </form>
+          </section>
+
+          <section class="carte-compte carte-danger" aria-labelledby="t-supprimer">
+            <div class="carte-compte-tete"><h2 id="t-supprimer">Supprimer mon compte</h2></div>
+            <p class="espace-aide">Vos coordonnées, votre RIB et vos demandes sont effacés. Si vous nous avez déjà vendu du carbure, votre
+              identité et votre pièce d'identité sont gardées pour justifier l'achat, le temps exigé par la loi.</p>
+            <details class="modif">
+              <summary>Supprimer mon compte…</summary>
+              <div class="confirmer-suppression">
+                <label for="x-confirmer">Pour confirmer, tapez SUPPRIMER</label>
+                <input id="x-confirmer" autocomplete="off" autocapitalize="characters" spellcheck="false">
+                <button type="button" class="btn btn-danger" data-supprimer>Supprimer définitivement</button>
+              </div>
+            </details>
+          </section>
+        </div>
       </div>
     </div>
+    <div class="bulle-compte" data-bulle role="status" hidden></div>
   </section>
 </main>
 

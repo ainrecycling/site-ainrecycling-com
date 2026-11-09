@@ -19,6 +19,8 @@ const PHOTO_MAX = 4 * 1024 * 1024, COLIS_MAX = 5, KG_PAR_COLIS = 20, ENVOIS_PAR_
 const LANGUES = ['fr', 'de', 'en', 'it', 'es'];
 const MATIERES = ['Plaquettes carbure', 'Forets / fraises carbure', 'Lot mélangé (plaquettes, forets, fraises)'];
 const TYPES_PIECE = ["Carte d'identité", 'Passeport', 'Titre de séjour', 'Permis de conduire'];
+const PREVENIR = ['email', 'whatsapp', 'les-deux']; // comment la personne veut être prévenue des étapes (proposition 95)
+const LIEN_MINUTES = 10; // lien « Me connecter » de l'e-mail du code (proposition 72)
 
 function langue_de($x): string
 {
@@ -45,13 +47,13 @@ function cle_code(string $espace, string $email): string
 
 /** Envoie un code à 6 chiffres (10 minutes, 5 essais). Limites : 3 codes par quart d'heure et 8 par jour pour une
  *  adresse, 40 par jour en tout (le quota gratuit de Resend sert aussi aux bons de l'appli). */
-function envoyer_code(string $email, string $langue, string $espace = 'espace'): string
+function envoyer_code(string $email, string $langue, string $espace = 'espace', ?array $creation = null): string
 {
     $maintenant = ms();
     $jour = aujourdhui();
     $cle = cle_code($espace, $email);
     $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-    $r = transaction(function (PDO $bd) use ($maintenant, $jour, $cle, $email, $code, $espace) {
+    $r = transaction(function (PDO $bd) use ($maintenant, $jour, $cle, $email, $code, $espace, $creation) {
         $q = $bd->prepare('SELECT envois FROM espace_codes WHERE cle = ?' . pour_maj());
         $q->execute([$cle]);
         $l = $q->fetch();
@@ -64,16 +66,81 @@ function envoyer_code(string $email, string $langue, string $espace = 'espace'):
         $n = $t && $t['jour'] === $jour ? (int) $t['n'] : 0;
         if ($n >= CODES_JOUR_TOTAL) return 'trop';
         $envois[] = $maintenant;
-        $valeurs = [signer("code|$espace|$email|$code"), $maintenant + CODE_MINUTES * 60000, json_encode($envois), $cle];
-        if ($l) $bd->prepare('UPDATE espace_codes SET h = ?, exp = ?, essais = 0, envois = ? WHERE cle = ?')->execute($valeurs);
-        else $bd->prepare('INSERT INTO espace_codes (h, exp, essais, envois, cle) VALUES (?, ?, 0, ?, ?)')->execute($valeurs);
+        $valeurs = [signer("code|$espace|$email|$code"), $maintenant + CODE_MINUTES * 60000, json_encode($envois),
+            $creation ? json_encode($creation, JSON_UNESCAPED_UNICODE) : null, $cle];
+        if ($l) $bd->prepare('UPDATE espace_codes SET h = ?, exp = ?, essais = 0, envois = ?, creation = ? WHERE cle = ?')->execute($valeurs);
+        else $bd->prepare('INSERT INTO espace_codes (h, exp, essais, envois, creation, cle) VALUES (?, ?, 0, ?, ?, ?)')->execute($valeurs);
         if ($t) $bd->prepare('UPDATE espace_compteurs SET jour = ?, n = ? WHERE nom = ?')->execute([$jour, $n + 1, 'codes']);
         else $bd->prepare('INSERT INTO espace_compteurs (jour, n, nom) VALUES (?, ?, ?)')->execute([$jour, 1, 'codes']);
         return 'ok';
     });
     if ($r !== 'ok') return $r;
-    mail_code($email, $code, $langue, $espace);
+    mail_code($email, $code, $langue, $espace, $espace === 'espace' ? creer_lien($email) : null);
     return 'ok';
+}
+
+/** Prénom, nom, particulier ou entreprise donnés en créant le compte (« Créer un compte », proposition 71). */
+function lire_creation($b): ?array
+{
+    if (!is_array($b)) return null;
+    $cr = ['prenom' => texte($b['prenom'] ?? null, 80), 'nom' => texte($b['nom'] ?? null, 80),
+        'profil' => ($b['profil'] ?? '') === 'professionnel' ? 'professionnel' : 'particulier',
+        'entreprise' => texte($b['entreprise'] ?? null, 120), 'siret' => (string) preg_replace('/\s/', '', texte($b['siret'] ?? null, 20))];
+    if ($cr['prenom'] === '' || $cr['nom'] === '') return null;
+    if ($cr['profil'] === 'particulier') $cr['entreprise'] = $cr['siret'] = '';
+    elseif (!preg_match('/^\d{14}$/', $cr['siret'])) $cr['siret'] = '';
+    return $cr;
+}
+
+/** Les informations de création gardées avec le code (une seule fois). */
+function prendre_creation(string $email): ?array
+{
+    $cle = cle_code('espace', $email);
+    $q = bd()->prepare('SELECT creation FROM espace_codes WHERE cle = ?');
+    $q->execute([$cle]);
+    $brut = $q->fetchColumn();
+    if (!$brut) return null;
+    bd()->prepare('UPDATE espace_codes SET creation = NULL WHERE cle = ?')->execute([$cle]);
+    $cr = json_decode((string) $brut, true);
+    return is_array($cr) ? $cr : null;
+}
+
+/** Un compte tout neuf (sans nom) reçoit le prénom, le nom et l'entreprise donnés en le créant. */
+function appliquer_creation(array $c, ?array $cr): array
+{
+    if (!$cr || $c['nom'] !== '' || $c['prenom'] !== '') return $c;
+    $c = ['prenom' => $cr['prenom'], 'nom' => $cr['nom'], 'profil' => $cr['profil'], 'entreprise' => $cr['entreprise'], 'siret' => $cr['siret'],
+        'maj_le' => iso()] + $c;
+    enregistrer_compte($c);
+    return $c;
+}
+
+/** Lien « Me connecter » de l'e-mail du code : 128 bits au hasard, 10 minutes, une seule fois (seule son empreinte est gardée). */
+function creer_lien(string $email): string
+{
+    $jeton = bin2hex(random_bytes(16));
+    bd()->prepare('INSERT INTO espace_liens (h, email, exp) VALUES (?, ?, ?)')
+        ->execute([hash('sha256', $jeton), chiffrer($email), ms() + LIEN_MINUTES * 60000]);
+    return $jeton;
+}
+
+/** L'adresse e-mail d'un lien encore valable (il ne resservira pas, le code envoyé avec lui non plus), sinon null. */
+function utiliser_lien(string $jeton): ?string
+{
+    if (!preg_match('/^[0-9a-f]{32}$/', $jeton)) return null;
+    $h = hash('sha256', $jeton);
+    return transaction(function (PDO $bd) use ($h) {
+        $q = $bd->prepare('SELECT email, exp FROM espace_liens WHERE h = ?' . pour_maj());
+        $q->execute([$h]);
+        $l = $q->fetch();
+        if (!$l) return null;
+        $bd->prepare('DELETE FROM espace_liens WHERE h = ?')->execute([$h]);
+        if (ms() > (int) $l['exp']) return null;
+        $email = dechiffrer((string) $l['email']);
+        if (!$email) return null;
+        $bd->prepare("UPDATE espace_codes SET h = '', exp = 0, essais = 0 WHERE cle = ?")->execute([cle_code('espace', $email)]);
+        return $email;
+    });
 }
 
 /** Le code tapé : bon (il ne resservira pas), faux, périmé, ou bloqué après 5 essais. */
@@ -105,7 +172,9 @@ function compte_depuis_ligne(array $l): array
         'recto' => $l['piece_recto'] ?: null, 'verso' => $l['piece_verso'] ?: null, 'depose_le' => (string) $l['piece_depose_le'],
     ] : null;
     $rib = $l['rib_iban'] ? ['titulaire' => (string) $l['rib_titulaire'], 'iban' => dechiffrer($l['rib_iban']) ?? ''] : null;
-    $c = ['piece' => $piece, 'rib' => $rib, 'langue' => langue_de($l['langue']), 'vendeur_id' => $l['vendeur_id'] ?: null];
+    $c = ['piece' => $piece, 'rib' => $rib, 'langue' => langue_de($l['langue']), 'vendeur_id' => $l['vendeur_id'] ?: null,
+        'prevenir' => in_array($l['prevenir'] ?? '', PREVENIR, true) ? (string) $l['prevenir'] : 'email',
+        'archive_le' => ($l['archive_le'] ?? null) ?: null, 'rappel_piece' => ($l['rappel_piece'] ?? null) ?: null];
     foreach (['id', 'email', 'cree_le', 'vu_le', 'maj_le', 'profil', 'nom', 'prenom', 'entreprise', 'siret', 'telephone', 'adresse', 'cp', 'ville'] as $k) $c[$k] = (string) $l[$k];
     return $c;
 }
@@ -122,6 +191,7 @@ function enregistrer_compte(array $c): void
         'piece_recto' => $p['recto'] ?? null, 'piece_verso' => $p['verso'] ?? null, 'piece_depose_le' => $p['depose_le'] ?? null,
         'rib_titulaire' => $r['titulaire'] ?? null, 'rib_iban' => $r ? chiffrer($r['iban']) : null,
         'langue' => $c['langue'], 'vendeur_id' => $c['vendeur_id'],
+        'prevenir' => $c['prevenir'] ?? 'email', 'rappel_piece' => $c['rappel_piece'] ?? null,
     ];
     $q = bd()->prepare('SELECT 1 FROM espace_comptes WHERE id = ?');
     $q->execute([$c['id']]);
@@ -157,7 +227,7 @@ function compte_par_email(string $email, string $langue): array
     $c = [
         'id' => uuid(), 'email' => $email, 'cree_le' => $maintenant, 'vu_le' => $maintenant, 'maj_le' => $maintenant, 'profil' => 'particulier',
         'nom' => '', 'prenom' => '', 'entreprise' => '', 'siret' => '', 'telephone' => '', 'adresse' => '', 'cp' => '', 'ville' => '',
-        'piece' => null, 'rib' => null, 'langue' => $langue, 'vendeur_id' => null,
+        'piece' => null, 'rib' => null, 'langue' => $langue, 'vendeur_id' => null, 'prevenir' => 'email', 'archive_le' => null, 'rappel_piece' => null,
     ];
     enregistrer_compte($c);
     return $c;
@@ -190,7 +260,8 @@ function lire_cookie_signe(string $nom, string $sorte): ?array
 function compte_connecte(): ?array
 {
     $s = lire_cookie_signe(COOKIE_ESPACE, 'session');
-    return $s && is_string($s['id'] ?? null) ? lire_compte($s['id']) : null;
+    $c = $s && is_string($s['id'] ?? null) ? lire_compte($s['id']) : null;
+    return $c && !$c['archive_le'] ? $c : null; // un compte supprimé (gardé pour justifier une vente) ne se connecte plus
 }
 
 // ---------- ce que la personne voit, ce qu'elle envoie ----------
@@ -205,7 +276,7 @@ function compte_visible(array $c): array
         'piece' => $p ? ['type' => $p['type'], 'numero' => $p['numero'], 'expiration' => $p['expiration'], 'recto' => (bool) $p['recto'],
             'verso' => (bool) $p['verso'], 'depose_le' => $p['depose_le']] : null,
         'rib' => $c['rib'] ? ['titulaire' => $c['rib']['titulaire'], 'iban' => substr($iban, 0, 4) . ' •••• ' . substr($iban, -4)] : null,
-        'manque' => manques($c),
+        'manque' => manques($c), 'prevenir' => $c['prevenir'] ?? 'email', 'cree_le' => $c['cree_le'],
     ];
 }
 
@@ -366,6 +437,10 @@ function envoi_depuis_ligne(array $l): array
         'traite_le' => $l['traite_le'] ?: null, 'traite_par' => (string) $l['traite_par'],
         'bon_numero' => $l['bon_numero'] ?: null, 'bon_le' => $l['bon_le'] ?: null,
         'prix_kg' => isset($l['prix_kg']) ? (float) $l['prix_kg'] : null, 'garanti_jusqu' => ($l['garanti_jusqu'] ?? null) ?: null,
+        'recu_le' => ($l['recu_le'] ?? null) ?: null, 'pese_le' => ($l['pese_le'] ?? null) ?: null,
+        'poids_brut' => isset($l['poids_brut']) ? (float) $l['poids_brut'] : null, 'poids_net' => isset($l['poids_net']) ? (float) $l['poids_net'] : null,
+        'paye_le' => ($l['paye_le'] ?? null) ?: null, 'montant' => isset($l['montant']) ? (float) $l['montant'] : null,
+        'paye_detail' => (string) ($l['paye_detail'] ?? ''), 'bon_redemande_le' => ($l['bon_redemande_le'] ?? null) ?: null,
     ];
 }
 
@@ -388,7 +463,10 @@ function lire_envoi(string $id): ?array
 function envoi_visible(array $e): array
 {
     return ['reference' => $e['reference'], 'cree_le' => $e['cree_le'], 'colis' => $e['colis'], 'total' => $e['total'],
-        'paiement' => $e['paiement'], 'traite_le' => $e['traite_le'], 'prix_kg' => $e['prix_kg'] ?? null, 'garanti_jusqu' => $e['garanti_jusqu'] ?? null];
+        'paiement' => $e['paiement'], 'traite_le' => $e['traite_le'], 'prix_kg' => $e['prix_kg'] ?? null, 'garanti_jusqu' => $e['garanti_jusqu'] ?? null,
+        'recu_le' => $e['recu_le'] ?? null, 'pese_le' => $e['pese_le'] ?? null, 'poids_brut' => $e['poids_brut'] ?? null,
+        'poids_net' => $e['poids_net'] ?? null, 'paye_le' => $e['paye_le'] ?? null, 'montant' => $e['montant'] ?? null,
+        'bon_numero' => $e['bon_numero'] ?? null, 'bon_redemande_le' => $e['bon_redemande_le'] ?? null];
 }
 
 /** Référence lisible à écrire sur le colis : COL-AAMMJJ- + 4 caractères sans ambiguïté (pas de 0/O ni 1/I). */
@@ -417,9 +495,34 @@ function creer_envoi(array $e): void
     }
 }
 
-/** Supprime le compte, ses photos et ses demandes (la fiche du carnet de l'appli, elle, reste à Malik). */
+/** La personne a vendu (ou un envoi est en route) : sa pièce d'identité sert à justifier l'achat (proposition 86). */
+function a_vendu(array $c): bool
+{
+    foreach (envois_du($c['id']) as $e) {
+        if ($e['traite_le'] || ($e['recu_le'] ?? null) || $e['bon_numero'] || ($e['paye_le'] ?? null)) return true;
+    }
+    return false;
+}
+
+/** Compte supprimé par une personne qui a vendu : elle ne peut plus se connecter, son e-mail, son téléphone et son RIB
+ *  sont effacés ; son identité, sa pièce d'identité et ses ventes restent pour justifier les achats (registre). */
+function archiver_compte(array $c): void
+{
+    transaction(function (PDO $bd) use ($c) {
+        $bd->prepare("UPDATE espace_comptes SET email = ?, telephone = '', rib_titulaire = NULL, rib_iban = NULL, prevenir = NULL, archive_le = ? WHERE id = ?")
+            ->execute(['supprime+' . $c['id'] . '@compte.invalid', iso(), $c['id']]);
+        $bd->prepare('DELETE FROM espace_codes WHERE cle = ?')->execute([cle_code('espace', $c['email'])]);
+        // les demandes jamais parties (pas d'étiquette) ne servent à rien : effacées
+        $bd->prepare('DELETE FROM espace_envois WHERE compte = ? AND traite_le IS NULL AND recu_le IS NULL AND bon_numero IS NULL AND paye_le IS NULL')
+            ->execute([$c['id']]);
+    });
+}
+
+/** Supprime le compte, ses photos et ses demandes (la fiche du carnet de l'appli, elle, reste à Malik) ; s'il a vendu, le
+ *  compte est seulement fermé (archiver_compte). */
 function supprimer_compte(array $c): void
 {
+    if (a_vendu($c)) { archiver_compte($c); return; }
     transaction(function (PDO $bd) use ($c) {
         $bd->prepare('DELETE FROM espace_envois WHERE compte = ?')->execute([$c['id']]);
         $bd->prepare('DELETE FROM espace_codes WHERE cle = ?')->execute([cle_code('espace', $c['email'])]);
@@ -439,10 +542,12 @@ function menage_du_jour(): void
     @file_put_contents($f, $jour, LOCK_EX);
     apres_reponse(function () {
         $limite = iso(ms() - (int) (3 * 365.25 * 86400000));
-        $q = bd()->prepare('SELECT * FROM espace_comptes WHERE vu_le < ?');
+        $q = bd()->prepare('SELECT * FROM espace_comptes WHERE vu_le < ? AND archive_le IS NULL');
         $q->execute([$limite]);
         foreach ($q->fetchAll() as $l) supprimer_compte(compte_depuis_ligne($l));
         $maintenant = ms();
+        bd()->prepare('DELETE FROM espace_liens WHERE exp < ?')->execute([$maintenant]);
+        rappeler_pieces();
         $q = bd()->prepare('SELECT cle, envois FROM espace_codes WHERE exp < ?');
         $q->execute([$maintenant]);
         foreach ($q->fetchAll() as $l) {
@@ -486,17 +591,74 @@ function demandes_pour_malik(string $etat): array
     return $r;
 }
 
-/** Étiquette envoyée (ou Annuler), bon fait dans l'appli (ou retiré). */
-function marquer_envoi(string $id, string $action, string $par, string $numero = ''): ?array
+const ETAPES_A_PREVENIR = ['traite', 'recu', 'pese', 'paye'];
+
+/** Les étapes d'une demande, cochées par Malik (page des demandes) ou par l'appli : étiquette envoyée, colis reçu, pesé
+ *  (poids brut et net), payé (montant, n° du chèque), bon fait dans l'appli, et leur « Annuler » (propositions 94 et 99). */
+function marquer_envoi(string $id, string $action, string $par, string $numero = '', array $x = []): ?array
 {
     $e = lire_envoi($id);
     if (!$e) return null;
-    if ($action === 'traite') $e = ['traite_le' => iso(), 'traite_par' => coupe($par, 60)] + $e;
-    elseif ($action === 'remettre') $e = ['traite_le' => null, 'traite_par' => ''] + $e;
-    elseif ($action === 'bon') $e = ['bon_numero' => coupe($numero, 20), 'bon_le' => iso(), 'traite_le' => $e['traite_le'] ?? iso()] + $e;
-    elseif ($action === 'sans_bon') $e = ['bon_numero' => null, 'bon_le' => null] + $e;
-    else return null;
-    bd()->prepare('UPDATE espace_envois SET traite_le = ?, traite_par = ?, bon_numero = ?, bon_le = ? WHERE id = ?')
-        ->execute([$e['traite_le'], $e['traite_par'], $e['bon_numero'], $e['bon_le'], $id]);
+    $kg = fn ($v) => is_numeric($v) && (float) $v > 0 && (float) $v < 1000 ? round((float) $v * 100) / 100 : null;
+    switch ($action) {
+        case 'traite': $e = ['traite_le' => iso(), 'traite_par' => coupe($par, 60)] + $e; break;
+        case 'remettre': $e = ['traite_le' => null, 'traite_par' => ''] + $e; break;
+        case 'recu': $e = ['recu_le' => iso(), 'traite_le' => $e['traite_le'] ?? iso()] + $e; break;
+        case 'sans_recu': $e = ['recu_le' => null] + $e; break;
+        case 'pese':
+            $net = $kg($x['poids_net'] ?? null);
+            if ($net === null) return null;
+            $e = ['pese_le' => iso(), 'poids_net' => $net, 'poids_brut' => $kg($x['poids_brut'] ?? null), 'recu_le' => ($e['recu_le'] ?? null) ?: iso()] + $e;
+            break;
+        case 'sans_pese': $e = ['pese_le' => null, 'poids_net' => null, 'poids_brut' => null] + $e; break;
+        case 'paye':
+            $m = is_numeric($x['montant'] ?? null) && (float) $x['montant'] > 0 ? round((float) $x['montant'] * 100) / 100
+                : (($e['poids_net'] ?? null) && ($e['prix_kg'] ?? null) ? round($e['poids_net'] * $e['prix_kg'] * 100) / 100 : null);
+            $e = ['paye_le' => iso(), 'montant' => $m, 'paye_detail' => texte($x['detail'] ?? null, 60)] + $e;
+            break;
+        case 'sans_paye': $e = ['paye_le' => null, 'montant' => null, 'paye_detail' => ''] + $e; break;
+        case 'bon': $e = ['bon_numero' => coupe($numero, 20), 'bon_le' => iso(), 'traite_le' => $e['traite_le'] ?? iso()] + $e; break;
+        case 'sans_bon': $e = ['bon_numero' => null, 'bon_le' => null] + $e; break;
+        default: return null;
+    }
+    bd()->prepare('UPDATE espace_envois SET traite_le = ?, traite_par = ?, bon_numero = ?, bon_le = ?, recu_le = ?, pese_le = ?, poids_brut = ?,
+        poids_net = ?, paye_le = ?, montant = ?, paye_detail = ? WHERE id = ?')
+        ->execute([$e['traite_le'], $e['traite_par'], $e['bon_numero'], $e['bon_le'], $e['recu_le'] ?? null, $e['pese_le'] ?? null,
+            $e['poids_brut'] ?? null, $e['poids_net'] ?? null, $e['paye_le'] ?? null, $e['montant'] ?? null, $e['paye_detail'] ?? '', $id]);
     return $e;
+}
+
+/** Après une étape cochée : e-mail à la personne si elle le veut (proposition 95), et le lien WhatsApp déjà écrit que Malik
+ *  peut envoyer d'un appui si elle préfère WhatsApp (envoi gratuit, fait par lui). */
+function prevenir_etape(array $e, string $action): ?string
+{
+    if (!in_array($action, ETAPES_A_PREVENIR, true)) return null;
+    $c = lire_compte($e['compte']);
+    if (!$c || $c['archive_le']) return null;
+    if (in_array($c['prevenir'], ['email', 'les-deux'], true)) apres_reponse(fn () => mail_etape($c, $e, $action));
+    $tel = in_array($c['prevenir'], ['whatsapp', 'les-deux'], true) ? numero_international($c['telephone']) : null;
+    return $tel ? 'https://wa.me/' . $tel . '?text=' . rawurlencode(texte_whatsapp_etape($c, $e, $action)) : null;
+}
+
+/** La demande COL-… de ce compte. */
+function envoi_du_compte(array $c, string $reference): ?array
+{
+    foreach (envois_du($c['id']) as $e) if ($e['reference'] === $reference) return $e;
+    return null;
+}
+
+/** Pièces d'identité qui expirent dans les 30 jours : un e-mail, une seule fois par date de fin (proposition 81). */
+function rappeler_pieces(): void
+{
+    $auj = aujourdhui();
+    $dans30 = (new DateTimeImmutable($auj . ' 12:00:00'))->modify('+30 days')->format('Y-m-d');
+    $q = bd()->prepare("SELECT * FROM espace_comptes WHERE archive_le IS NULL AND piece_expiration IS NOT NULL AND piece_expiration <> ''
+        AND piece_expiration >= ? AND piece_expiration <= ? LIMIT 10");
+    $q->execute([$auj, $dans30]);
+    foreach ($q->fetchAll() as $l) {
+        $c = compte_depuis_ligne($l);
+        if (!$c['piece'] || $c['rappel_piece'] === $c['piece']['expiration']) continue;
+        bd()->prepare('UPDATE espace_comptes SET rappel_piece = ? WHERE id = ?')->execute([$c['piece']['expiration'], $c['id']]);
+        mail_piece_bientot($c);
+    }
 }
