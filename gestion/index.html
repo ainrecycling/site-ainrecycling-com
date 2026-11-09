@@ -55,9 +55,18 @@
         </button>
       </div>
       <h2 class="titre-demandes">Demandes d'envoi par colis</h2>
+      <!-- ce qui t'attend (proposition 100) : un appui montre ces demandes -->
+      <div class="compteurs" role="group" aria-label="Ce qui t'attend">
+        <button type="button" class="compteur" data-etat="nouvelles" aria-pressed="false"><b data-n="nouvelles">0</b><span>étiquettes à envoyer</span></button>
+        <button type="button" class="compteur" data-etat="en_route" aria-pressed="false"><b data-n="en_route">0</b><span>colis en route</span></button>
+        <button type="button" class="compteur" data-etat="a_peser" aria-pressed="false"><b data-n="a_peser">0</b><span>à peser</span></button>
+        <button type="button" class="compteur" data-etat="a_payer" aria-pressed="false"><b data-n="a_payer">0</b><span>à payer</span></button>
+      </div>
       <div class="barre">
+        <div class="recherche"><label class="sr-only" for="chercher">Chercher une demande</label>
+          <input id="chercher" type="search" placeholder="Nom, référence, ville…" autocomplete="off" enterkeyhint="search" data-chercher></div>
         <div class="filtres" role="group" aria-label="Demandes à afficher">
-          <button type="button" class="filtre actif" data-etat="a_traiter" aria-pressed="true">À traiter</button>
+          <button type="button" class="filtre actif" data-etat="en_cours" aria-pressed="true">En cours</button>
           <button type="button" class="filtre" data-etat="toutes" aria-pressed="false">Toutes</button>
         </div>
         <button type="button" class="bouton fantome" data-actualiser>Actualiser</button>
@@ -168,10 +177,8 @@
           <div class="mini-rangee"><button type="button" class="mini" data-afficher-iban>Afficher</button>
           <button type="button" class="mini" data-copier-iban>Copier l'IBAN</button></div></dd>
       </dl>
-      <div class="actions">
-        <button type="button" class="bouton" data-traite>✓ Étiquette envoyée</button>
-        <button type="button" class="bouton fantome" data-remettre hidden>Annuler : remettre à traiter</button>
-      </div>
+      <p class="etapes-faites" data-etapes hidden></p>
+      <div class="actions" data-actions></div>
     </li>
   </template>
 

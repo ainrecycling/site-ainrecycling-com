@@ -158,3 +158,27 @@ dialog.feuille::backdrop { background: rgba(5, 10, 20, .55); }
 
 .feuille .pile .bouton { margin: 6px 0 0; width: 100%; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* 3e revue (9 nov. 2026) : ce qui t'attend, recherche, étapes reçu / pesé / payé, WhatsApp */
+.compteurs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0 0 14px; }
+@media (min-width: 760px) { .compteurs { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.compteur { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 12px 14px; border: 1px solid var(--ligne); border-radius: 14px;
+  background: var(--carte); font: inherit; color: var(--doux); text-align: left; cursor: pointer; min-height: 72px; }
+.compteur b { font-size: 1.6rem; line-height: 1.1; color: var(--encre); }
+.compteur span { font-size: .9rem; }
+.compteur.chaud { border-color: #e7c88f; background: var(--ambre-fond); }
+.compteur.chaud b { color: var(--ambre); }
+.compteur.actif { outline: 2px solid var(--marine); outline-offset: 2px; }
+.recherche { flex: 1 1 220px; }
+.recherche input { width: 100%; min-height: 46px; padding: 0 14px; border: 1.5px solid var(--ligne); border-radius: 12px; font: inherit; background: var(--carte); }
+.recherche input:focus-visible { border-color: var(--marine); outline: 2px solid var(--focus); outline-offset: 1px; }
+.etat.recu { background: var(--bleu-fond); color: var(--marine); }
+.etat.pese { background: var(--bleu-fond); color: var(--marine); }
+.etat.paye { background: var(--vert-fond); color: var(--vert); }
+.etapes-faites { margin: 8px 0 0; font-size: .9rem; color: var(--doux); }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.champ-etape { display: grid; gap: 4px; flex: 1 1 200px; font-size: .9rem; font-weight: 600; color: var(--texte); }
+.champ-etape input { min-height: 46px; padding: 0 12px; border: 1.5px solid var(--ligne); border-radius: 10px; font: inherit; font-weight: 400; }
+.bouton.vert { background: var(--vert); text-decoration: none; }
+.bouton.vert:hover { background: #12623e; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

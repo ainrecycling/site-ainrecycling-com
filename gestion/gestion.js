@@ -18,9 +18,11 @@
     passee: 'Cette date de fin est déjà passée.', longue: 'Une annonce dure deux mois au plus.', villes: 'Indique les villes de la tournée.',
     mot_de_passe: 'Le mot de passe doit avoir au moins 10 caractères.', mdp_differents: 'Les deux mots de passe ne sont pas pareils.'
   };
-  var ouverture = Date.now(), etat = 'a_traiter', reglages = null, cible = null;
+  var ouverture = Date.now(), etat = 'en_cours', reglages = null, cible = null;
+  var tous = [], whatsappDe = {}, recherche = ''; // toutes les demandes (300 dernières), liens WhatsApp prêts, recherche
   var kg = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 });
   var euros = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 });
+  var argent = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   var entier = new Intl.NumberFormat('fr-FR');
   var $ = function (sel, dans) { return (dans || document).querySelector(sel); };
 
@@ -118,9 +120,19 @@
     var badge = $('[data-etat-demande]', li);
     li.id = 'demande-' + e.reference;
     $('[data-ref]', li).textContent = e.reference;
-    if (e.bon_numero) { badge.textContent = 'Bon ' + e.bon_numero + ' fait'; badge.classList.add('bon'); }
-    else if (e.traite_le) { badge.textContent = 'Étiquette envoyée le ' + jourCourt(e.traite_le); badge.classList.add('envoyee'); }
-    else badge.textContent = 'Nouvelle';
+    // où en est la demande (proposition 94) : étiquette, reçu, pesé, payé ; le bon fait dans l'appli en plus
+    var n = e.paye_le ? 5 : e.pese_le ? 4 : e.recu_le ? 3 : e.traite_le ? 2 : 1;
+    badge.textContent = e.paye_le ? 'Payé' + (e.montant ? ' : ' + argent.format(e.montant) + ' €' : '') : e.pese_le ? 'Pesé : ' + kg.format(e.poids_net) + ' kg net'
+      : e.recu_le ? 'Colis reçu' : e.traite_le ? 'Étiquette envoyée' : 'Nouvelle';
+    if (n > 1) badge.classList.add(['', 'envoyee', 'recu', 'pese', 'paye'][n - 1]);
+    if (e.bon_numero) badge.textContent += ' · bon ' + e.bon_numero;
+    var faites = [];
+    if (e.traite_le) faites.push('étiquette le ' + jourCourt(e.traite_le));
+    if (e.recu_le) faites.push('reçu le ' + jourCourt(e.recu_le));
+    if (e.pese_le) faites.push('pesé le ' + jourCourt(e.pese_le) + ' : ' + kg.format(e.poids_net) + ' kg net' + (e.poids_brut ? ' (' + kg.format(e.poids_brut) + ' kg brut)' : ''));
+    if (e.paye_le) faites.push('payé le ' + jourCourt(e.paye_le) + (e.montant ? ' : ' + argent.format(e.montant) + ' €' : '') + (e.paye_detail ? ' (' + e.paye_detail + ')' : ''));
+    if (e.bon_redemande_le) faites.push('bon redemandé le ' + jourCourt(e.bon_redemande_le));
+    if (faites.length) { $('[data-etapes]', li).textContent = 'Fait : ' + faites.join(' · '); $('[data-etapes]', li).hidden = false; }
     li.classList.toggle('traitee', !!e.traite_le);
     $('[data-quand]', li).textContent = 'Demandée le ' + jourHeure(e.cree_le);
     $('[data-nom]', li).textContent = c.profil === 'professionnel' ? c.entreprise + ' (' + personne + ')' : personne;
@@ -177,30 +189,88 @@
       $('[data-rib-ligne]', li).hidden = true;
     }
 
-    var traite = $('[data-traite]', li), remettre = $('[data-remettre]', li);
-    traite.hidden = !!e.traite_le || !!e.bon_numero;
-    remettre.hidden = !e.traite_le || !!e.bon_numero;
-    var agir = function (action) {
+    // l'étape suivante en un appui (le client reçoit l'e-mail de l'étape, ou le lien WhatsApp déjà écrit apparaît ici)
+    var actions = $('[data-actions]', li);
+    var agir = function (action, valeurs) {
       occupe(li, true);
-      api('POST', 'demandes', { action: action, envoi: e.id }).then(function (r) {
+      api('POST', 'demandes', { action: action, envoi: e.id, valeurs: valeurs || {} }).then(function (r) {
         occupe(li, false);
         if (r.status === 401) return montrerConnexion();
-        if (r.erreur) return dire(msgListe, r.erreur);
+        if (r.erreur) return dire(msgListe, r.erreur === 'poids' ? 'Indique le poids net en kilos, par exemple 18,2.' : r.erreur);
+        if (r.whatsapp) whatsappDe[e.id] = r.whatsapp; else delete whatsappDe[e.id];
         charger();
       });
     };
-    traite.addEventListener('click', function () { agir('traite'); });
-    remettre.addEventListener('click', function () { agir('remettre'); });
+    var bouton = function (texte, fantome, f) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'bouton' + (fantome ? ' fantome' : ''); b.textContent = texte;
+      b.addEventListener('click', f);
+      actions.appendChild(b);
+    };
+    var champ = function (etiquette, valeur, nombre) {
+      var d = document.createElement('label'), s = document.createElement('span'), i = document.createElement('input');
+      d.className = 'champ-etape'; s.textContent = etiquette; i.value = valeur || '';
+      if (nombre) i.inputMode = 'decimal';
+      d.appendChild(s); d.appendChild(i); actions.appendChild(d);
+      return i;
+    };
+    var nombreLu = function (v) { var x = parseFloat(String(v).replace(/\s/g, '').replace(',', '.')); return isFinite(x) ? x : null; };
+    if (!e.traite_le) bouton('✓ Étiquette envoyée', false, function () { agir('traite'); });
+    else if (!e.recu_le) { bouton('✓ Colis reçu', false, function () { agir('recu'); }); bouton('Annuler : étiquette pas envoyée', true, function () { agir('remettre'); }); }
+    else if (!e.pese_le) {
+      var net = champ('Poids net, le carbure seul (kg)', '', true), brut = champ('Poids brut, colis fermé (kg, facultatif)', '', true);
+      bouton('✓ Pesé', false, function () { agir('pese', { poids_net: nombreLu(net.value), poids_brut: nombreLu(brut.value) }); });
+      bouton('Annuler : pas encore reçu', true, function () { agir('sans_recu'); });
+    } else if (!e.paye_le) {
+      var prevu = e.poids_net && e.prix_kg ? Math.round(e.poids_net * e.prix_kg * 100) / 100 : null;
+      var montant = champ('Montant payé (€)' + (prevu ? ' : ' + kg.format(e.poids_net) + ' kg × ' + euros.format(e.prix_kg) + ' €' : ''), prevu ? argent.format(prevu).replace(/\s/g, '') : '', true);
+      var detail = champ(e.paiement === 'Chèque' ? 'N° du chèque' : 'Détail du virement (facultatif)', '');
+      bouton('✓ Payé', false, function () { agir('paye', { montant: nombreLu(montant.value), detail: detail.value }); });
+      bouton('Annuler la pesée', true, function () { agir('sans_pese'); });
+    } else bouton('Annuler le paiement', true, function () { agir('sans_paye'); });
+    if (whatsappDe[e.id]) {
+      var a = document.createElement('a');
+      a.className = 'bouton vert'; a.href = whatsappDe[e.id]; a.target = '_blank'; a.rel = 'noopener';
+      a.textContent = 'Prévenir sur WhatsApp';
+      actions.appendChild(a);
+    }
     return li;
   }
 
   function choisirFiltre(nouveau) {
     etat = nouveau;
-    liste.querySelectorAll('.filtre').forEach(function (x) {
+    liste.querySelectorAll('.filtre, .compteur').forEach(function (x) {
       var oui = x.getAttribute('data-etat') === nouveau;
       x.classList.toggle('actif', oui);
       x.setAttribute('aria-pressed', String(oui));
     });
+  }
+  // filtres par étape et recherche (propositions 100 et 101), faits ici sur les 300 dernières demandes
+  var FILTRES = {
+    en_cours: function (e) { return !e.paye_le; },
+    nouvelles: function (e) { return !e.traite_le; },
+    en_route: function (e) { return e.traite_le && !e.recu_le; },
+    a_peser: function (e) { return e.recu_le && !e.pese_le; },
+    a_payer: function (e) { return e.pese_le && !e.paye_le; },
+    toutes: function () { return true; },
+  };
+  function afficherListe() {
+    var q = recherche.trim().toLowerCase();
+    var vues = tous.filter(FILTRES[etat] || FILTRES.en_cours).filter(function (e) {
+      var c = e.client || {};
+      return !q || [e.reference, c.nom, c.prenom, c.entreprise, c.ville, c.cp, c.email, c.telephone].join(' ').toLowerCase().indexOf(q) >= 0;
+    });
+    ul.textContent = '';
+    vues.forEach(function (e) { ul.appendChild(carte(e)); });
+    var vide = $('[data-vide]');
+    vide.textContent = q ? 'Aucune demande ne correspond à « ' + recherche.trim() + ' ».' : 'Aucune demande ici.';
+    vide.hidden = vues.length > 0;
+    ['nouvelles', 'en_route', 'a_peser', 'a_payer'].forEach(function (k) {
+      var n = tous.filter(FILTRES[k]).length;
+      $('[data-n="' + k + '"]').textContent = n;
+      $('.compteur[data-etat="' + k + '"]').classList.toggle('chaud', n > 0);
+    });
+    $('.filtre[data-etat="en_cours"]').textContent = 'En cours (' + tous.filter(FILTRES.en_cours).length + ')';
   }
 
   // QR code du bordereau : /gestion/#COL-261108-K7Q2 ouvre cette demande (cherchée dans « Toutes » si besoin)
@@ -211,7 +281,7 @@
   function montrerCible(envois) {
     if (!cible) return;
     var ref = cible, li = document.getElementById('demande-' + ref);
-    if (!li && etat !== 'toutes') { choisirFiltre('toutes'); charger(); return; }
+    if (!li && etat !== 'toutes') { choisirFiltre('toutes'); afficherListe(); li = document.getElementById('demande-' + ref); }
     cible = null;
     history.replaceState(null, '', location.pathname);
     if (!li) { dire(msgListe, 'Demande ' + ref + ' introuvable (supprimée avec son compte ?).'); return; }
@@ -225,25 +295,26 @@
 
   function charger() {
     $('[data-chargement]').hidden = false;
-    api('GET', 'demandes?etat=' + etat).then(function (r) {
+    api('GET', 'demandes?etat=toutes').then(function (r) {
       $('[data-chargement]').hidden = true;
       if (r.status === 401) return montrerConnexion();
       cx.hidden = true; liste.hidden = false; deco.hidden = false;
       if (!reglages) chargerReglages();
       if (r.erreur) return dire(msgListe, r.erreur);
       dire(msgListe, '');
-      ul.textContent = '';
-      (r.envois || []).forEach(function (e) { ul.appendChild(carte(e)); });
-      var vide = $('[data-vide]');
-      vide.textContent = etat === 'a_traiter' ? 'Aucune demande à traiter.' : 'Aucune demande pour le moment.';
-      vide.hidden = (r.envois || []).length > 0;
-      if (etat === 'a_traiter') $('[data-etat="a_traiter"]').textContent = 'À traiter (' + (r.envois || []).length + ')';
-      montrerCible(r.envois || []);
+      tous = r.envois || [];
+      afficherListe();
+      montrerCible(tous);
     });
   }
-  liste.querySelectorAll('.filtre').forEach(function (b) {
-    b.addEventListener('click', function () { choisirFiltre(b.getAttribute('data-etat')); charger(); });
+  liste.querySelectorAll('.filtre, .compteur').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var k = b.getAttribute('data-etat');
+      choisirFiltre(b.classList.contains('compteur') && etat === k ? 'en_cours' : k);
+      afficherListe();
+    });
   });
+  $('[data-chercher]').addEventListener('input', function () { recherche = this.value; afficherListe(); });
   $('[data-actualiser]').addEventListener('click', function () { charger(); chargerReglages(); });
   window.addEventListener('hashchange', function () { lireCible(); if (cible && !liste.hidden) charger(); });
 
