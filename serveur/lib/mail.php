@@ -3,18 +3,18 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/base.php';
 
-// E-mails du site, envoyés par Resend (même compte et même domaine que l'appli : contact@ainrecycling.com).
-// Essai sur l'ordinateur : rien ne part, le message est écrit dans le journal (journal/mails.log du dossier privé).
-// Depuis le 8 nov. 2026 (proposition 51, « des e-mails à tes couleurs ») : tous les e-mails ont le même cadre, lisible sur
-// téléphone : logo, trait bleu marine, texte, bouton, et en bas les coordonnées et les numéros de la société, dans la langue
-// de la personne. Jamais de pièce d'identité ni de RIB dedans.
+
+
+
+
+
 
 function echapper(string $s): string
 {
     return htmlspecialchars($s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
-/** $entetes : en-têtes en plus (ex. List-Unsubscribe de l'alerte prix). */
+
 function envoyer_mail(string $a, string $sujet, string $html, string $texte, array $cci = [], array $entetes = [], array $pieces = []): void
 {
     if (mode_essai()) {
@@ -22,7 +22,7 @@ function envoyer_mail(string $a, string $sujet, string $html, string $texte, arr
         if (!is_dir($d)) @mkdir($d, 0700, true);
         $ligne = '[' . iso() . "] à $a : $sujet" . ($pieces ? ' (' . count($pieces) . ' pièce(s) jointe(s))' : '') . "\n$texte\n----\n";
         @file_put_contents("$d/mails.log", $ligne, FILE_APPEND | LOCK_EX);
-        // le dernier e-mail en HTML, pour le regarder dans un navigateur pendant les essais
+
         @file_put_contents("$d/dernier-mail.html", $html, LOCK_EX);
         error_log("[essai, rien n'est parti] mail à $a : $sujet | " . str_replace("\n", ' | ', $texte));
         return;
@@ -55,13 +55,13 @@ function envoyer_mail(string $a, string $sujet, string $html, string $texte, arr
     }
 }
 
-// ---------- adresses, dates et nombres dans la langue de la personne ----------
+
 function adresse_site(): string
 {
     return rtrim((string) reglage('adresse_site', 'https://ainrecycling.com'), '/');
 }
 
-/** Une page du site dans la langue de la personne : https://ainrecycling.com/de/espace-client.html… */
+
 function lien_page(string $langue, string $page = ''): string
 {
     return adresse_site() . '/' . ($langue === 'fr' ? '' : $langue . '/') . $page;
@@ -75,7 +75,7 @@ const MOIS = [
     'es' => ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
 ];
 
-/** « 2026-11-15 » → « 15 novembre 2026 », « 15. November 2026 », « 15 de noviembre de 2026 »… */
+
 function date_longue(string $ymd, string $langue): string
 {
     if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $ymd, $m)) return $ymd;
@@ -89,27 +89,27 @@ function date_longue(string $ymd, string $langue): string
     }
 }
 
-/** Poids écrit comme l'appli : « 12,5 » (« 12.5 » en anglais). */
+
 function kg_texte(float $kg, string $langue = 'fr', int $decimales = 1): string
 {
     $s = rtrim(rtrim(number_format($kg, $decimales, '.', ''), '0'), '.');
     return $langue === 'en' ? $s : str_replace('.', ',', $s);
 }
 
-/** Somme d'argent, toujours avec les centimes : « 1 470,20 » (« 1,470.20 » en anglais). */
+
 function montant_texte(float $m, string $langue = 'fr'): string
 {
     return $langue === 'en' ? number_format($m, 2, '.', ',') : number_format($m, 2, ',', " ");
 }
 
-/** Prix au kilo : « 47 », « 47,5 » (« 47.5 » en anglais). */
+
 function prix_texte(float $prix, string $langue = 'fr'): string
 {
     $s = rtrim(rtrim(number_format($prix, 2, '.', ''), '0'), '.');
     return $langue === 'en' ? $s : str_replace('.', ',', $s);
 }
 
-// ---------- le cadre commun ----------
+
 const PIED_MAIL = [
     'fr' => ['SASU au capital de 1 000 €', 'TVA', 'Rachat de carbure de tungstène'],
     'de' => ['SASU mit einem Kapital von 1 000 €', 'USt-IdNr.', 'Ankauf von Wolframkarbid'],
@@ -118,7 +118,7 @@ const PIED_MAIL = [
     'es' => ['SASU con un capital social de 1 000 €', 'IVA', 'Compra de carburo de tungsteno'],
 ];
 
-/** Un bouton qui marche dans toutes les boîtes mail (tableau, couleurs écrites dans la balise). */
+
 function bouton_mail(string $texte, string $lien): string
 {
     return '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:22px 0 6px"><tr>'
@@ -127,7 +127,7 @@ function bouton_mail(string $texte, string $lien): string
         . echapper($texte) . '</a></td></tr></table>';
 }
 
-/** La page HTML de l'e-mail : $contenu est déjà du HTML sûr (textes passés par echapper). $bas : petite note sous le cadre. */
+
 function mail_cadre(string $langue, string $contenu, string $bas = ''): string
 {
     $p = PIED_MAIL[$langue] ?? PIED_MAIL['fr'];
@@ -150,7 +150,7 @@ function mail_cadre(string $langue, string $contenu, string $bas = ''): string
         . '</td></tr></table></body></html>';
 }
 
-/** Le même e-mail en texte simple (lu par les boîtes mail qui n'affichent pas le HTML). */
+
 function pied_texte(string $langue): string
 {
     $p = PIED_MAIL[$langue] ?? PIED_MAIL['fr'];
@@ -159,7 +159,7 @@ function pied_texte(string $langue): string
         . $p[0] . ' · SIRET 132 041 039 00018 · RCS Bourg-en-Bresse · ' . $p[1] . ' FR58132041039';
 }
 
-// ---------- code de connexion (5 langues, comme l'appli) ----------
+
 const MAIL_CODE = [
     'fr' => ['Votre code de connexion Ain Recycling', "Votre code pour votre compte Ain Recycling : ", "Il est valable 10 minutes. Si vous n'avez rien demandé, ignorez ce message."],
     'de' => ['Ihr Anmeldecode für Ain Recycling', 'Ihr Code für Ihr Konto bei Ain Recycling: ', 'Er ist 10 Minuten gültig. Wenn Sie nichts angefordert haben, ignorieren Sie diese Nachricht.'],
@@ -168,7 +168,7 @@ const MAIL_CODE = [
     'es' => ['Su código de acceso a Ain Recycling', 'Su código para su cuenta de Ain Recycling: ', 'Es válido durante 10 minutos. Si no ha solicitado nada, ignore este mensaje.'],
 ];
 
-/** Code à 6 chiffres envoyé à la personne (espace client) ou à Malik (page de gestion, en français). */
+
 function mail_code(string $email, string $code, string $langue, string $espace, ?string $lien = null): void
 {
     $gestion = $espace === 'gestion';
@@ -177,7 +177,7 @@ function mail_code(string $email, string $code, string $langue, string $espace, 
         : (MAIL_CODE[$langue] ?? MAIL_CODE['fr']);
     $langue = $gestion ? 'fr' : $langue;
     $lisible = substr($code, 0, 3) . ' ' . substr($code, 3);
-    // bouton « Me connecter » (lien de 10 minutes, une seule fois : proposition 72), puis le code pour qui préfère le taper
+
     $url = $lien && !$gestion ? lien_page($langue, 'espace-client.html') . '?lien=' . $lien : '';
     $l = MAIL_LIEN[$langue] ?? MAIL_LIEN['fr'];
     $contenu = '<p style="margin:0 0 6px">' . echapper(rtrim($m[1], ' :')) . '</p>'
@@ -188,7 +188,7 @@ function mail_code(string $email, string $code, string $langue, string $espace, 
         $m[1] . $lisible . "\n\n" . ($url ? $l[0] . ' : ' . $url . "\n\n" . $l[2] : $m[2]) . "\n\n" . pied_texte($langue));
 }
 
-// ---------- demande d'envoi par colis : confirmation à la personne (jamais de pièce d'identité dedans) ----------
+
 const MAIL_ENVOI = [
     'fr' => [
         'sujet' => "Votre demande d'envoi {ref} est bien reçue", 'bonjour' => 'Bonjour {prenom}, votre demande est bien reçue.',
@@ -232,11 +232,20 @@ const MAIL_ENVOI = [
     ],
 ];
 
-/** Remplace {mot} par sa valeur. */
+
 function remplir(string $modele, array $valeurs): string
 {
     return strtr($modele, array_combine(array_map(fn ($k) => '{' . $k . '}', array_keys($valeurs)), array_values($valeurs)));
 }
+
+
+const MAIL_CGV = [
+    'fr' => 'Vous avez accepté nos conditions de vente en faisant cette demande :',
+    'de' => 'Mit dieser Anfrage haben Sie unsere Verkaufsbedingungen akzeptiert (auf Französisch):',
+    'en' => 'By making this request you accepted our terms of sale (in French):',
+    'it' => 'Con questa richiesta avete accettato le nostre condizioni di vendita (in francese):',
+    'es' => 'Con esta solicitud ha aceptado nuestras condiciones de venta (en francés):',
+];
 
 function mail_envoi_recu(array $c, array $e): void
 {
@@ -248,6 +257,7 @@ function mail_envoi_recu(array $c, array $e): void
     $garanti = $prix && !empty($e['garanti_jusqu'])
         ? remplir($t['garanti'], ['prix' => prix_texte((float) $prix, $l), 'date' => date_longue((string) $e['garanti_jusqu'], $l)]) : '';
 
+    $cgv = adresse_site() . (($c['profil'] ?? '') === 'professionnel' ? '/conditions-generales-achat.html' : '/conditions-de-vente.html');
     $html = '<p style="margin:0 0 14px">' . echapper(remplir($t['bonjour'], $v)) . '</p>'
         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="border:2px solid #0e3c8a;border-radius:10px;padding:10px 12px">'
         . '<div style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#667085">' . echapper($t['ref']) . '</div>'
@@ -262,13 +272,15 @@ function mail_envoi_recu(array $c, array $e): void
         $html .= '<li style="margin:0 0 6px">' . str_replace(['{b}', '{/b}'], ['<b>', '</b>'], echapper(remplir($etape, $v))) . '</li>';
     }
     $html .= '</ol>' . bouton_mail($t['bouton'], lien_page($l, 'espace-client.html'))
-        . '<p style="margin:12px 0 0;font-size:14px;color:#475467">' . echapper(remplir($t['note'], $v)) . '</p>';
+        . '<p style="margin:12px 0 0;font-size:14px;color:#475467">' . echapper(remplir($t['note'], $v)) . '</p>'
+        . '<p style="margin:10px 0 0;font-size:12.5px;color:#667085">' . echapper(MAIL_CGV[$l]) . ' <a href="' . $cgv . '" style="color:#667085">' . echapper($cgv) . '</a></p>';
 
     $texte = [remplir($t['bonjour'], $v), $t['ref'] . ' : ' . $e['reference'] . ' (' . remplir($t['detail'], $v) . ')'];
     if ($garanti !== '') $texte[] = $garanti . ', ' . $t['garanti2'];
     $texte[] = $t['suite'] . "\n" . implode("\n", array_map(fn ($x, $i) => ($i + 1) . '. ' . str_replace(['{b}', '{/b}'], '', remplir($x, $v)), $t['etapes'], array_keys($t['etapes'])));
     $texte[] = $t['bouton'] . ' : ' . lien_page($l, 'espace-client.html');
     $texte[] = remplir($t['note'], $v);
+    $texte[] = MAIL_CGV[$l] . ' ' . $cgv;
     envoyer_mail($c['email'], remplir($t['sujet'], $v), mail_cadre($l, $html), implode("\n\n", $texte) . "\n\n" . pied_texte($l));
 }
 
@@ -277,8 +289,8 @@ function langue_mail($x): string
     return in_array($x, ['fr', 'de', 'en', 'it', 'es'], true) ? $x : 'fr';
 }
 
-/** E-mail à Malik pour chaque nouvelle demande : qui, d'où, combien, le prix garanti et le lien de la page des demandes.
- *  Ni pièce d'identité ni IBAN dans l'e-mail : ils restent sur la page réservée. */
+
+
 function mail_nouvelle_demande(array $c, array $e): void
 {
     $a = (string) reglage('mail_admin', '');
@@ -303,7 +315,7 @@ function mail_nouvelle_demande(array $c, array $e): void
     envoyer_mail($a, "📦 Demande d'envoi " . $e['reference'] . " : $nom", mail_cadre('fr', $html), implode("\n\n", [...$lignes, "Pièce d'identité, RIB et étiquette : $lien"]));
 }
 
-// ---------- alerte prix (proposition 56) ----------
+
 const MAIL_ALERTE = [
     'fr' => [
         'sujet_ok' => 'Confirmez votre alerte prix Ain Recycling',
@@ -357,7 +369,7 @@ const MAIL_ALERTE = [
     ],
 ];
 
-/** E-mail « confirmez votre alerte » (le lien ouvre le site, où la personne appuie pour confirmer). */
+
 function mail_alerte_confirmer(string $email, string $langue, string $jeton): void
 {
     $l = langue_mail($langue);
@@ -368,7 +380,7 @@ function mail_alerte_confirmer(string $email, string $langue, string $jeton): vo
     envoyer_mail($email, $t['sujet_ok'], mail_cadre($l, $html), $t['texte_ok'] . "\n" . $lien . "\n\n" . $t['note_ok'] . "\n\n" . pied_texte($l));
 }
 
-/** E-mail « notre prix monte », avec le lien de désinscription (et l'en-tête qui donne le bouton « Se désabonner »). */
+
 function mail_alerte_prix(string $email, string $langue, string $jeton, float $prix): void
 {
     $l = langue_mail($langue);
@@ -387,7 +399,7 @@ function mail_alerte_prix(string $email, string $langue, string $jeton, float $p
         ['List-Unsubscribe' => '<' . $direct . '>', 'List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click']);
 }
 
-// ---------- résumé du mois pour Malik (proposition 57) ----------
+
 function mail_resume_mois(string $a, string $sujet, array $lignes, string $lien): void
 {
     $html = '<p style="margin:0 0 12px;font-size:18px"><b>' . echapper($sujet) . '</b></p><ul style="margin:0;padding-left:20px;color:#344054">'
@@ -396,7 +408,7 @@ function mail_resume_mois(string $a, string $sujet, array $lignes, string $lien)
     envoyer_mail($a, $sujet, mail_cadre('fr', $html), $sujet . "\n\n- " . implode("\n- ", $lignes) . "\n\n" . $lien);
 }
 
-// ---------- 3e revue (9 nov. 2026) : bouton « Me connecter », e-mail à chaque étape, pièce qui expire, bon redemandé ----------
+
 const MAIL_LIEN = [
     'fr' => ['Me connecter', 'ou tapez ce code sur le site :', "Le bouton et le code sont valables 10 minutes, une seule fois. Si vous n'avez rien demandé, ignorez ce message."],
     'de' => ['Anmelden', 'oder geben Sie diesen Code auf der Website ein:', 'Schaltfläche und Code sind 10 Minuten lang einmal gültig. Wenn Sie nichts angefordert haben, ignorieren Sie diese Nachricht.'],
@@ -498,7 +510,7 @@ const MAIL_ETAPE = [
     ],
 ];
 
-/** Les valeurs d'une étape (référence, date de garantie, prix, poids, montant) mises en forme dans la langue du compte. */
+
 function valeurs_etape(array $c, array $e, string $langue): array
 {
     $m = MAIL_ETAPE[$langue] ?? MAIL_ETAPE['fr'];
@@ -508,7 +520,7 @@ function valeurs_etape(array $c, array $e, string $langue): array
         'prenom' => $c['prenom'], 'ref' => $e['reference'],
         'date' => !empty($e['garanti_jusqu']) ? date_longue((string) $e['garanti_jusqu'], $langue) : '',
         'prix' => !empty($e['prix_kg']) ? prix_texte((float) $e['prix_kg'], $langue) : '',
-        // pesée au centième près, comme sur le bon d'achat de l'appli (47,72 kg)
+
         'net' => !empty($e['poids_net']) ? kg_texte((float) $e['poids_net'], $langue, 2) : '',
         'brut' => !empty($e['poids_brut']) ? remplir($m['brut'], ['brut' => kg_texte((float) $e['poids_brut'], $langue, 2)]) : '',
         'montant' => $montant ? montant_texte((float) $montant, $langue) : '',
@@ -516,7 +528,7 @@ function valeurs_etape(array $c, array $e, string $langue): array
     ];
 }
 
-/** Virement ou chèque : celui du paiement fait (détail donné par l'appli ou par Malik), sinon celui choisi dans la demande. */
+
 function paiement_fait(array $e): string
 {
     $d = mb_strtolower(trim((string) ($e['paye_detail'] ?? '')));
@@ -525,15 +537,15 @@ function paiement_fait(array $e): string
     return (string) $e['paiement'];
 }
 
-/** Pesée : le montant du bon de l'appli n'est pas « poids net × prix garanti » (autre prix, autre matière, pas de prix
- *  garanti) : le mail annonce alors le montant du bon, sans parler du prix garanti. */
+
+
 function pese_autre_montant(array $e): bool
 {
     if (empty($e['montant']) || empty($e['poids_net'])) return false;
     return empty($e['prix_kg']) || abs((float) $e['montant'] - round((float) $e['poids_net'] * (float) $e['prix_kg'], 2)) > 0.01;
 }
 
-/** Le suivi en 5 cases dans l'e-mail (tableau : lu par toutes les messageries). */
+
 function suivi_mail(int $faites, string $langue): string
 {
     $noms = (MAIL_ETAPE[$langue] ?? MAIL_ETAPE['fr'])['etapes'];
@@ -546,7 +558,7 @@ function suivi_mail(int $faites, string $langue): string
     return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 6px;table-layout:fixed"><tr>' . $barres . '</tr><tr>' . $textes . '</tr></table>';
 }
 
-/** E-mail à la personne quand Malik coche une étape (étiquette envoyée, colis reçu, pesé, payé) : proposition 95. */
+
 function mail_etape(array $c, array $e, string $etape): void
 {
     $langue = langue_mail($c['langue']);
@@ -562,7 +574,7 @@ function mail_etape(array $c, array $e, string $etape): void
     envoyer_mail($c['email'], $sujet, mail_cadre($langue, $html), remplir($m['bonjour'], $v) . "\n\n" . $texte . "\n\n" . $m['bouton'] . ' : ' . $lien . "\n\n" . pied_texte($langue));
 }
 
-/** Le message WhatsApp déjà écrit pour une étape, dans la langue de la personne (Malik l'envoie lui-même d'un appui). */
+
 function texte_whatsapp_etape(array $c, array $e, string $etape): string
 {
     $langue = langue_mail($c['langue']);
@@ -579,7 +591,7 @@ const MAIL_PIECE = [
     'es' => ['Su documento de identidad caduca pronto', 'Hola {prenom}: el documento ({type}) guardado en su cuenta de Ain Recycling caduca el {date}.', 'Para sus próximas ventas, sustitúyalo en un minuto desde su cuenta.', 'Actualizar mi documento'],
 ];
 
-/** Rappel un mois avant la fin de la pièce d'identité (proposition 81). */
+
 function mail_piece_bientot(array $c): void
 {
     if (!$c['piece'] || $c['piece']['expiration'] === '') return;
@@ -592,7 +604,7 @@ function mail_piece_bientot(array $c): void
     envoyer_mail($c['email'], $m[0], mail_cadre($langue, $html), remplir($m[1], $v) . "\n\n" . $m[2] . "\n\n" . $m[3] . ' : ' . $lien . "\n\n" . pied_texte($langue));
 }
 
-/** Le bon d'achat redemandé depuis le compte : e-mail à Malik, qui le renvoie lui-même (proposition 98, sa version). */
+
 function mail_bon_redemande(array $c, array $e): void
 {
     $a = (string) reglage('mail_admin', '');
@@ -605,7 +617,7 @@ function mail_bon_redemande(array $c, array $e): void
     envoyer_mail($a, '🧾 Bon redemandé : ' . $nom . ' (' . $e['bon_numero'] . ')', mail_cadre('fr', $html), $l1 . "\n\n" . $l2);
 }
 
-/** Le prix garanti arrive à sa fin et le colis n'est pas parti (4e revue, n° 158). */
+
 const MAIL_GARANTIE = [
     'fr' => ['Plus que 2 jours pour votre prix de {prix} €/kg ({ref})', "Votre colis n'est pas encore parti. Votre prix de {prix} €/kg est garanti jusqu'au {date}. Il suffit de déposer votre colis avec l'étiquette reçue par e-mail avant cette date.", 'Revoir ma demande'],
     'de' => ['Nur noch 2 Tage für Ihren Preis von {prix} €/kg ({ref})', 'Ihr Paket wurde noch nicht aufgegeben. Ihr Preis von {prix} €/kg ist bis zum {date} garantiert. Geben Sie Ihr Paket einfach bis dahin mit dem per E-Mail erhaltenen Etikett auf.', 'Meine Anfrage ansehen'],

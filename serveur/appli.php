@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-// /api/appli/… : adresse privée pour l'appli de bons (ain-recycling.vercel.app), protégée par une clé secrète partagée
-// (en-tête X-Cle-Appli ; la même clé est dans les réglages de l'appli sur Vercel). L'appli y lit les demandes d'envoi
-// avec tout ce qu'il faut pour l'étiquette et le bon (coordonnées, pièce, RIB), télécharge la pièce pour la ranger dans
-// sa fiche client, puis dit au site « étiquette envoyée » et « bon AR-… fait ». Les numéros de bons restent créés par
-// l'appli seule : le site ne fait que des demandes COL-….
+
+
+
+
+
 
 require __DIR__ . '/lib/espace.php';
 
@@ -18,13 +18,13 @@ try {
     if (strlen($cle) < 32 || !hash_equals($cle, $donnee)) refus('cle', 401);
 
     switch ("$methode $chemin") {
-        // Demandes avec leur client : etat=a_traiter (étiquette pas encore envoyée), en_cours (pas encore de bon), toutes.
+
         case 'GET demandes':
             $etat = in_array($_GET['etat'] ?? '', ['a_traiter', 'toutes'], true) ? $_GET['etat'] : 'en_cours';
             repondre(['envois' => demandes_pour_malik($etat)]);
 
-        // { action: traite | remettre | bon | sans_bon | recu | pese | paye (et sans_recu, sans_pese, sans_paye), envoi, par,
-        //   numero (bon AR-…), valeurs (pese : poids_net, poids_brut, montant du bon ; paye : montant, detail) }
+
+
         case 'POST demandes':
             $b = corps_json() ?? [];
             $action = (string) ($b['action'] ?? '');
@@ -32,14 +32,14 @@ try {
             if ($action === 'bon' && !preg_match('/^AR-\d{4}-\d{4,6}$/', $numero)) refus('numero');
             $connues = ['traite', 'remettre', 'bon', 'sans_bon', 'recu', 'sans_recu', 'pese', 'sans_pese', 'paye', 'sans_paye'];
             if (!in_array($action, $connues, true)) refus('action', 404);
-            // l'appli envoie le poids et le montant de son bon (pese) puis le paiement (paye) : proposition 99
+
             $e = marquer_envoi((string) ($b['envoi'] ?? ''), $action, texte($b['par'] ?? 'appli', 40) ?: 'appli', $numero,
                 is_array($b['valeurs'] ?? null) ? $b['valeurs'] : []);
             if (!$e) refus($action === 'pese' ? 'poids' : 'introuvable', $action === 'pese' ? 400 : 404);
             prevenir_etape($e, $action);
             repondre(['envoi' => $e]);
 
-        // { action: vendeur, compte, vendeur_id } : la fiche du carnet de l'appli créée ou reliée pour ce compte.
+
         case 'POST compte':
             $b = corps_json() ?? [];
             $c = lire_compte((string) ($b['compte'] ?? ''));
@@ -50,7 +50,7 @@ try {
             enregistrer_compte($c);
             repondre(['ok' => true]);
 
-        // Photo de la pièce, déchiffrée (l'appli la range dans le dossier du client, comme pour un bon).
+
         case 'GET piece':
             $c = lire_compte((string) ($_GET['compte'] ?? ''));
             $face = (string) ($_GET['face'] ?? '');

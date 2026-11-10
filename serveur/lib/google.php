@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-// Connexion avec Google (3e revue, 9 nov. 2026, propositions 68 et 74 choisies par Malik) : « Continuer avec Google » sur la
-// page Mon compte. Flux « code d'autorisation » avec PKCE, côté serveur seulement : aucun script de Google n'est chargé
-// sur les pages du site. La clé (identifiant et code secret du client OAuth, créés par Malik dans la console Google Cloud)
-// est collée par Malik sur /gestion et gardée chiffrée dans site_reglages (« google »). Google ne donne que l'e-mail vérifié,
-// le prénom et le nom. Une adresse de la liste des admins ouvre /gestion (« Mode gestion »).
+
+
+
+
+
 
 require_once __DIR__ . '/admins.php';
 
@@ -13,7 +13,7 @@ const GOOGLE_AUTH = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_JETON = 'https://oauth2.googleapis.com/token';
 const GOOGLE_VERIF = 'https://oauth2.googleapis.com/tokeninfo';
 
-/** La clé Google si Malik l'a donnée, sinon null (le bouton reste caché). */
+
 function google_cle(): ?array
 {
     $g = reglage_site('google');
@@ -22,7 +22,7 @@ function google_cle(): ?array
     return $secret ? ['client_id' => (string) $g['client_id'], 'secret' => $secret] : null;
 }
 
-/** Adresse de retour, à déclarer telle quelle dans la console Google Cloud. */
+
 function google_retour(): string
 {
     return adresse_site() . '/api/espace/google/retour';
@@ -41,7 +41,7 @@ function google_aller(string $ou, ?string $cookie = null): void
     exit;
 }
 
-/** 1er pas : vers la page de Google (état et vérificateur PKCE gardés dans un cookie signé de 10 minutes). */
+
 function google_depart(string $langue): void
 {
     $k = google_cle();
@@ -57,7 +57,7 @@ function google_depart(string $langue): void
     google_aller(GOOGLE_AUTH . '?' . $q, $cookie);
 }
 
-/** Appel HTTPS vers Google (cURL), réponse JSON ou null. */
+
 function google_http(string $url, ?array $post = null): ?array
 {
     $ch = curl_init($url);
@@ -72,7 +72,7 @@ function google_http(string $url, ?array $post = null): ?array
     return is_array($j) ? $j : null;
 }
 
-/** 2e pas : Google revient avec un code, échangé contre l'identité vérifiée ; puis connexion (ou /gestion pour un admin). */
+
 function google_arrivee(): void
 {
     $s = lire_cookie_signe('google', 'google');
@@ -88,9 +88,10 @@ function google_arrivee(): void
         || !in_array($id['email_verified'] ?? null, [true, 'true'], true) || (int) ($id['exp'] ?? 0) < time()) google_aller($echec, $efface);
     $email = email_valide($id['email'] ?? null);
     if (!$email) google_aller($echec, $efface);
-    // l'adresse de Malik (liste des admins) : « Mode gestion » (proposition 74)
+
     if (in_array(strtolower($email), admins(), true)) {
         header('Set-Cookie: ' . $efface, false);
+        noter_connexion_gestion($email);
         google_aller(adresse_site() . '/gestion/', cookie_gestion($email));
     }
     $c = appliquer_creation(compte_par_email($email, $langue), ['prenom' => texte($id['given_name'] ?? null, 80), 'nom' => texte($id['family_name'] ?? null, 80),

@@ -5,12 +5,12 @@ require_once __DIR__ . '/base.php';
 require_once __DIR__ . '/mail.php';
 require_once __DIR__ . '/site.php';
 
-// Espace client du site (demandé par Malik le 2 nov. 2026 : « que les gens créent un compte pour ne pas renvoyer leur
-// pièce d'identité »), refait chez OVH le 6 nov. 2026 avec les mêmes adresses (/api/espace/…), les mêmes réponses et les
-// mêmes codes d'erreur que la première version (lib/espace-serveur.ts de l'appli) : site.js n'a rien à changer.
-// Connexion par un code à 6 chiffres envoyé par e-mail (pas de mot de passe), puis cookie de session signé, 60 jours.
-// Comptes et demandes dans la base MySQL ; n° de pièce et IBAN chiffrés ; photos de la pièce chiffrées dans le dossier
-// privé (pieces/<compte>/), jamais servies telles quelles.
+
+
+
+
+
+
 
 const COOKIE_ESPACE = 'espace';
 const SESSION_JOURS = 60;
@@ -19,8 +19,11 @@ const PHOTO_MAX = 4 * 1024 * 1024, COLIS_MAX = 5, KG_PAR_COLIS = 20, ENVOIS_PAR_
 const LANGUES = ['fr', 'de', 'en', 'it', 'es'];
 const MATIERES = ['Plaquettes carbure', 'Forets / fraises carbure', 'Lot mélangé (plaquettes, forets, fraises)'];
 const TYPES_PIECE = ["Carte d'identité", 'Passeport', 'Titre de séjour', 'Permis de conduire'];
-const PREVENIR = ['email', 'whatsapp', 'les-deux']; // comment la personne veut être prévenue des étapes (proposition 95)
-const LIEN_MINUTES = 10; // lien « Me connecter » de l'e-mail du code (proposition 72)
+const PREVENIR = ['email', 'whatsapp', 'les-deux'];
+
+
+const CGV_VERSION = '2026-11-10';
+const LIEN_MINUTES = 10;
 
 function langue_de($x): string
 {
@@ -33,27 +36,28 @@ function email_valide($x): ?string
     return strlen($s) <= 120 && preg_match('/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/u', $s) ? $s : null;
 }
 
-/** Robot : case cachée remplie, ou envoi moins de 2 secondes après l'ouverture de la page. */
+
 function robot(array $b): bool
 {
     return (is_string($b['site'] ?? null) && $b['site'] !== '') || !(is_numeric($b['duree'] ?? null) && (float) $b['duree'] >= 2000);
 }
 
-// ---------- codes de connexion ----------
+
 function cle_code(string $espace, string $email): string
 {
     return hash('sha256', $espace . '|' . $email);
 }
 
-/** Envoie un code à 6 chiffres (10 minutes, 5 essais). Limites : 3 codes par quart d'heure et 8 par jour pour une
- *  adresse, 40 par jour en tout (le quota gratuit de Resend sert aussi aux bons de l'appli). */
+
+
 function envoyer_code(string $email, string $langue, string $espace = 'espace', ?array $creation = null): string
 {
     $maintenant = ms();
     $jour = aujourdhui();
     $cle = cle_code($espace, $email);
     $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-    $r = transaction(function (PDO $bd) use ($maintenant, $jour, $cle, $email, $code, $espace, $creation) {
+    $compteur = $espace === 'gestion' ? 'codes-gestion' : 'codes';
+    $r = transaction(function (PDO $bd) use ($maintenant, $jour, $cle, $email, $code, $espace, $creation, $compteur) {
         $q = $bd->prepare('SELECT envois FROM espace_codes WHERE cle = ?' . pour_maj());
         $q->execute([$cle]);
         $l = $q->fetch();
@@ -61,7 +65,7 @@ function envoyer_code(string $email, string $langue, string $espace = 'espace', 
         $quart = count(array_filter($envois, fn ($t) => $maintenant - $t < 900000));
         if ($quart >= CODES_PAR_QUART || count($envois) >= CODES_PAR_JOUR) return 'trop';
         $q = $bd->prepare('SELECT jour, n FROM espace_compteurs WHERE nom = ?' . pour_maj());
-        $q->execute(['codes']);
+        $q->execute([$compteur]);
         $t = $q->fetch();
         $n = $t && $t['jour'] === $jour ? (int) $t['n'] : 0;
         if ($n >= CODES_JOUR_TOTAL) return 'trop';
@@ -70,8 +74,8 @@ function envoyer_code(string $email, string $langue, string $espace = 'espace', 
             $creation ? json_encode($creation, JSON_UNESCAPED_UNICODE) : null, $cle];
         if ($l) $bd->prepare('UPDATE espace_codes SET h = ?, exp = ?, essais = 0, envois = ?, creation = ? WHERE cle = ?')->execute($valeurs);
         else $bd->prepare('INSERT INTO espace_codes (h, exp, essais, envois, creation, cle) VALUES (?, ?, 0, ?, ?, ?)')->execute($valeurs);
-        if ($t) $bd->prepare('UPDATE espace_compteurs SET jour = ?, n = ? WHERE nom = ?')->execute([$jour, $n + 1, 'codes']);
-        else $bd->prepare('INSERT INTO espace_compteurs (jour, n, nom) VALUES (?, ?, ?)')->execute([$jour, 1, 'codes']);
+        if ($t) $bd->prepare('UPDATE espace_compteurs SET jour = ?, n = ? WHERE nom = ?')->execute([$jour, $n + 1, $compteur]);
+        else $bd->prepare('INSERT INTO espace_compteurs (jour, n, nom) VALUES (?, ?, ?)')->execute([$jour, 1, $compteur]);
         return 'ok';
     });
     if ($r !== 'ok') return $r;
@@ -79,7 +83,7 @@ function envoyer_code(string $email, string $langue, string $espace = 'espace', 
     return 'ok';
 }
 
-/** Prénom, nom, particulier ou entreprise donnés en créant le compte (« Créer un compte », proposition 71). */
+
 function lire_creation($b): ?array
 {
     if (!is_array($b)) return null;
@@ -92,7 +96,7 @@ function lire_creation($b): ?array
     return $cr;
 }
 
-/** Les informations de création gardées avec le code (une seule fois). */
+
 function prendre_creation(string $email): ?array
 {
     $cle = cle_code('espace', $email);
@@ -105,7 +109,7 @@ function prendre_creation(string $email): ?array
     return is_array($cr) ? $cr : null;
 }
 
-/** Un compte tout neuf (sans nom) reçoit le prénom, le nom et l'entreprise donnés en le créant. */
+
 function appliquer_creation(array $c, ?array $cr): array
 {
     if (!$cr || $c['nom'] !== '' || $c['prenom'] !== '') return $c;
@@ -115,7 +119,7 @@ function appliquer_creation(array $c, ?array $cr): array
     return $c;
 }
 
-/** Lien « Me connecter » de l'e-mail du code : 128 bits au hasard, 10 minutes, une seule fois (seule son empreinte est gardée). */
+
 function creer_lien(string $email): string
 {
     $jeton = bin2hex(random_bytes(16));
@@ -124,7 +128,7 @@ function creer_lien(string $email): string
     return $jeton;
 }
 
-/** L'adresse e-mail d'un lien encore valable (il ne resservira pas, le code envoyé avec lui non plus), sinon null. */
+
 function utiliser_lien(string $jeton): ?string
 {
     if (!preg_match('/^[0-9a-f]{32}$/', $jeton)) return null;
@@ -143,7 +147,7 @@ function utiliser_lien(string $jeton): ?string
     });
 }
 
-/** Le code tapé : bon (il ne resservira pas), faux, périmé, ou bloqué après 5 essais. */
+
 function verifier_code(string $email, string $code, string $espace = 'espace'): string
 {
     $cle = cle_code($espace, $email);
@@ -163,7 +167,7 @@ function verifier_code(string $email, string $code, string $espace = 'espace'): 
     });
 }
 
-// ---------- comptes ----------
+
 function compte_depuis_ligne(array $l): array
 {
     $piece = $l['piece_depose_le'] ? [
@@ -174,7 +178,8 @@ function compte_depuis_ligne(array $l): array
     $rib = $l['rib_iban'] ? ['titulaire' => (string) $l['rib_titulaire'], 'iban' => dechiffrer($l['rib_iban']) ?? ''] : null;
     $c = ['piece' => $piece, 'rib' => $rib, 'langue' => langue_de($l['langue']), 'vendeur_id' => $l['vendeur_id'] ?: null,
         'prevenir' => in_array($l['prevenir'] ?? '', PREVENIR, true) ? (string) $l['prevenir'] : 'email',
-        'archive_le' => ($l['archive_le'] ?? null) ?: null, 'rappel_piece' => ($l['rappel_piece'] ?? null) ?: null];
+        'archive_le' => ($l['archive_le'] ?? null) ?: null, 'rappel_piece' => ($l['rappel_piece'] ?? null) ?: null,
+        'rib_maj_le' => ($l['rib_maj_le'] ?? null) ?: null];
     foreach (['id', 'email', 'cree_le', 'vu_le', 'maj_le', 'profil', 'nom', 'prenom', 'entreprise', 'siret', 'telephone', 'adresse', 'cp', 'ville'] as $k) $c[$k] = (string) $l[$k];
     return $c;
 }
@@ -191,7 +196,7 @@ function enregistrer_compte(array $c): void
         'piece_recto' => $p['recto'] ?? null, 'piece_verso' => $p['verso'] ?? null, 'piece_depose_le' => $p['depose_le'] ?? null,
         'rib_titulaire' => $r['titulaire'] ?? null, 'rib_iban' => $r ? chiffrer($r['iban']) : null,
         'langue' => $c['langue'], 'vendeur_id' => $c['vendeur_id'],
-        'prevenir' => $c['prevenir'] ?? 'email', 'rappel_piece' => $c['rappel_piece'] ?? null,
+        'prevenir' => $c['prevenir'] ?? 'email', 'rappel_piece' => $c['rappel_piece'] ?? null, 'rib_maj_le' => $c['rib_maj_le'] ?? null,
     ];
     $q = bd()->prepare('SELECT 1 FROM espace_comptes WHERE id = ?');
     $q->execute([$c['id']]);
@@ -213,7 +218,7 @@ function lire_compte(string $id): ?array
     return $l ? compte_depuis_ligne($l) : null;
 }
 
-/** Le compte de cette adresse, créé à la première connexion. */
+
 function compte_par_email(string $email, string $langue): array
 {
     $q = bd()->prepare('SELECT * FROM espace_comptes WHERE email = ?');
@@ -233,7 +238,7 @@ function compte_par_email(string $email, string $langue): array
     return $c;
 }
 
-// ---------- sessions ----------
+
 function cookie_session(string $id): string
 {
     $charge = b64url((string) json_encode(['id' => $id, 'exp' => ms() + SESSION_JOURS * 86400000]));
@@ -246,7 +251,7 @@ function cookie_efface(string $nom = COOKIE_ESPACE, string $samesite = 'Lax'): s
     return "$nom=; Path=/; HttpOnly; " . (https() || !mode_essai() ? 'Secure; ' : '') . "SameSite=$samesite; Max-Age=0";
 }
 
-/** Contenu d'un cookie signé « charge.signature » encore valable, sinon null. */
+
 function lire_cookie_signe(string $nom, string $sorte): ?array
 {
     $brut = (string) ($_COOKIE[$nom] ?? '');
@@ -256,16 +261,16 @@ function lire_cookie_signe(string $nom, string $sorte): ?array
     return is_array($s) && is_int($s['exp'] ?? null) && ms() < $s['exp'] ? $s : null;
 }
 
-/** Le compte de la personne connectée (cookie signé encore valable), sinon null. */
+
 function compte_connecte(): ?array
 {
     $s = lire_cookie_signe(COOKIE_ESPACE, 'session');
     $c = $s && is_string($s['id'] ?? null) ? lire_compte($s['id']) : null;
-    return $c && !$c['archive_le'] ? $c : null; // un compte supprimé (gardé pour justifier une vente) ne se connecte plus
+    return $c && !$c['archive_le'] ? $c : null;
 }
 
-// ---------- ce que la personne voit, ce qu'elle envoie ----------
-/** Ce que la personne voit de son compte : sans les chemins des photos, avec l'IBAN en partie caché. */
+
+
 function compte_visible(array $c): array
 {
     $p = $c['piece'];
@@ -276,11 +281,12 @@ function compte_visible(array $c): array
         'piece' => $p ? ['type' => $p['type'], 'numero' => $p['numero'], 'expiration' => $p['expiration'], 'recto' => (bool) $p['recto'],
             'verso' => (bool) $p['verso'], 'depose_le' => $p['depose_le']] : null,
         'rib' => $c['rib'] ? ['titulaire' => $c['rib']['titulaire'], 'iban' => substr($iban, 0, 4) . ' •••• ' . substr($iban, -4)] : null,
+        'rib_autre' => rib_autre_personne($c),
         'manque' => manques($c), 'prevenir' => $c['prevenir'] ?? 'email', 'cree_le' => $c['cree_le'],
     ];
 }
 
-/** Ce qui manque pour demander un envoi (le RIB n'est demandé que pour un paiement par virement). */
+
 function manques(array $c): array
 {
     $m = [];
@@ -292,7 +298,7 @@ function manques(array $c): array
     return $m;
 }
 
-/** Numéro de téléphone au format international (33…), ou null s'il n'est pas valable (même règle que l'appli). */
+
 function numero_international(string $tel): ?string
 {
     $n = (string) preg_replace('/[^\d+]/', '', $tel);
@@ -302,7 +308,7 @@ function numero_international(string $tel): ?string
     return preg_match('/^\d{8,15}$/', $n) ? $n : null;
 }
 
-/** Coordonnées envoyées par le formulaire, vérifiées (France métropolitaine : code postal à 5 chiffres). */
+
 function lire_coordonnees(array $b, array $c)
 {
     $n = $c;
@@ -332,7 +338,7 @@ function normaliser_iban(string $s): string
     return (string) preg_replace('/[^A-Z0-9]/', '', strtoupper($s));
 }
 
-/** IBAN juste : sa clé de contrôle (calcul « modulo 97 »), comme dans l'appli. */
+
 function iban_valide(string $s): bool
 {
     $iban = normaliser_iban($s);
@@ -345,19 +351,37 @@ function iban_valide(string $s): bool
     return $reste === 1;
 }
 
-/** RIB (paiement par virement) : un IBAN juste et le nom du titulaire. */
+
 function lire_rib(array $b, array $c)
 {
     $iban = normaliser_iban(texte($b['iban'] ?? null, 50));
     $titulaire = texte($b['titulaire'] ?? null, 80);
     if ($titulaire === '') return 'titulaire';
     if (!iban_valide($iban)) return 'iban';
+    if (($c['rib']['iban'] ?? '') !== $iban) $c['rib_maj_le'] = iso();
     $c['rib'] = ['titulaire' => $titulaire, 'iban' => $iban];
     $c['maj_le'] = iso();
     return $c;
 }
 
-/** Champs de la pièce (type, numéro, date de fin) ; les photos arrivent à part. Une pièce périmée est refusée. */
+
+
+function rib_autre_personne(array $c): bool
+{
+    if (!$c['rib']) return false;
+    $mots = function (string $s): array {
+        $s = function_exists('mb_strtolower') ? mb_strtolower($s, 'UTF-8') : strtolower($s);
+        $s = strtr($s, ['à' => 'a', 'â' => 'a', 'ä' => 'a', 'á' => 'a', 'ç' => 'c', 'é' => 'e', 'è' => 'e', 'ê' => 'e', 'ë' => 'e', 'î' => 'i', 'ï' => 'i',
+            'í' => 'i', 'ı' => 'i', 'ô' => 'o', 'ö' => 'o', 'ó' => 'o', 'ù' => 'u', 'û' => 'u', 'ü' => 'u', 'ú' => 'u', 'ÿ' => 'y', 'ñ' => 'n',
+            'ß' => 'ss', 'ğ' => 'g', 'ş' => 's']);
+        return array_values(array_filter((array) preg_split('/[^a-z0-9]+/', $s), fn ($m) => strlen((string) $m) >= 3));
+    };
+    $titulaire = $mots((string) $c['rib']['titulaire']);
+    $noms = array_merge($mots((string) $c['nom']), $c['profil'] === 'professionnel' ? $mots((string) $c['entreprise']) : []);
+    return $noms && $titulaire && !array_intersect($noms, $titulaire);
+}
+
+
 function lire_piece(array $b)
 {
     $type = texte($b['type'] ?? null, 40);
@@ -370,7 +394,7 @@ function lire_piece(array $b)
     return ['type' => $type, 'numero' => $numero, 'expiration' => $expiration];
 }
 
-// ---------- photos de la pièce : chiffrées dans le dossier privé ----------
+
 function dossier_photos(string $compte): string
 {
     if (!preg_match('/^[0-9a-f-]{36}$/', $compte)) throw new RuntimeException('compte invalide');
@@ -384,7 +408,7 @@ function est_jpeg(string $octets): bool
     return is_array($i) && ($i[2] ?? null) === IMAGETYPE_JPEG;
 }
 
-/** Garde la photo (chiffrée) et renvoie son nom de fichier. */
+
 function garder_photo(string $compte, string $face, string $octets): string
 {
     $d = dossier_photos($compte);
@@ -415,7 +439,7 @@ function effacer_dossier_photos(string $compte): void
     @rmdir($d);
 }
 
-/** Envoie la photo déchiffrée, jamais gardée en cache. */
+
 function servir_photo(string $octets): void
 {
     http_response_code(200);
@@ -427,7 +451,7 @@ function servir_photo(string $octets): void
     exit;
 }
 
-// ---------- demandes d'envoi par colis ----------
+
 function envoi_depuis_ligne(array $l): array
 {
     return [
@@ -441,6 +465,7 @@ function envoi_depuis_ligne(array $l): array
         'poids_brut' => isset($l['poids_brut']) ? (float) $l['poids_brut'] : null, 'poids_net' => isset($l['poids_net']) ? (float) $l['poids_net'] : null,
         'paye_le' => ($l['paye_le'] ?? null) ?: null, 'montant' => isset($l['montant']) ? (float) $l['montant'] : null,
         'paye_detail' => (string) ($l['paye_detail'] ?? ''), 'bon_redemande_le' => ($l['bon_redemande_le'] ?? null) ?: null,
+        'cgv_version' => ($l['cgv_version'] ?? null) ?: null, 'cgv_le' => ($l['cgv_le'] ?? null) ?: null,
     ];
 }
 
@@ -459,7 +484,7 @@ function lire_envoi(string $id): ?array
     return $l ? envoi_depuis_ligne($l) : null;
 }
 
-/** Ce que la personne voit de ses demandes (sans les notes internes). */
+
 function envoi_visible(array $e): array
 {
     return ['reference' => $e['reference'], 'cree_le' => $e['cree_le'], 'colis' => $e['colis'], 'total' => $e['total'],
@@ -469,7 +494,7 @@ function envoi_visible(array $e): array
         'bon_numero' => $e['bon_numero'] ?? null, 'bon_redemande_le' => $e['bon_redemande_le'] ?? null];
 }
 
-/** Référence lisible à écrire sur le colis : COL-AAMMJJ- + 4 caractères sans ambiguïté (pas de 0/O ni 1/I). */
+
 function reference_envoi(): string
 {
     $a = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -482,20 +507,21 @@ function creer_envoi(array $e): void
 {
     for ($essai = 0; ; $essai++) {
         try {
-            bd()->prepare('INSERT INTO espace_envois (id, reference, compte, cree_le, colis, total, paiement, message, traite_le, traite_par, prix_kg, garanti_jusqu)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, \'\', ?, ?)')
+            bd()->prepare('INSERT INTO espace_envois (id, reference, compte, cree_le, colis, total, paiement, message, traite_le, traite_par, prix_kg, garanti_jusqu, cgv_version, cgv_le)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, \'\', ?, ?, ?, ?)')
                 ->execute([$e['id'], $e['reference'], $e['compte'], $e['cree_le'], json_encode($e['colis'], JSON_UNESCAPED_UNICODE),
-                    $e['total'], $e['paiement'], $e['message'], $e['prix_kg'] ?? null, $e['garanti_jusqu'] ?? null]);
+                    $e['total'], $e['paiement'], $e['message'], $e['prix_kg'] ?? null, $e['garanti_jusqu'] ?? null,
+                    $e['cgv_version'] ?? null, $e['cgv_le'] ?? null]);
             return;
         } catch (PDOException $x) {
-            // référence déjà prise (une chance sur un million par jour) : une autre
+
             if ($essai >= 3) throw $x;
             $e['reference'] = reference_envoi();
         }
     }
 }
 
-/** La personne a vendu (ou un envoi est en route) : sa pièce d'identité sert à justifier l'achat (proposition 86). */
+
 function a_vendu(array $c): bool
 {
     foreach (envois_du($c['id']) as $e) {
@@ -504,22 +530,22 @@ function a_vendu(array $c): bool
     return false;
 }
 
-/** Compte supprimé par une personne qui a vendu : elle ne peut plus se connecter, son e-mail, son téléphone et son RIB
- *  sont effacés ; son identité, sa pièce d'identité et ses ventes restent pour justifier les achats (registre). */
+
+
 function archiver_compte(array $c): void
 {
     transaction(function (PDO $bd) use ($c) {
         $bd->prepare("UPDATE espace_comptes SET email = ?, telephone = '', rib_titulaire = NULL, rib_iban = NULL, prevenir = NULL, archive_le = ? WHERE id = ?")
             ->execute(['supprime+' . $c['id'] . '@compte.invalid', iso(), $c['id']]);
         $bd->prepare('DELETE FROM espace_codes WHERE cle = ?')->execute([cle_code('espace', $c['email'])]);
-        // les demandes jamais parties (pas d'étiquette) ne servent à rien : effacées
+
         $bd->prepare('DELETE FROM espace_envois WHERE compte = ? AND traite_le IS NULL AND recu_le IS NULL AND bon_numero IS NULL AND paye_le IS NULL')
             ->execute([$c['id']]);
     });
 }
 
-/** Supprime le compte, ses photos et ses demandes (la fiche du carnet de l'appli, elle, reste à Malik) ; s'il a vendu, le
- *  compte est seulement fermé (archiver_compte). */
+
+
 function supprimer_compte(array $c): void
 {
     if (a_vendu($c)) { archiver_compte($c); return; }
@@ -531,9 +557,9 @@ function supprimer_compte(array $c): void
     effacer_dossier_photos($c['id']);
 }
 
-// ---------- ménage quotidien (fait par la première demande du jour, après la réponse) ----------
-/** Les comptes sans connexion depuis 3 ans sont supprimés (promis dans la politique de confidentialité du site) ; les
- *  codes de connexion qui ne servent plus aux limites de la journée sont effacés. */
+
+
+
 function menage_du_jour(): void
 {
     $f = prive() . '/menage.jour';
@@ -557,12 +583,12 @@ function menage_du_jour(): void
                 bd()->prepare('DELETE FROM espace_codes WHERE cle = ?')->execute([$l['cle']]);
             }
         }
-        menage_site(); // alertes pas confirmées, compteurs et pages vues trop anciens, résumé du mois (lib/site.php)
+        menage_site();
     });
 }
 
-// ---------- pour Malik (page des demandes) et pour l'appli (adresse privée) ----------
-/** Tout ce qu'il faut pour faire l'étiquette et le bon : coordonnées, pièce (n° en clair), RIB complet. */
+
+
 function client_pour_malik(array $c): array
 {
     $p = $c['piece'];
@@ -570,13 +596,14 @@ function client_pour_malik(array $c): array
         'id' => $c['id'], 'email' => $c['email'], 'profil' => $c['profil'], 'nom' => $c['nom'], 'prenom' => $c['prenom'],
         'entreprise' => $c['entreprise'], 'siret' => $c['siret'], 'telephone' => $c['telephone'], 'adresse' => $c['adresse'],
         'cp' => $c['cp'], 'ville' => $c['ville'], 'rib' => $c['rib'], 'vendeur_id' => $c['vendeur_id'], 'langue' => $c['langue'],
+        'rib_maj_le' => $c['rib_maj_le'] ?? null, 'rib_autre' => rib_autre_personne($c), 'cree_le' => $c['cree_le'],
         'piece' => $p ? ['type' => $p['type'], 'numero' => $p['numero'], 'expiration' => $p['expiration'], 'recto' => (bool) $p['recto'],
             'verso' => (bool) $p['verso'], 'depose_le' => $p['depose_le']] : null,
     ];
 }
 
-/** Les demandes avec leur client : « a_traiter » (étiquette pas encore envoyée), « en_cours » (pas encore de bon),
- *  « toutes » (les 300 dernières). Les plus anciennes d'abord pour les deux premières. */
+
+
 function demandes_pour_malik(string $etat): array
 {
     $ou = $etat === 'a_traiter' ? 'WHERE traite_le IS NULL' : ($etat === 'en_cours' ? 'WHERE bon_numero IS NULL' : '');
@@ -594,8 +621,8 @@ function demandes_pour_malik(string $etat): array
 
 const ETAPES_A_PREVENIR = ['traite', 'recu', 'pese', 'paye'];
 
-/** Les étapes d'une demande, cochées par Malik (page des demandes) ou par l'appli : étiquette envoyée, colis reçu, pesé
- *  (poids brut et net), payé (montant, n° du chèque), bon fait dans l'appli, et leur « Annuler » (propositions 94 et 99). */
+
+
 function marquer_envoi(string $id, string $action, string $par, string $numero = '', array $x = []): ?array
 {
     $e = lire_envoi($id);
@@ -609,9 +636,9 @@ function marquer_envoi(string $id, string $action, string $par, string $numero =
         case 'pese':
             $net = $kg($x['poids_net'] ?? null);
             if ($net === null) return null;
-            // montant du bon fait dans l'appli (proposition 99) : c'est lui que le mail « pesé » annonce
+
             $montant = is_numeric($x['montant'] ?? null) && (float) $x['montant'] > 0 && (float) $x['montant'] < 1000000
-                ? round((float) $x['montant'] * 100) / 100 : null; // pesée sans bon (page /gestion) : montant = poids × prix garanti
+                ? round((float) $x['montant'] * 100) / 100 : null;
             $e = ['pese_le' => iso(), 'poids_net' => $net, 'poids_brut' => $kg($x['poids_brut'] ?? null), 'recu_le' => ($e['recu_le'] ?? null) ?: iso(),
                 'montant' => $montant] + $e;
             break;
@@ -633,8 +660,8 @@ function marquer_envoi(string $id, string $action, string $par, string $numero =
     return $e;
 }
 
-/** Après une étape cochée : e-mail à la personne si elle le veut (proposition 95), et le lien WhatsApp déjà écrit que Malik
- *  peut envoyer d'un appui si elle préfère WhatsApp (envoi gratuit, fait par lui). */
+
+
 function prevenir_etape(array $e, string $action): ?string
 {
     if (!in_array($action, ETAPES_A_PREVENIR, true)) return null;
@@ -645,14 +672,14 @@ function prevenir_etape(array $e, string $action): ?string
     return $tel ? 'https://wa.me/' . $tel . '?text=' . rawurlencode(texte_whatsapp_etape($c, $e, $action)) : null;
 }
 
-/** La demande COL-… de ce compte. */
+
 function envoi_du_compte(array $c, string $reference): ?array
 {
     foreach (envois_du($c['id']) as $e) if ($e['reference'] === $reference) return $e;
     return null;
 }
 
-/** Colis pas encore arrivé, 2 jours avant la fin du prix garanti : un e-mail, une seule fois par demande (4e revue, n° 158). */
+
 function rappeler_garanties(): void
 {
     $dans2 = (new DateTimeImmutable(aujourdhui() . ' 12:00:00'))->modify('+2 days')->format('Y-m-d');
@@ -666,7 +693,7 @@ function rappeler_garanties(): void
     }
 }
 
-/** Pièces d'identité qui expirent dans les 30 jours : un e-mail, une seule fois par date de fin (proposition 81). */
+
 function rappeler_pieces(): void
 {
     $auj = aujourdhui();

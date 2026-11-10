@@ -3,6 +3,19 @@ Allow: /
 Disallow: /outils/
 Disallow: /api/
 Disallow: /serveur/
-Disallow: /gestion/
+
+# Entraînement des IA refusé (voir aussi /.well-known/tdmrep.json). Les moteurs de recherche restent les bienvenus.
+User-agent: GPTBot
+User-agent: Google-Extended
+User-agent: CCBot
+User-agent: ClaudeBot
+User-agent: anthropic-ai
+User-agent: Bytespider
+User-agent: Applebot-Extended
+User-agent: meta-externalagent
+User-agent: Diffbot
+User-agent: Omgilibot
+User-agent: cohere-ai
+Disallow: /
 
 Sitemap: https://ainrecycling.com/sitemap.xml

@@ -4,22 +4,22 @@ declare(strict_types=1);
 require_once __DIR__ . '/base.php';
 require_once __DIR__ . '/mail.php';
 
-// Réglages du site pilotés par Malik depuis sa page /gestion/ (8 nov. 2026, propositions 50, 54 à 57 et 65) :
-// - le prix par colis (« Tout le site suit ») et sa garantie : 7 jours après la demande, jamais après la fin du mois
-//   (choix de Malik : « mes contrats s'actualisent le 1er de chaque mois, donc s'il fait le 30 c'est valable jusqu'au 31 ») ;
-// - les annonces en haut du site (congés, fermeture exceptionnelle, tournée), qui disparaissent seules à leur date de fin ;
-// - l'alerte prix : les abonnés (inscription confirmée par e-mail) sont prévenus quand le prix monte ;
-// - les pages vues, comptées sans cookie ni adresse IP (jour, page, d'où vient le visiteur), et le résumé du mois ;
-// - la date de la dernière sauvegarde de l'espace client.
-// Tables site_reglages, site_alertes et site_visites (créées par migrer() de base.php).
 
-const PRIX_PAGES = 47.0;        // le prix écrit dans les pages du site : site.js le remplace par le prix du jour
+
+
+
+
+
+
+
+
+const PRIX_PAGES = 47.0;
 const PRIX_MIN = 5, PRIX_MAX = 300, PRIX_DOUTE_BAS = 30, PRIX_DOUTE_HAUT = 80;
 const GARANTIE_JOURS = 7;
 const ALERTES_PAR_JOUR = 40, ALERTES_PAR_PASSAGE = 8, CONFIRMATIONS_PAR_JOUR = 20;
 const TYPES_ANNONCE = ['conges', 'fermeture', 'tournee'];
 
-// ---------- jours (heure de Paris) ----------
+
 function jour_paris(?int $ms = null): string
 {
     $d = new DateTime('@' . intdiv($ms ?? ms(), 1000));
@@ -38,7 +38,7 @@ function plus_jours(string $jour, int $n): string
     return (new DateTimeImmutable($jour . ' 12:00:00', new DateTimeZone('Europe/Paris')))->modify(($n >= 0 ? '+' : '') . $n . ' days')->format('Y-m-d');
 }
 
-/** Fin de la garantie d'une demande faite ce jour-là : 7 jours après, sans dépasser le dernier jour du mois. */
+
 function garanti_jusqu(string $jour): string
 {
     $fin = plus_jours($jour, GARANTIE_JOURS);
@@ -46,7 +46,7 @@ function garanti_jusqu(string $jour): string
     return min($fin, $finMois);
 }
 
-// ---------- réglages (une ligne par sujet, valeur en JSON) ----------
+
 function reglage_site(string $cle, $defaut = null)
 {
     $q = bd()->prepare('SELECT valeur FROM site_reglages WHERE cle = ?');
@@ -68,13 +68,15 @@ function ecrire_reglage_site(string $cle, $valeur, string $par = ''): void
     $bd->prepare($sql)->execute([$cle, (string) json_encode($valeur, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), iso(), coupe($par, 60)]);
 }
 
-// ---------- prix (proposition 54) ----------
-/** Le prix par colis : celui que Malik a enregistré, sinon celui des pages. Historique : les plus récents d'abord. */
+
+
 function prix_site(): array
 {
     $p = reglage_site('prix');
-    if (!is_array($p) || !is_numeric($p['kg'] ?? null)) return ['kg' => PRIX_PAGES, 'le' => null, 'par' => '', 'historique' => []];
+    if (!is_array($p) || !is_numeric($p['kg'] ?? null)) return ['kg' => PRIX_PAGES, 'depot' => PRIX_PAGES + 3, 'le' => null, 'par' => '', 'historique' => []];
     $p['kg'] = (float) $p['kg'];
+
+    $p['depot'] = is_numeric($p['depot_regle'] ?? null) ? (float) $p['depot_regle'] : $p['kg'] + 3;
     $p['historique'] = is_array($p['historique'] ?? null) ? $p['historique'] : [];
     return $p;
 }
@@ -87,28 +89,28 @@ function lire_prix($x): ?float
     return $kg >= PRIX_MIN && $kg <= PRIX_MAX ? $kg : null;
 }
 
-/** Nouveau prix : gardé avec l'ancien dans l'historique (60 changements). Renvoie [ancien, nouveau]. */
-function changer_prix(float $kg, string $par): array
+
+function changer_prix(float $kg, string $par, ?float $depot = null): array
 {
-    return transaction(function (PDO $bd) use ($kg, $par) {
+    return transaction(function (PDO $bd) use ($kg, $par, $depot) {
         $avant = prix_site();
         $histo = $avant['historique'];
         array_unshift($histo, ['kg' => $kg, 'le' => iso(), 'par' => coupe($par, 60), 'avant' => $avant['kg']]);
-        $nouveau = ['kg' => $kg, 'le' => iso(), 'par' => coupe($par, 60), 'historique' => array_slice($histo, 0, 60)];
+        $nouveau = ['kg' => $kg, 'depot_regle' => $depot, 'le' => iso(), 'par' => coupe($par, 60), 'historique' => array_slice($histo, 0, 60)];
         ecrire_reglage_site('prix', $nouveau, $par);
         drapeau_prix((float) $nouveau['kg']);
         return [$avant, $nouveau];
     });
 }
 
-// ---------- annonces (proposition 55) ----------
+
 function annonces(): array
 {
     $a = reglage_site('annonces', []);
     return is_array($a) ? array_values(array_filter($a, 'is_array')) : [];
 }
 
-/** Les annonces encore valables (fin pas encore passée), par date de début. */
+
 function annonces_actives(): array
 {
     $auj = jour_paris();
@@ -117,7 +119,7 @@ function annonces_actives(): array
     return $a;
 }
 
-/** Une annonce envoyée par la page de gestion, vérifiée : type, du … au … (62 jours au plus), villes d'une tournée. */
+
 function lire_annonce(array $b)
 {
     $type = (string) ($b['type'] ?? '');
@@ -153,54 +155,134 @@ function retirer_annonce(string $id, string $par): bool
     });
 }
 
-// ---------- ce que voit tout visiteur (site.js : /api/site/infos) ----------
+
 function infos_publiques(): array
 {
     $p = prix_site();
     $auj = jour_paris();
     return [
-        'prix' => ['kg' => $p['kg'], 'depuis' => $p['le'] ? jour_paris((int) strtotime($p['le']) * 1000) : null,
+        'prix' => ['kg' => $p['kg'], 'depot' => $p['depot'], 'depuis' => $p['le'] ? jour_paris((int) strtotime($p['le']) * 1000) : null,
             'garanti_jusqu' => garanti_jusqu($auj)],
         'aujourdhui' => $auj,
         'annonces' => array_map(fn ($a) => ['type' => $a['type'], 'debut' => $a['debut'], 'fin' => $a['fin'], 'villes' => $a['villes'] ?? ''], array_slice(annonces_actives(), 0, 4)),
-        'google' => !empty((reglage_site('google') ?? [])['client_id']), // le bouton « Continuer avec Google » (proposition 68)
+        'google' => !empty((reglage_site('google') ?? [])['client_id']),
     ];
 }
 
-// ---------- limites par appareil (empreinte de l'adresse IP, jamais l'adresse elle-même) ----------
+
 function empreinte_ip(): string
 {
     $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
     return substr(hash_hmac('sha256', $ip . '|' . aujourdhui(), cle_binaire('secret')), 0, 16);
 }
 
-/** Une demande envoyée par les formulaires Contact et Devis : e-mail à Malik, avec au plus 3 photos. Rien n'est gardé sur le site. */
+
 function recevoir_contact(): void
 {
-    if (trim((string) ($_POST['site'] ?? '')) !== '') repondre(['ok' => true]); // robot : la case cachée est remplie
+    if (trim((string) ($_POST['site'] ?? '')) !== '') repondre(['ok' => true]);
     $sujet = coupe(trim(preg_replace('/[\r\n]+/', ' ', (string) ($_POST['sujet'] ?? '')) ?? ''), 150);
     $corps = trim(str_replace("\r", '', (string) ($_POST['texte'] ?? '')));
     $corps = mb_substr((string) preg_replace('/[^\P{C}\n\t]/u', '', $corps), 0, 4000);
     $retour = coupe(trim((string) ($_POST['retour'] ?? '')), 120);
     if ($corps === '' || $sujet === '') refus('vide');
     if (!sous_la_limite('contact:' . empreinte_ip(), 8) || !sous_la_limite('contact:tous', 40)) refus('trop', 429);
-    $pieces = [];
+    $pieces = $brutes = [];
     $f = $_FILES['photos'] ?? null;
     if ($f && is_array($f['tmp_name'])) {
         foreach (array_slice($f['tmp_name'], 0, 3, true) as $i => $tmp) {
             if (($f['error'][$i] ?? 1) !== UPLOAD_ERR_OK || !is_uploaded_file($tmp) || ($f['size'][$i] ?? 0) > 6 * 1024 * 1024) continue;
             $info = @getimagesize($tmp);
             if (!$info || !in_array($info[2], [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_WEBP], true)) continue;
-            $pieces[] = ['filename' => 'photo-' . (count($pieces) + 1) . image_type_to_extension($info[2]), 'content' => base64_encode((string) file_get_contents($tmp))];
+            $brutes[] = (string) file_get_contents($tmp);
+            $pieces[] = ['filename' => 'photo-' . (count($pieces) + 1) . image_type_to_extension($info[2]), 'content' => base64_encode($brutes[count($brutes) - 1])];
         }
     }
     $html = '<p style="margin:0;white-space:pre-line">' . echapper($corps) . '</p>';
     $entetes = filter_var($retour, FILTER_VALIDATE_EMAIL) ? ['Reply-To' => $retour] : [];
-    envoyer_mail((string) reglage('mail_admin', ''), $sujet, mail_cadre('fr', $html), $corps, [], $entetes, $pieces);
+
+    try {
+        garder_message($sujet, $corps, $retour, $brutes);
+    } catch (Throwable $e) {
+        journaliser('message non gardé : ' . resume_erreur($e));
+    }
+    envoyer_mail((string) reglage('mail_admin', ''), '[Site] ' . $sujet, mail_cadre('fr', $html), $corps, [], $entetes, $pieces);
     repondre(['ok' => true]);
 }
 
-/** Compte une action pour ce nom aujourd'hui ; faux si la limite est déjà atteinte (rien n'est compté alors). */
+
+
+function dossier_messages(): string
+{
+    $d = prive() . '/messages';
+    if (!is_dir($d)) @mkdir($d, 0700, true);
+    return $d;
+}
+
+
+function garder_message(string $sujet, string $texte, string $retour, array $photos): void
+{
+    $id = uuid();
+    $noms = [];
+    foreach (array_values($photos) as $i => $octets) {
+        $nom = $id . '-' . ($i + 1) . '.bin';
+        if (@file_put_contents(dossier_messages() . '/' . $nom, chiffrer_octets($octets), LOCK_EX) !== false) $noms[] = $nom;
+    }
+    bd()->prepare('INSERT INTO site_messages (id, cree_le, sujet, texte, retour, photos) VALUES (?, ?, ?, ?, ?, ?)')
+        ->execute([$id, iso(), coupe($sujet, 160), $texte, coupe($retour, 120), json_encode($noms)]);
+}
+
+function messages_pour_malik(): array
+{
+    $r = [];
+    foreach (bd()->query('SELECT * FROM site_messages ORDER BY cree_le DESC LIMIT 100')->fetchAll() as $l) {
+        $r[] = ['id' => $l['id'], 'cree_le' => $l['cree_le'], 'sujet' => $l['sujet'], 'texte' => $l['texte'], 'retour' => $l['retour'],
+            'photos' => count((array) json_decode((string) $l['photos'], true)), 'repondu_le' => $l['repondu_le'] ?: null];
+    }
+    return $r;
+}
+
+function messages_a_repondre(): int
+{
+    return (int) bd()->query('SELECT COUNT(*) FROM site_messages WHERE repondu_le IS NULL')->fetchColumn();
+}
+
+
+function marquer_message(string $id, string $action): bool
+{
+    $q = bd()->prepare('SELECT photos FROM site_messages WHERE id = ?');
+    $q->execute([$id]);
+    $l = $q->fetch();
+    if (!$l) return false;
+    if ($action === 'supprimer') {
+        foreach ((array) json_decode((string) $l['photos'], true) as $nom) {
+            if (preg_match('/^[0-9a-f-]{36}-\d\.bin$/', (string) $nom)) @unlink(dossier_messages() . '/' . $nom);
+        }
+        bd()->prepare('DELETE FROM site_messages WHERE id = ?')->execute([$id]);
+        return true;
+    }
+    bd()->prepare('UPDATE site_messages SET repondu_le = ? WHERE id = ?')->execute([$action === 'repondu' ? iso() : null, $id]);
+    return true;
+}
+
+function photo_message(string $id, int $n): ?string
+{
+    if (!preg_match('/^[0-9a-f-]{36}$/', $id) || $n < 1 || $n > 3) return null;
+    $f = dossier_messages() . '/' . $id . '-' . $n . '.bin';
+    return is_file($f) ? dechiffrer_octets((string) file_get_contents($f)) : null;
+}
+
+
+function servir_image(string $octets): void
+{
+    $i = @getimagesizefromstring($octets);
+    header('Content-Type: ' . (is_array($i) && in_array($i[2], [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_WEBP], true) ? $i['mime'] : 'application/octet-stream'));
+    header('Cache-Control: no-store');
+    header('X-Content-Type-Options: nosniff');
+    header('Content-Length: ' . strlen($octets));
+    echo $octets;
+    exit;
+}
+
 function sous_la_limite(string $nom, int $max): bool
 {
     $jour = aujourdhui();
@@ -216,9 +298,9 @@ function sous_la_limite(string $nom, int $max): bool
     });
 }
 
-// ---------- alerte prix (proposition 56) ----------
-/** Inscription : un e-mail de confirmation (une fois par jour au plus pour une adresse). Rien ne dit si l'adresse est déjà
- *  inscrite. Renvoie 'ok' ou 'trop'. */
+
+
+
 function inscrire_alerte(string $email, string $langue): string
 {
     $q = bd()->prepare('SELECT * FROM site_alertes WHERE email = ?');
@@ -271,7 +353,7 @@ function alertes_en_attente(): int
     return (int) bd()->query('SELECT COUNT(*) FROM site_alertes WHERE prevenir IS NOT NULL AND confirme_le IS NOT NULL')->fetchColumn();
 }
 
-/** Le prix monte : chaque abonné sera prévenu (40 e-mails par jour au plus : le quota gratuit sert aussi à l'appli). */
+
 function programmer_alertes(float $kg): int
 {
     $q = bd()->prepare('UPDATE site_alertes SET prevenir = ? WHERE confirme_le IS NOT NULL');
@@ -284,8 +366,8 @@ function annuler_alertes(): void
     bd()->exec('UPDATE site_alertes SET prevenir = NULL');
 }
 
-/** Envoie quelques alertes en attente (8 par passage, une fois toutes les 2 minutes au plus), après la réponse.
- *  Une alerte dont le prix n'est plus celui du jour n'est pas envoyée. */
+
+
 function envoyer_alertes_en_attente(): void
 {
     $f = prive() . '/alertes.passage';
@@ -310,8 +392,8 @@ function envoyer_alertes_en_attente(): void
     });
 }
 
-// ---------- annuaire des entreprises (proposition 60) ----------
-/** « RUE DE L'EGLISE » → « Rue de l'Eglise » (les noms de l'annuaire sont en majuscules), comme l'appli (lib/annuaire.ts). */
+
+
 function en_casse(string $s): string
 {
     $petits = ['de', 'des', 'du', 'la', 'le', 'les', 'et', 'a', 'au', 'aux', 'en', 'sur', 'sous', 'd', 'l'];
@@ -323,7 +405,7 @@ function en_casse(string $s): string
     }, mb_strtolower($s, 'UTF-8'));
 }
 
-/** Entreprises en activité dont le nom, le SIREN ou le SIRET correspond (6 au plus) : nom, SIRET du siège, adresse. */
+
 function chercher_entreprises(string $q): array
 {
     $chiffres = (string) preg_replace('/\s/', '', $q);
@@ -335,7 +417,7 @@ function chercher_entreprises(string $q): array
         CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 3, CURLOPT_TIMEOUT => 5,
         CURLOPT_HTTPHEADER => ['Accept: application/json', 'User-Agent: AinRecycling-site/1.0 (+https://ainrecycling.com)'],
     ]);
-    // essais sur l'ordinateur (Windows) : certificats du système ; chez OVH (Linux), ceux du serveur
+
     if (PHP_OS_FAMILY === 'Windows' && defined('CURLSSLOPT_NATIVE_CA')) curl_setopt($ch, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
     $r = curl_exec($ch);
     $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
@@ -361,8 +443,8 @@ function chercher_entreprises(string $q): array
     return $liste;
 }
 
-// ---------- pages vues (proposition 57) : sans cookie, sans adresse IP ----------
-/** Page lue et source du visiteur (« google », « bing », « direct », « qr »…) : une ligne par jour, page et source. */
+
+
 function compter_visite(string $page, string $source): void
 {
     $bd = bd();
@@ -372,7 +454,7 @@ function compter_visite(string $page, string $source): void
     $bd->prepare($sql)->execute([jour_paris(), $page, $source]);
 }
 
-/** « /de/correspondance.html » ou « / » : seulement les pages du site, sans paramètres. */
+
 function page_visitee($x): ?string
 {
     $p = is_string($x) ? (string) parse_url($x, PHP_URL_PATH) : '';
@@ -380,7 +462,7 @@ function page_visitee($x): ?string
     return preg_match('#^/((de|en|it|es)/)?([a-z0-9-]+\.html)?$#', $p) ? $p : null;
 }
 
-/** D'où vient le visiteur, d'après le nom du site précédent (jamais son adresse complète). */
+
 function source_visite($referent, $qr): string
 {
     if ($qr === 'bac') return 'qr-bac';
@@ -403,10 +485,10 @@ function est_robot(): bool
     return (bool) preg_match('/bot|crawl|spider|slurp|preview|headless|lighthouse|facebookexternalhit|whatsapp|curl|wget|python|monitor/i', (string) ($_SERVER['HTTP_USER_AGENT'] ?? ''));
 }
 
-/** Pages vues d'un mois (« 2026-11 ») : total, par page, par source. */
+
 function visites_du_mois(string $mois): array
 {
-    $q = bd()->prepare('SELECT page, source, SUM(n) AS n FROM site_visites WHERE jour LIKE ? GROUP BY page, source');
+    $q = bd()->prepare("SELECT page, source, SUM(n) AS n FROM site_visites WHERE jour LIKE ? AND page <> '(visiteurs)' GROUP BY page, source");
     $q->execute([$mois . '-%']);
     $pages = $sources = [];
     $total = 0;
@@ -427,11 +509,11 @@ function mois_avant(string $mois, int $n = 1): string
     return (new DateTimeImmutable($mois . '-15'))->modify("-$n month")->format('Y-m');
 }
 
-/** Pour la page de gestion : ce mois-ci et le mois d'avant, et les 30 derniers jours (pages vues par jour). */
+
 function visites_resume(): array
 {
     $mois = substr(jour_paris(), 0, 7);
-    $q = bd()->prepare("SELECT jour, SUM(n) AS n FROM site_visites WHERE jour >= ? AND source <> 'interne' GROUP BY jour ORDER BY jour");
+    $q = bd()->prepare("SELECT jour, SUM(n) AS n FROM site_visites WHERE jour >= ? AND source <> 'interne' AND page <> '(visiteurs)' GROUP BY jour ORDER BY jour");
     $q->execute([plus_jours(jour_paris(), -29)]);
     $jours = [];
     foreach ($q->fetchAll() as $l) $jours[$l['jour']] = (int) $l['n'];
@@ -441,24 +523,55 @@ function visites_resume(): array
 
 function demandes_du_mois(string $mois): int
 {
-    // cree_le est en heure de Londres : à quelques heures près, c'est le bon mois
+
     $q = bd()->prepare('SELECT COUNT(*) FROM espace_envois WHERE cree_le LIKE ?');
     $q->execute([$mois . '-%']);
     return (int) $q->fetchColumn();
 }
 
-// ---------- ménage et résumé du mois (première demande du jour, après la réponse) ----------
+
+
+
+function visites_detail(): array
+{
+    $depuis = plus_jours(jour_paris(), -29);
+    $jours = [];
+    for ($i = 0; $i < 30; $i++) $jours[plus_jours($depuis, $i)] = 0;
+    $q = bd()->prepare('SELECT jour, page, source, n FROM site_visites WHERE jour >= ?');
+    $q->execute([$depuis]);
+    $pages = $sources = [];
+    $visiteurs = ['nouveau' => 0, 'revenu' => 0];
+    foreach ($q->fetchAll() as $l) {
+        $n = (int) $l['n'];
+        if ($l['page'] === '(visiteurs)') {
+            if (isset($visiteurs[$l['source']])) $visiteurs[$l['source']] += $n;
+            continue;
+        }
+        if (isset($jours[$l['jour']])) $jours[$l['jour']] += $n;
+        $pages[$l['page']] = ($pages[$l['page']] ?? 0) + $n;
+        if ($l['source'] !== 'interne') $sources[$l['source']] = ($sources[$l['source']] ?? 0) + $n;
+    }
+    arsort($pages);
+    arsort($sources);
+    return ['jours' => $jours, 'total' => array_sum($jours), 'pages' => array_slice($pages, 0, 8, true),
+        'sources' => array_slice($sources, 0, 8, true), 'visiteurs' => $visiteurs];
+}
+
 function menage_site(): void
 {
     $auj = aujourdhui();
-    bd()->prepare("DELETE FROM espace_compteurs WHERE jour < ? AND nom NOT IN ('codes')")->execute([$auj]);
+    bd()->prepare("DELETE FROM espace_compteurs WHERE jour < ? AND nom NOT IN ('codes', 'codes-gestion')")->execute([$auj]);
+
+    $q = bd()->prepare('SELECT id FROM site_messages WHERE cree_le < ?');
+    $q->execute([iso(ms() - (int) (3 * 365.25 * 86400000))]);
+    foreach ($q->fetchAll() as $l) marquer_message((string) $l['id'], 'supprimer');
     bd()->prepare('DELETE FROM site_alertes WHERE confirme_le IS NULL AND cree_le < ?')->execute([iso(ms() - 7 * 86400000)]);
     bd()->prepare('DELETE FROM site_alertes WHERE confirme_le IS NOT NULL AND confirme_le < ?')->execute([iso(ms() - (int) (3 * 365.25 * 86400000))]);
     bd()->prepare('DELETE FROM site_visites WHERE jour < ?')->execute([mois_avant(substr(jour_paris(), 0, 7), 25) . '-01']);
     resume_du_mois();
 }
 
-/** Le 1er du mois (première demande), un e-mail à Malik : le mois passé en quelques lignes, et la sauvegarde à refaire. */
+
 function resume_du_mois(): void
 {
     $a = (string) reglage('mail_admin', '');
@@ -489,8 +602,8 @@ function resume_du_mois(): void
     mail_resume_mois($a, "Le site en $nomMois", $lignes, adresse_site() . '/gestion/');
 }
 
-/** Prix différent de celui écrit dans les pages : les pages passent par serveur/page.php, qui met le vrai prix dans le titre et
- *  les aperçus (Google, WhatsApp). Revenu au prix écrit : les pages sont de nouveau servies telles quelles (4e revue, n° 118). */
+
+
 function drapeau_prix(float $kg): void
 {
     $f = dirname(__DIR__, 2) . '/.prix-change';

@@ -1,8 +1,8 @@
 <?php
 declare(strict_types=1);
 
-// Page du site servie avec le vrai prix dans le titre et les aperçus (4e revue, n° 118) : seulement quand le prix réglé sur /gestion
-// diffère de celui écrit dans les pages (fichier .prix-change à la racine, voir .htaccess). Sinon, Apache sert les pages telles quelles.
+
+
 
 require __DIR__ . '/lib/espace.php';
 
@@ -26,7 +26,7 @@ try {
         if (is_string($tete)) $html = $tete . substr($html, $fin);
     }
 } catch (Throwable $e) {
-    // le prix écrit reste affiché
+
 }
 header('Content-Type: text/html; charset=UTF-8');
 header('Cache-Control: no-cache');

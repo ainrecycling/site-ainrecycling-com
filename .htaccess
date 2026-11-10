@@ -1,36 +1,28 @@
-# Site Ain Recycling chez OVH (Apache). L'espace client, la page des demandes de Malik et l'adresse privée de l'appli
-# sont servis par les scripts PHP du dossier serveur/ (mêmes adresses /api/… que sur Vercel : site.js ne change pas).
 Options -Indexes
 DirectoryIndex index.html index.php
 ErrorDocument 404 /404.html
 AddType text/vcard .vcf
 
-# Types et encodage bien déclarés (proposition 53, 8 nov. 2026) : les polices n'avaient pas de type, llms.txt pas d'encodage.
 AddType font/woff2 .woff2
 AddType application/manifest+json .webmanifest
 AddCharset UTF-8 .html .css .js .mjs .json .txt .xml .svg .md
 
 <IfModule mod_rewrite.c>
 RewriteEngine On
-# Une seule adresse : https://ainrecycling.com (sans www). Pour Google (pas de pages en double) et pour l'espace client,
-# qui ne marche qu'en https (cookie « Secure », origine vérifiée). /.well-known/ n'est jamais redirigé (certificat) ;
-# l'adresse technique d'OVH (…cluster129.hosting.ovh.net, sans https) non plus.
 RewriteCond %{REQUEST_URI} !^/\.well-known/
 RewriteCond %{HTTP_HOST} ^www\.ainrecycling\.com$ [NC,OR]
 RewriteCond %{SERVER_PORT} ^80$
 RewriteCond %{HTTP_HOST} (^|\.)ainrecycling\.com$ [NC]
 RewriteRule ^(.*)$ https://ainrecycling.com/$1 [R=301,L]
-# Fichiers et dossiers cachés jamais servis (.git déposé par le déploiement GitHub d'OVH, .ovhconfig…),
-# sauf /.well-known/ (validation du certificat HTTPS).
 RewriteRule (^|/)\.(?!well-known/) - [R=404,L]
-# Une seule adresse pour l'accueil (4e revue, n° 117) : /index.html → /, /de/index.html → /de/, et /de → /de/ (sans « :443 » dedans).
-# THE_REQUEST = l'adresse demandée par le navigateur : pas de boucle avec DirectoryIndex.
+RewriteCond %{REQUEST_URI} !^/api/
+RewriteCond %{HTTP_USER_AGENT} (HTTrack|WebCopier|WebZIP|WebReaper|WebStripper|SiteSnagger|SiteSucker|Teleport|Offline\ Explorer|Cyotek|wget|Scrapy|python-requests|python-urllib|Go-http-client|libwww-perl|zgrab) [NC]
+RewriteRule ^ - [F,L]
 RewriteCond %{HTTP_HOST} ^ainrecycling\.com$ [NC]
 RewriteCond %{THE_REQUEST} \s/+((?:de/|en/|it/|es/)?)index\.html[\s?]
 RewriteRule ^ https://ainrecycling.com/%1 [R=301,L]
 RewriteCond %{HTTP_HOST} ^ainrecycling\.com$ [NC]
 RewriteRule ^(de|en|it|es)$ https://ainrecycling.com/$1/ [R=301,L]
-# Prix différent de celui écrit dans les pages (fichier .prix-change posé par le serveur) : les pages passent par PHP (4e revue, n° 118)
 RewriteCond %{DOCUMENT_ROOT}/.prix-change -f
 RewriteRule ^((?:de/|en/|it/|es/)?[a-z0-9-]+\.html)$ serveur/page.php?f=$1 [L]
 RewriteCond %{DOCUMENT_ROOT}/.prix-change -f
@@ -39,25 +31,19 @@ RewriteRule ^api/espace/(.*)$ serveur/espace.php?chemin=$1 [QSA,L]
 RewriteRule ^api/gestion/(.*)$ serveur/gestion.php?chemin=$1 [QSA,L]
 RewriteRule ^api/appli/(.*)$ serveur/appli.php?chemin=$1 [QSA,L]
 RewriteRule ^api/site/(.*)$ serveur/site.php?chemin=$1 [QSA,L]
-RewriteRule ^api/installation/?$ serveur/installation.php [QSA,L]
 </IfModule>
 
 <IfModule mod_headers.c>
 Header always set X-Content-Type-Options "nosniff"
+Header always unset X-Powered-By
+Header unset X-Powered-By
+Header always set tdm-reservation "1"
 Header always set Referrer-Policy "strict-origin-when-cross-origin"
 Header always set X-Frame-Options "SAMEORIGIN"
-# Cadenas obligatoire (HSTS, proposition 53) : pendant un an, le navigateur ne passe plus jamais par http:// (il ignore
-# cette ligne sur une page en http). Sans les sous-domaines (ceux des e-mails ne sont pas des sites).
 Header always set Strict-Transport-Security "max-age=31536000"
-# Ce que les pages ont le droit de charger (CSP) : rien d'autre que le site lui-même. Les 3 empreintes sont celles des
-# petits scripts écrits dans les pages (classe « js » de chaque page, plan des modules 3D de l'accueil en français et
-# dans les autres langues) : à recalculer si l'un d'eux change (voir A-LIRE.md, « Protections du site »).
 Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-Du+OJKJSbdUgz5nrHeWWINvez6XKDDU/tyj/5c2uvwo=' 'sha256-59Jv0D8l/mrFTCQ2y4C2ljXaNMlkywdbMkQn2Buq5Oo=' 'sha256-IFPr5mKO4iDhqA5WlzGbCHgo1B5z5iQoubSHvfY74wo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; media-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
 Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
 Header always set Cross-Origin-Opener-Policy "same-origin"
-# Ce que le navigateur garde (proposition 53) : polices un an (elles ne changent jamais), images un mois (une image
-# changée prend un autre nom, ou « ?v=2 » au bout de son adresse) ; pages, styles et scripts redemandés à chaque visite
-# (réponse « pas changé » très courte quand rien n'a bougé), pour que chaque mise en ligne se voie tout de suite.
 <FilesMatch "\.woff2$">
 Header set Cache-Control "public, max-age=31536000, immutable"
 Header unset Expires

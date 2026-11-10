@@ -3,13 +3,13 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/espace.php';
 
-// Sauvegarde de l'espace client (proposition 65, 8 nov. 2026) : un fichier téléchargé par Malik depuis sa page /gestion/,
-// fermé par un mot de passe qu'il choisit (jamais gardé par le site). Dedans : les comptes (n° de pièce et IBAN en clair,
-// pour pouvoir tout remettre même si le serveur et sa clé sont perdus), les demandes, les abonnés à l'alerte prix, les
-// réglages (prix et son historique, annonces), les pages vues et les photos des pièces d'identité.
-// Format : zip chiffré AES-256 (s'ouvre avec 7-Zip, gratuit) quand PHP le sait faire ; sinon fichier « .ain » chiffré en
-// AES-256-GCM, clé tirée du mot de passe (PBKDF2-SHA256, 600 000 tours), ouvert par outils/ovh/ouvrir-sauvegarde.mjs.
-// Jamais par e-mail : il y a des pièces d'identité dedans.
+
+
+
+
+
+
+
 
 const SAUVEGARDE_TOURS = 600000;
 
@@ -47,7 +47,7 @@ function zip_chiffre_possible(): bool
     return class_exists('ZipArchive') && method_exists('ZipArchive', 'setEncryptionName') && defined('ZipArchive::EM_AES_256');
 }
 
-/** Fabrique le fichier, note la date et l'envoie au navigateur (puis s'arrête). */
+
 function servir_sauvegarde(string $mdp, string $par): void
 {
     [$fichiers, $nComptes, $nEnvois] = contenu_sauvegarde($par);

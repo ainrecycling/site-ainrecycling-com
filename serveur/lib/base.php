@@ -1,15 +1,15 @@
 <?php
 declare(strict_types=1);
 
-// Serveur du site chez OVH (décidé le 6 nov. 2026 : le site et son espace client, séparés de l'appli de bons).
-// Outils communs : réglages (fichier gardé HORS du dossier www), base de données (MySQL chez OVH, SQLite pour les essais
-// sur l'ordinateur), réponses JSON, signatures et chiffrement, journal des erreurs.
-// Le dossier privé (prive-ain, à côté de www) garde : config.php (secrets, écrit une fois par serveur/installation.php),
-// les photos des pièces d'identité (chiffrées), le journal. Rien de tout cela n'est jamais servi par le site.
 
-const SCHEMA_VERSION = 4;
 
-/** Dossier privé : à côté de www (jamais servi par le site). AIN_PRIVE le remplace pour les essais sur l'ordinateur. */
+
+
+
+
+const SCHEMA_VERSION = 5;
+
+
 function prive(): string
 {
     static $dossier = null;
@@ -36,14 +36,17 @@ function reglage(string $nom, $defaut = null)
     return config()[$nom] ?? $defaut;
 }
 
-/** Essai sur l'ordinateur (AIN_ESSAI=1, posé par outils/ovh/routeur-local.php) : les e-mails vont dans le journal au
- *  lieu de partir, adresses localhost acceptées, cookies sans « Secure » (pas de HTTPS). Jamais chez OVH. */
+
+
 function mode_essai(): bool
 {
     return getenv('AIN_ESSAI') === '1' || (bool) reglage('essai', false);
 }
 
-// ---------- base de données ----------
+
+if (function_exists('header_remove')) header_remove('X-Powered-By');
+
+
 function bd(): PDO
 {
     static $bd = null;
@@ -65,13 +68,13 @@ function est_sqlite(PDO $bd): bool
     return $bd->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite';
 }
 
-/** Ligne lue « pour la modifier » : verrouillée jusqu'à la fin de la transaction (MySQL ; SQLite verrouille tout). */
+
 function pour_maj(): string
 {
     return est_sqlite(bd()) ? '' : ' FOR UPDATE';
 }
 
-/** Une suite de lectures et d'écritures faite d'un bloc (deux demandes en même temps ne se marchent pas dessus). */
+
 function transaction(callable $f)
 {
     $bd = bd();
@@ -90,7 +93,7 @@ function transaction(callable $f)
     }
 }
 
-/** Tables de l'espace client, créées au premier usage (le même texte marche avec MySQL et SQLite). */
+
 function migrer(PDO $bd): void
 {
     $drapeau = prive() . '/schema-v' . SCHEMA_VERSION . '.ok';
@@ -130,8 +133,8 @@ function migrer(PDO $bd): void
     )$fin");
     if (!$mysql) $bd->exec('CREATE INDEX IF NOT EXISTS espace_envois_compte ON espace_envois (compte)');
 
-    // Version 2 (8 nov. 2026) : le prix garanti gardé dans chaque demande (proposition 50), les réglages pilotés depuis
-    // /gestion/ (prix, annonces, date de sauvegarde : propositions 54, 55, 65), l'alerte prix (56), les pages vues (57).
+
+
     ajouter_colonnes($bd, 'espace_envois', ['prix_kg' => 'DOUBLE NULL', 'garanti_jusqu' => 'VARCHAR(10) NULL']);
     $bd->exec("CREATE TABLE IF NOT EXISTS site_reglages (
         cle VARCHAR(40) NOT NULL PRIMARY KEY, valeur TEXT NOT NULL, maj_le VARCHAR(30) NOT NULL, maj_par VARCHAR(60) NOT NULL DEFAULT ''
@@ -145,23 +148,31 @@ function migrer(PDO $bd): void
         jour VARCHAR(10) NOT NULL, page VARCHAR(120) NOT NULL, source VARCHAR(30) NOT NULL, n INTEGER NOT NULL DEFAULT 0,
         PRIMARY KEY (jour, page, source)
     )$fin");
-    // Version 3 (9 nov. 2026, 3e revue) : les étapes du suivi (colis reçu, pesé, payé : propositions 94 à 97), la façon
-    // d'être prévenu (e-mail, WhatsApp ou les deux : 95), le compte gardé pour justifier une vente quand la personne le
-    // supprime (86), le rappel de la pièce qui expire (81), le lien de connexion dans l'e-mail (72), le prénom et le nom
-    // donnés en créant le compte (71), le bon redemandé (98).
+
+
+
+
     ajouter_colonnes($bd, 'espace_envois', ['recu_le' => 'VARCHAR(30) NULL', 'pese_le' => 'VARCHAR(30) NULL', 'poids_brut' => 'DOUBLE NULL',
         'poids_net' => 'DOUBLE NULL', 'paye_le' => 'VARCHAR(30) NULL', 'montant' => 'DOUBLE NULL', 'paye_detail' => 'VARCHAR(60) NULL',
         'bon_redemande_le' => 'VARCHAR(30) NULL']);
     ajouter_colonnes($bd, 'espace_comptes', ['prevenir' => 'VARCHAR(12) NULL', 'archive_le' => 'VARCHAR(30) NULL', 'rappel_piece' => 'VARCHAR(10) NULL']);
     ajouter_colonnes($bd, 'espace_codes', ['creation' => 'TEXT NULL']);
-    ajouter_colonnes($bd, 'espace_envois', ['rappel_garantie' => 'VARCHAR(30) NULL']); // 4e revue, n° 158
+    ajouter_colonnes($bd, 'espace_envois', ['rappel_garantie' => 'VARCHAR(30) NULL']);
     $bd->exec("CREATE TABLE IF NOT EXISTS espace_liens (
         h CHAR(64) NOT NULL PRIMARY KEY, email TEXT NOT NULL, exp BIGINT NOT NULL
+    )$fin");
+
+
+    ajouter_colonnes($bd, 'espace_envois', ['cgv_version' => 'VARCHAR(12) NULL', 'cgv_le' => 'VARCHAR(30) NULL']);
+    ajouter_colonnes($bd, 'espace_comptes', ['rib_maj_le' => 'VARCHAR(30) NULL']);
+    $bd->exec("CREATE TABLE IF NOT EXISTS site_messages (
+        id VARCHAR(36) NOT NULL PRIMARY KEY, cree_le VARCHAR(30) NOT NULL, sujet VARCHAR(160) NOT NULL, texte TEXT NOT NULL,
+        retour VARCHAR(120) NOT NULL DEFAULT '', photos TEXT NULL, repondu_le VARCHAR(30) NULL
     )$fin");
     @file_put_contents($drapeau, gmdate('c'));
 }
 
-/** Ajoute les colonnes qui manquent (une autre demande peut les ajouter au même moment). */
+
 function ajouter_colonnes(PDO $bd, string $table, array $colonnes): void
 {
     foreach ($colonnes as $col => $type) {
@@ -185,8 +196,8 @@ function colonne_existe(PDO $bd, string $table, string $colonne): bool
     return (int) $q->fetchColumn() > 0;
 }
 
-// ---------- réponses ----------
-/** Envoie la réponse JSON (jamais gardée en cache), puis fait ce qui a été mis « après la réponse » (e-mails). */
+
+
 function repondre($corps, int $status = 200, ?string $cookie = null): void
 {
     http_response_code($status);
@@ -205,7 +216,7 @@ function refus(string $code, int $status = 400): void
     repondre(['erreur' => $code], $status);
 }
 
-/** Travail à faire une fois la réponse partie (le navigateur n'attend pas les e-mails). */
+
 function apres_reponse(callable $f): void
 {
     $GLOBALS['ain_apres'][] = $f;
@@ -230,7 +241,7 @@ function terminer(): void
     exit;
 }
 
-/** Corps JSON de la demande (100 Ko au plus), ou null. */
+
 function corps_json(): ?array
 {
     $brut = file_get_contents('php://input', false, null, 0, 100000);
@@ -245,7 +256,7 @@ function https(): bool
         || strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https';
 }
 
-/** Une demande qui modifie quelque chose doit venir du site (ou d'aucun navigateur) : pas d'envoi depuis une autre page. */
+
 function origine_refusee(): void
 {
     $o = (string) ($_SERVER['HTTP_ORIGIN'] ?? '');
@@ -255,13 +266,13 @@ function origine_refusee(): void
     if (!in_array($o, $origines, true) && !$locale) refus('origine', 403);
 }
 
-// ---------- temps ----------
+
 function ms(): int
 {
     return (int) floor(microtime(true) * 1000);
 }
 
-/** « 2026-11-06T10:14:04.303Z » (même écriture que l'appli et le navigateur, heure de Londres) */
+
 function iso(?int $ms = null): string
 {
     $ms ??= ms();
@@ -273,8 +284,8 @@ function aujourdhui(): string
     return gmdate('Y-m-d');
 }
 
-// ---------- textes ----------
-/** Texte d'un formulaire : espaces en trop retirés, coupé à $max caractères. */
+
+
 function texte($x, int $max = 120): string
 {
     if (!is_string($x)) return '';
@@ -301,7 +312,7 @@ function uuid(): string
     return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($b), 4));
 }
 
-// ---------- signatures et chiffrement ----------
+
 function b64url(string $octets): string
 {
     return rtrim(strtr(base64_encode($octets), '+/', '-_'), '=');
@@ -321,13 +332,13 @@ function cle_binaire(string $nom): string
     return $k;
 }
 
-/** Signature (HMAC-SHA256) avec la clé du serveur : sessions, codes de connexion. */
+
 function signer(string $texte): string
 {
     return b64url(hash_hmac('sha256', $texte, cle_binaire('secret'), true));
 }
 
-/** Chiffrement AES-256-GCM (clé du dossier privé) : n° de pièce, IBAN, photos des pièces. */
+
 function chiffrer_octets(string $clair): string
 {
     $iv = random_bytes(12);
@@ -356,7 +367,7 @@ function dechiffrer(?string $s): ?string
     return is_string($b) ? dechiffrer_octets($b) : null;
 }
 
-// ---------- journal ----------
+
 function journaliser(string $quoi): void
 {
     $d = prive() . '/journal';
@@ -369,7 +380,7 @@ function resume_erreur(Throwable $e): string
     return get_class($e) . ' : ' . $e->getMessage() . ' (' . basename($e->getFile()) . ':' . $e->getLine() . ')';
 }
 
-/** Erreur imprévue : notée dans le journal (sans données personnelles), réponse « serveur ». */
+
 function erreur_serveur(Throwable $e): void
 {
     journaliser(($_SERVER['REQUEST_METHOD'] ?? '?') . ' ' . ($_GET['chemin'] ?? '') . ' : ' . resume_erreur($e));

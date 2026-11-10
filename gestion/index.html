@@ -1,209 +1,184 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex, nofollow">
-  <meta name="referrer" content="no-referrer">
-  <title>Demandes du site – Ain Recycling</title>
-  <link rel="icon" href="/favicon.png">
-  <link rel="stylesheet" href="gestion.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Gestion – Ain Recycling</title>
+<link rel="icon" href="/favicon.png">
+<link rel="stylesheet" href="gestion.css">
 </head>
 <body>
-  <!-- Page réservée à Malik : les demandes d'envoi par colis faites dans l'espace client du site, avec la pièce
-       d'identité et le RIB (lus par serveur/gestion.php, connexion par un code envoyé à son adresse seulement). -->
-  <header class="tete">
-    <a href="/" class="logo"><img src="/logo.png" alt="Ain Recycling" width="152" height="32"></a>
-    <span class="tete-titre">Demandes du site</span>
-    <button type="button" class="lien" data-deconnexion hidden>Se déconnecter</button>
-  </header>
-
-  <main>
-    <form id="connexion" class="carte connexion" novalidate>
-      <h1>Demandes du site</h1>
-      <p class="aide">Réservé à Ain Recycling. Un code arrive sur ton adresse e-mail.</p>
-      <div class="pot" aria-hidden="true"><label>Site web <input name="site" tabindex="-1" autocomplete="off"></label></div>
-      <div data-etape="email">
-        <label for="g-email">Ton adresse e-mail</label>
-        <input id="g-email" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" required>
-        <button type="submit" class="bouton">Recevoir un code</button>
-      </div>
-      <div data-etape="code" hidden>
-        <label for="g-code">Code reçu sur <span data-email></span></label>
-        <input id="g-code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="123 456" required>
-        <button type="submit" class="bouton">Se connecter</button>
-        <button type="button" class="lien" data-autre>Autre adresse</button>
-      </div>
-      <p class="msg" role="alert" hidden></p>
-    </form>
-
-    <section id="liste" hidden>
-      <h1 class="sr-only">Ma page du site</h1>
-      <!-- Le site piloté par Malik (8 nov. 2026, propositions 54, 55, 57 et 65) : un appui sur une case ouvre son réglage -->
-      <div class="tuiles" aria-label="Réglages du site">
-        <button type="button" class="tuile" data-ouvrir="d-prix">
-          <span class="tuile-titre">Prix du site</span><span class="tuile-valeur" data-t-prix>…</span><span class="tuile-detail" data-t-prix-detail></span>
-        </button>
-        <button type="button" class="tuile" data-ouvrir="d-annonces">
-          <span class="tuile-titre">Annonce</span><span class="tuile-valeur petite" data-t-annonce>…</span><span class="tuile-detail" data-t-annonce-detail></span>
-        </button>
-        <button type="button" class="tuile" data-ouvrir="d-visites">
-          <span class="tuile-titre">Visites</span><span class="tuile-valeur" data-t-visites>…</span><span class="tuile-detail" data-t-visites-detail></span>
-        </button>
-        <button type="button" class="tuile" data-ouvrir="d-sauvegarde">
-          <span class="tuile-titre">Sauvegarde</span><span class="tuile-valeur petite" data-t-sauvegarde>…</span><span class="tuile-detail" data-t-sauvegarde-detail></span>
-        </button>
-        <button type="button" class="tuile" data-ouvrir="d-google">
-          <span class="tuile-titre">Connexion Google</span><span class="tuile-valeur petite" data-t-google>…</span><span class="tuile-detail" data-t-google-detail></span>
-        </button>
-      </div>
-      <h2 class="titre-demandes">Demandes d'envoi par colis</h2>
-      <!-- ce qui t'attend (proposition 100) : un appui montre ces demandes -->
-      <div class="compteurs" role="group" aria-label="Ce qui t'attend">
-        <button type="button" class="compteur" data-etat="nouvelles" aria-pressed="false"><b data-n="nouvelles">0</b><span>étiquettes à envoyer</span></button>
-        <button type="button" class="compteur" data-etat="en_route" aria-pressed="false"><b data-n="en_route">0</b><span>colis en route</span></button>
-        <button type="button" class="compteur" data-etat="a_peser" aria-pressed="false"><b data-n="a_peser">0</b><span>à peser</span></button>
-        <button type="button" class="compteur" data-etat="a_payer" aria-pressed="false"><b data-n="a_payer">0</b><span>à payer</span></button>
-      </div>
-      <div class="barre">
-        <div class="recherche"><label class="sr-only" for="chercher">Chercher une demande</label>
-          <input id="chercher" type="search" placeholder="Nom, référence, ville…" autocomplete="off" enterkeyhint="search" data-chercher></div>
-        <div class="filtres" role="group" aria-label="Demandes à afficher">
-          <button type="button" class="filtre actif" data-etat="en_cours" aria-pressed="true">En cours</button>
-          <button type="button" class="filtre" data-etat="toutes" aria-pressed="false">Toutes</button>
-        </div>
-        <button type="button" class="bouton fantome" data-actualiser>Actualiser</button>
-      </div>
-      <p class="msg" role="alert" hidden></p>
-      <p class="vide" data-vide hidden>Aucune demande à traiter.</p>
-      <p class="chargement" data-chargement>Chargement…</p>
-      <ul class="demandes" data-demandes></ul>
-    </section>
-  </main>
-
-  <dialog id="visionneuse" aria-label="Pièce d'identité">
-    <img alt="">
-    <button type="button" class="bouton" data-fermer>Fermer</button>
-  </dialog>
-
-  <!-- Prix du site (proposition 54) : tout le site suit ; les demandes déjà faites gardent leur prix garanti -->
-  <dialog id="d-prix" class="feuille" aria-labelledby="d-prix-titre">
-    <form method="dialog" class="feuille-tete"><h2 id="d-prix-titre">Prix du site</h2><button class="lien">Fermer</button></form>
-    <p class="prix-actuel"><span data-prix-actuel>…</span> <small>€ / kg par colis</small></p>
-    <p class="aide" data-prix-depuis></p>
-    <form id="f-prix" class="pile" novalidate>
-      <label for="g-prix">Nouveau prix par colis (plaquettes, forets, fraises)</label>
-      <div class="champ-unite"><input id="g-prix" inputmode="decimal" autocomplete="off" placeholder="47"><span>€ / kg</span></div>
-      <label class="case" data-prevenir-ligne hidden><input type="checkbox" id="g-prevenir" checked> <span data-prevenir-texte>Prévenir les abonnés à l'alerte prix (seulement s'il monte)</span></label>
-      <div class="confirmer" data-confirmer hidden role="alert">
-        <p><b>Tu es sûr ?</b> <span data-confirmer-texte></span></p>
-        <div class="actions"><button type="button" class="bouton" data-oui>Oui, enregistrer</button><button type="button" class="bouton fantome" data-non>Non, corriger</button></div>
-      </div>
-      <button type="submit" class="bouton">Enregistrer : tout le site suit</button>
-      <p class="msg" role="alert" hidden></p>
-    </form>
-    <details class="historique"><summary>Historique des prix</summary><ul data-historique></ul></details>
-  </dialog>
-
-  <!-- Annonce en haut de toutes les pages (proposition 55), traduite toute seule dans les 5 langues -->
-  <dialog id="d-annonces" class="feuille" aria-labelledby="d-annonces-titre">
-    <form method="dialog" class="feuille-tete"><h2 id="d-annonces-titre">Annonce en haut du site</h2><button class="lien">Fermer</button></form>
-    <ul class="annonces" data-annonces></ul>
-    <p class="aide" data-aucune-annonce>Aucune annonce en ce moment.</p>
-    <form id="f-annonce" class="pile" novalidate>
-      <h3>Nouvelle annonce</h3>
-      <div class="choix-type" role="radiogroup" aria-label="Sorte d'annonce">
-        <label><input type="radio" name="type" value="conges" checked> <span>Congés</span></label>
-        <label><input type="radio" name="type" value="fermeture"> <span>Fermeture exceptionnelle</span></label>
-        <label><input type="radio" name="type" value="tournee"> <span>Tournée</span></label>
-      </div>
-      <div class="deux">
-        <div><label for="g-debut">Du</label><input id="g-debut" type="date" required></div>
-        <div><label for="g-fin">Au</label><input id="g-fin" type="date"></div>
-      </div>
-      <div data-villes-ligne hidden><label for="g-villes">Villes de la tournée</label><input id="g-villes" maxlength="80" placeholder="Lyon · Grenoble" autocomplete="off"></div>
-      <p class="apercu" data-apercu aria-live="polite"></p>
-      <button type="submit" class="bouton">Ajouter l'annonce</button>
-      <p class="aide">Elle s'affiche en haut de toutes les pages, dans les 5 langues, et disparaît toute seule après la date de fin. Une tournée apparaît aussi sous la carte de l'accueil (« Prochaine tournée »).</p>
-      <p class="msg" role="alert" hidden></p>
-    </form>
-  </dialog>
-
-  <!-- Pages vues, sans cookie ni adresse IP (proposition 57) -->
-  <dialog id="d-visites" class="feuille" aria-labelledby="d-visites-titre">
-    <form method="dialog" class="feuille-tete"><h2 id="d-visites-titre">Visites du site</h2><button class="lien">Fermer</button></form>
-    <div class="chiffres" data-chiffres></div>
-    <h3>Arrivées sur le site, 30 derniers jours</h3>
-    <div class="barres" data-barres aria-hidden="true"></div>
-    <p class="aide" data-barres-texte></p>
-    <div class="deux-listes">
-      <div><h3>D'où ils viennent</h3><ul class="liste-nombres" data-sources></ul></div>
-      <div><h3>Pages les plus lues</h3><ul class="liste-nombres" data-pages></ul></div>
-    </div>
-    <p class="aide">Comptées par le site lui-même, sans cookie et sans adresse IP : rien qui permette de reconnaître quelqu'un. Les robots ne sont pas comptés. Le 1er de chaque mois, tu reçois le résumé du mois par e-mail.</p>
-    <p class="aide"><b>Ce que les gens tapent dans Google</b> : Google Search Console, rubrique « Performances ». <b>Les chiffres d'OVH</b> : espace client OVH › Web Cloud › Hébergements › ainrecycling.com › « Statistiques et logs ».</p>
-  </dialog>
-
-  <!-- Sauvegarde de l'espace client (proposition 65) -->
-  <dialog id="d-sauvegarde" class="feuille" aria-labelledby="d-sauvegarde-titre">
-    <form method="dialog" class="feuille-tete"><h2 id="d-sauvegarde-titre">Sauvegarde du site</h2><button class="lien">Fermer</button></form>
-    <p>Comptes, demandes, abonnés et pièces d'identité, dans un fichier fermé par <b>ton</b> mot de passe.</p>
-    <p class="etat-sauvegarde" data-etat-sauvegarde></p>
-    <form id="f-sauvegarde" class="pile" novalidate>
-      <label for="g-mdp">Choisis un mot de passe (10 caractères au moins)</label>
-      <input id="g-mdp" type="password" autocomplete="new-password" minlength="10">
-      <label for="g-mdp2">Encore une fois</label>
-      <input id="g-mdp2" type="password" autocomplete="new-password" minlength="10">
-      <button type="submit" class="bouton">Sauvegarder maintenant</button>
-      <p class="msg" role="alert" hidden></p>
-    </form>
-    <p class="aide">Range le fichier sur ton ordinateur ou une clé USB, <b>jamais dans un e-mail</b> : il y a des pièces d'identité dedans. Note bien le mot de passe : sans lui, personne ne peut ouvrir le fichier, pas même moi. Pour l'ouvrir : 7-Zip (gratuit). Une fois par mois, c'est bien.</p>
-  </dialog>
-
-  <dialog id="d-google" class="feuille" aria-labelledby="d-google-titre">
-    <form method="dialog" class="feuille-tete"><h2 id="d-google-titre">Connexion avec Google</h2><button class="lien">Fermer</button></form>
-    <p>Le bouton « Continuer avec Google » de la page Mon compte marche dès que la clé est enregistrée ici. Elle se crée une fois,
-      gratuitement, dans la console Google Cloud (« Identifiants » › « ID client OAuth » › « Application Web »).</p>
-    <p class="aide">Adresse de retour à déclarer chez Google : <b data-google-retour></b>
-      <button type="button" class="mini" data-copier-retour>Copier</button></p>
-    <p class="etat-sauvegarde" data-etat-google></p>
-    <form id="f-google" class="pile" novalidate>
-      <label for="g-client">ID client (se termine par .apps.googleusercontent.com)</label>
-      <input id="g-client" autocomplete="off" spellcheck="false">
-      <label for="g-secret">Code secret du client</label>
-      <input id="g-secret" type="password" autocomplete="off" spellcheck="false">
-      <button type="submit" class="bouton">Enregistrer la clé</button>
-      <button type="button" class="bouton fantome" data-retirer-google>Retirer la clé (bouton caché)</button>
-      <p class="msg" role="alert" hidden></p>
-    </form>
-    <p class="aide">Le code secret est gardé chiffré sur le serveur et n'est plus jamais affiché.</p>
-  </dialog>
-
-  <template id="modele-demande">
-    <li class="carte demande">
-      <div class="demande-tete"><b class="ref" data-ref></b><span class="etat" data-etat-demande></span></div>
-      <p class="quand" data-quand></p>
-      <h2 data-nom></h2>
-      <ul class="colis" data-colis></ul>
-      <p class="total" data-total></p>
-      <p class="message-client" data-message hidden></p>
-      <p class="garantie" data-garantie hidden></p>
-      <dl class="infos">
-        <dt>Adresse</dt><dd><span data-adresse></span>
-          <div class="mini-rangee"><button type="button" class="mini" data-copier-adresse>Copier l'adresse</button></div></dd>
-        <dt>Contact</dt><dd><a data-tel hidden></a><a data-mail></a></dd>
-        <dt data-piece-titre>Pièce</dt><dd data-piece-ligne><span data-piece></span>
-          <div class="mini-rangee boutons-piece"><button type="button" class="mini" data-voir="recto">Voir le recto</button>
-          <button type="button" class="mini" data-voir="verso">Voir le verso</button></div></dd>
-        <dt data-rib-titre>RIB</dt><dd data-rib-ligne><span data-rib></span>
-          <div class="mini-rangee"><button type="button" class="mini" data-afficher-iban>Afficher</button>
-          <button type="button" class="mini" data-copier-iban>Copier l'IBAN</button></div></dd>
-      </dl>
-      <p class="etapes-faites" data-etapes hidden></p>
-      <div class="actions" data-actions></div>
-    </li>
-  </template>
-
-  <script src="gestion.js"></script>
+<main id="porte" class="porte">
+<form id="connexion" class="carte connexion" novalidate>
+<img src="/logo.png" alt="Ain Recycling" width="152" height="32">
+<h1>Gestion du site</h1>
+<p class="aide">Réservé à Ain Recycling. Un code arrive sur ton adresse e-mail.</p>
+<div class="pot" aria-hidden="true"><label>Site web <input name="site" tabindex="-1" autocomplete="off"></label></div>
+<div data-etape="email">
+<label for="g-email">Ton adresse e-mail</label>
+<input id="g-email" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" required>
+<button type="submit" class="bouton">Recevoir un code</button>
+<a class="bouton clair" href="/api/espace/google?langue=fr">Continuer avec Google</a>
+</div>
+<div data-etape="code" hidden>
+<label for="g-code">Code reçu sur <span data-email></span></label>
+<input id="g-code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="123 456" required>
+<button type="submit" class="bouton">Se connecter</button>
+<button type="button" class="lien" data-autre>Autre adresse</button>
+</div>
+<p class="msg" role="alert" hidden></p>
+</form>
+</main>
+<div id="appli" class="appli" hidden>
+<aside class="menu" aria-label="Menu de la gestion">
+<a href="/" class="logo"><img src="/logo.png" alt="Ain Recycling, voir le site" width="152" height="32"></a>
+<nav>
+<button type="button" data-aller="aujourdhui" aria-current="page">Aujourd'hui <span class="pastille-n" data-n="afaire" hidden></span></button>
+<button type="button" data-aller="demandes">Demandes <span class="pastille-n" data-n="demandes" hidden></span></button>
+<button type="button" data-aller="messages">Messages <span class="pastille-n" data-n="messages" hidden></span></button>
+<button type="button" data-aller="prix">Prix du site</button>
+<button type="button" data-aller="annonces">Annonces</button>
+<button type="button" data-aller="visites">Visites</button>
+<button type="button" data-aller="reglages">Réglages</button>
+</nav>
+<button type="button" class="lien" data-actualiser>Actualiser</button>
+<button type="button" class="lien" data-deconnexion>Se déconnecter</button>
+</aside>
+<main class="vues">
+<section data-vue="aujourdhui">
+<h1>Bonjour</h1>
+<p class="sous-titre" data-date-du-jour></p>
+<div class="deux">
+<div class="carte">
+<h2>À faire maintenant</h2>
+<div data-a-faire></div>
+</div>
+<div class="colonne">
+<button type="button" class="carte carte-lien" data-aller="prix"><span class="petit">Prix du jour</span><b class="grand" data-r-prix>…</b><span class="petit" data-r-prix-detail></span></button>
+<button type="button" class="carte carte-lien" data-aller="visites"><span class="petit">Pages vues, 30 jours</span><b class="grand" data-r-visites>…</b><span data-r-visites-courbe></span></button>
+<button type="button" class="carte carte-lien" data-aller="annonces"><span class="petit">Annonce en ligne</span><b data-r-annonce>…</b><span class="petit" data-r-annonce-detail></span></button>
+</div>
+</div>
+</section>
+<section data-vue="demandes" hidden>
+<h1>Demandes</h1>
+<div class="outils">
+<input type="search" data-chercher placeholder="Nom, référence, ville…" aria-label="Chercher une demande">
+<div class="choix" role="group" aria-label="Demandes affichées">
+<button type="button" data-filtre="en-cours" aria-pressed="true">En cours</button>
+<button type="button" data-filtre="toutes" aria-pressed="false">Toutes</button>
+</div>
+</div>
+<div class="deux large-gauche">
+<div class="carte sans-marge" data-liste-demandes></div>
+<div class="carte" data-detail hidden></div>
+</div>
+</section>
+<section data-vue="messages" hidden>
+<h1>Messages</h1>
+<p class="sous-titre">Les demandes envoyées par les formulaires Contact et Devis. Elles arrivent aussi dans ta boîte mail.</p>
+<div data-liste-messages class="pile"></div>
+</section>
+<section data-vue="prix" hidden>
+<h1>Prix du site</h1>
+<div class="deux etroit-gauche">
+<form class="carte" data-form-prix novalidate>
+<label for="p-kg">Par colis (€/kg)</label>
+<input id="p-kg" inputmode="decimal" autocomplete="off" required>
+<label for="p-depot">Livré au dépôt (€/kg)</label>
+<input id="p-depot" inputmode="decimal" autocomplete="off">
+<p class="petit">Laisse la case du dépôt vide pour « prix par colis + 3 € ».</p>
+<label class="case"><input type="checkbox" data-prevenir checked><span data-prevenir-texte>Prévenir les abonnés à l'alerte prix si le prix monte</span></label>
+<p class="alerte" data-prix-doute hidden></p>
+<button type="submit" class="bouton">Mettre à jour le prix</button>
+<p class="msg" role="alert" hidden></p>
+<p class="petit">Les demandes déjà faites gardent leur prix garanti.</p>
+</form>
+<div class="carte">
+<h2>Ton prix par colis</h2>
+<div data-courbe-prix></div>
+<ul class="histo" data-histo-prix></ul>
+</div>
+</div>
+</section>
+<section data-vue="annonces" hidden>
+<h1>Annonces</h1>
+<p class="sous-titre">Une ligne en haut de toutes les pages du site : congés, fermeture, tournée.</p>
+<div class="deux etroit-gauche">
+<form class="carte" data-form-annonce novalidate>
+<label for="a-type">Quoi ?</label>
+<select id="a-type"><option value="tournee">Une tournée</option><option value="conges">Des congés</option><option value="fermeture">Une fermeture</option></select>
+<label for="a-debut">Du</label>
+<input id="a-debut" type="date" required>
+<label for="a-fin">Au</label>
+<input id="a-fin" type="date">
+<div data-villes><label for="a-villes">Villes de la tournée</label><input id="a-villes" placeholder="ex. Lyon · Grenoble" maxlength="80"></div>
+<button type="submit" class="bouton">Ajouter l'annonce</button>
+<p class="msg" role="alert" hidden></p>
+</form>
+<div class="carte"><h2>En ligne ou à venir</h2><div data-liste-annonces></div></div>
+</div>
+</section>
+<section data-vue="visites" hidden>
+<h1>Visites</h1>
+<div class="deux large-gauche">
+<div class="carte"><span class="petit">30 derniers jours</span><b class="grand" data-v-total>…</b><div data-v-courbe></div><p class="petit" data-v-visiteurs></p></div>
+<div class="carte"><h2>Pages les plus lues</h2><div data-v-pages></div><h2 class="haut">D'où viennent les gens</h2><div data-v-sources></div></div>
+</div>
+</section>
+<section data-vue="reglages" hidden>
+<h1>Réglages</h1>
+<div class="liens-plus"><button type="button" class="bouton clair" data-aller="annonces">Annonces</button><button type="button" class="bouton clair" data-aller="visites">Visites</button></div>
+<div class="deux">
+<div class="colonne">
+<div class="carte">
+<h2>Dernières connexions à cette page</h2>
+<div data-connexions></div>
+<button type="button" class="bouton danger" data-deconnecter-tout>Déconnecter tous les appareils</button>
+<p class="petit">Tu restes connecté ici. Les autres appareils devront se reconnecter.</p>
+</div>
+<div class="carte">
+<h2>Connexion avec Google</h2>
+<p data-google-etat></p>
+<details><summary>Changer la clé Google</summary>
+<form data-form-google novalidate>
+<p class="petit">Adresse de retour à déclarer chez Google : <code data-google-retour></code></p>
+<label for="go-id">Identifiant du client</label><input id="go-id" autocomplete="off" spellcheck="false">
+<label for="go-secret">Code secret du client</label><input id="go-secret" type="password" autocomplete="off">
+<button type="submit" class="bouton">Enregistrer</button>
+<p class="msg" role="alert" hidden></p>
+</form>
+</details>
+</div>
+</div>
+<form class="carte" data-form-sauvegarde novalidate>
+<h2>Sauvegarde des comptes clients</h2>
+<p data-sauvegarde-etat></p>
+<label for="s-mdp">Mot de passe du fichier (10 caractères au moins)</label>
+<input id="s-mdp" type="password" autocomplete="new-password" minlength="10">
+<button type="submit" class="bouton">Télécharger la sauvegarde</button>
+<p class="msg" role="alert" hidden></p>
+<p class="petit">Le fichier contient des pièces d'identité et des IBAN : garde-le sur ton ordinateur, jamais dans un e-mail.</p>
+</form>
+</div>
+</section>
+</main>
+<nav class="barre-bas" aria-label="Menu">
+<button type="button" data-aller="aujourdhui" aria-current="page">Aujourd'hui<span class="pastille-n" data-n="afaire" hidden></span></button>
+<button type="button" data-aller="demandes">Demandes</button>
+<button type="button" data-aller="messages">Messages<span class="pastille-n" data-n="messages" hidden></span></button>
+<button type="button" data-aller="prix">Prix</button>
+<button type="button" data-aller="reglages">Réglages</button>
+</nav>
+</div>
+<p class="bulle" data-bulle role="status" hidden></p>
+<dialog id="visionneuse" aria-label="Photo">
+<form method="dialog"><button class="lien">Fermer</button></form>
+<img alt="" data-photo>
+</dialog>
+<article id="dossier" class="dossier" aria-hidden="true"></article>
+<script src="gestion.js" defer></script>
 </body>
 </html>
