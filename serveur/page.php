@@ -17,13 +17,20 @@ if (!preg_match('#^(?:(?:de|en|it|es)/)?[a-z0-9-]+\.html$#', $f) || !is_file("$r
 }
 $html = (string) file_get_contents("$racine/$f");
 try {
-    $kg = (float) prix_site()['kg'];
+    $p = prix_site();
+    $kg = (float) $p['kg'];
+    $depot = (float) $p['depot'];
     $fin = strpos($html, '</head>');
-    if ($fin !== false && abs($kg - PRIX_PAGES) > 0.001) {
+
+
+    if ($fin !== false && (abs($kg - PRIX_PAGES) > 0.001 || abs($depot - (PRIX_PAGES + ECART_DEPOT)) > 0.001)) {
         $virgule = str_starts_with($f, 'en/') ? '.' : ',';
-        $prix = rtrim(rtrim(number_format($kg, 2, $virgule, ''), '0'), $virgule);
-        $tete = preg_replace('/(^|[^\d.,])' . PRIX_PAGES . '(?=[\s\x{00a0}\x{202f}]?€)/mu', '${1}' . $prix, substr($html, 0, $fin));
-        if (is_string($tete)) $html = $tete . substr($html, $fin);
+        $ecrire = fn (float $x) => rtrim(rtrim(number_format($x, 2, $virgule, ''), '0'), $virgule);
+        $nouveaux = [(string) (int) PRIX_PAGES => $ecrire($kg), (string) (int) (PRIX_PAGES + ECART_DEPOT) => $ecrire($depot)];
+        $tete = preg_replace_callback('/(^|[^\d.,])(' . implode('|', array_keys($nouveaux)) . ')(?=[\s\x{00a0}\x{202f}]?€)/mu',
+            fn ($m) => $m[1] . $nouveaux[$m[2]], substr($html, 0, $fin));
+
+        if (is_string($tete)) $html = (string) preg_replace('/<html\b/', '<html data-prix-tete', $tete, 1) . substr($html, $fin);
     }
 } catch (Throwable $e) {
 

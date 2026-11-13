@@ -30,6 +30,18 @@ function reglages_pour_malik(): array
 }
 
 
+
+function lire_deux_prix(array $b): array
+{
+    $depot = lire_prix($b['depot'] ?? null);
+    if ($depot === null) refus('prix');
+    $k = $b['kg'] ?? null;
+    $kg = $k === null || $k === '' ? lire_prix($depot - ECART_DEPOT) : lire_prix($k);
+    if ($kg === null) refus('prix');
+    return [$kg, $depot];
+}
+
+
 function exiger_admin(): string
 {
     $s = lire_cookie_signe(COOKIE_GESTION, 'gestion');
@@ -85,7 +97,8 @@ try {
             exiger_admin();
             $b = corps_json();
             $action = (string) ($b['action'] ?? '');
-            if (!in_array($action, ['traite', 'remettre', 'recu', 'sans_recu', 'pese', 'sans_pese', 'paye', 'sans_paye'], true)) refus('action');
+
+            if (!in_array($action, ['traite', 'remettre', 'recu', 'sans_recu', 'pese', 'sans_pese', 'accord', 'sans_accord', 'paye', 'sans_paye', 'retard'], true)) refus('action');
             $e = marquer_envoi((string) ($b['envoi'] ?? ''), $action, 'Malik (site)', '', is_array($b['valeurs'] ?? null) ? $b['valeurs'] : []);
             if (!$e) refus($action === 'pese' ? 'poids' : 'introuvable', $action === 'pese' ? 400 : 404);
             repondre(['envoi' => $e, 'whatsapp' => prevenir_etape($e, $action)]);
@@ -102,15 +115,11 @@ try {
             origine_refusee();
             $email = exiger_admin();
             $b = corps_json() ?? [];
-            $kg = lire_prix($b['kg'] ?? null);
-            if ($kg === null) refus('prix');
 
-            $d = $b['depot'] ?? null;
-            $depot = $d === null || $d === '' ? null : lire_prix($d);
-            if ($d !== null && $d !== '' && $depot === null) refus('prix');
+            [$kg, $depot] = lire_deux_prix($b);
             $p0 = prix_site();
             $avant = $p0['kg'];
-            if (abs($kg - $avant) < 0.001 && abs(($depot ?? $kg + 3) - $p0['depot']) < 0.001) refus('meme_prix');
+            if (abs($kg - $avant) < 0.001 && abs($depot - $p0['depot']) < 0.001) refus('meme_prix');
             $doute = $kg < PRIX_DOUTE_BAS || $kg > PRIX_DOUTE_HAUT || abs($kg - $avant) / max($avant, 1) > 0.25;
             if ($doute && ($b['confirme'] ?? null) !== true) refus('confirmer', 409);
             [$ancien] = changer_prix($kg, $email, $depot);
@@ -118,6 +127,22 @@ try {
             if ($kg > $ancien['kg'] && ($b['prevenir'] ?? true) !== false) $prevenus = programmer_alertes($kg);
             elseif ($kg < $ancien['kg']) annuler_alertes();
             repondre(reglages_pour_malik() + ['prevenus' => $prevenus]);
+
+
+
+        case 'POST prix-programme':
+            origine_refusee();
+            $email = exiger_admin();
+            $b = corps_json() ?? [];
+            if (($b['action'] ?? '') === 'annuler') {
+                programmer_prix(null, $email);
+                repondre(reglages_pour_malik());
+            }
+            [$kg, $depot] = lire_deux_prix($b);
+            $jour = jour_valide($b['jour'] ?? null);
+            if (!$jour || $jour <= jour_paris() || $jour > plus_jours(jour_paris(), 366)) refus('jour');
+            programmer_prix(['kg' => $kg, 'depot' => $depot, 'jour' => $jour, 'prevenir' => ($b['prevenir'] ?? true) !== false], $email);
+            repondre(reglages_pour_malik());
 
 
         case 'POST annonces':

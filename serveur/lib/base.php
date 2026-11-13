@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 
 
-const SCHEMA_VERSION = 5;
+const SCHEMA_VERSION = 6;
 
 
 function prive(): string
@@ -169,6 +169,16 @@ function migrer(PDO $bd): void
         id VARCHAR(36) NOT NULL PRIMARY KEY, cree_le VARCHAR(30) NOT NULL, sujet VARCHAR(160) NOT NULL, texte TEXT NOT NULL,
         retour VARCHAR(120) NOT NULL DEFAULT '', photos TEXT NULL, repondu_le VARCHAR(30) NULL
     )$fin");
+
+
+
+    ajouter_colonnes($bd, 'espace_envois', ['accord_le' => 'VARCHAR(30) NULL', 'accord_par' => 'VARCHAR(20) NULL',
+        'depot_reponse' => 'VARCHAR(12) NULL', 'depot_repondu_le' => 'VARCHAR(30) NULL', 'retard' => 'TEXT NULL']);
+    $bd->exec("CREATE TABLE IF NOT EXISTS site_mails (
+        id VARCHAR(36) NOT NULL PRIMARY KEY, envoi VARCHAR(36) NOT NULL, le VARCHAR(30) NOT NULL, objet VARCHAR(200) NOT NULL"
+        . ($mysql ? ', INDEX site_mails_envoi (envoi)' : '') . "
+    )$fin");
+    if (!$mysql) $bd->exec('CREATE INDEX IF NOT EXISTS site_mails_envoi ON site_mails (envoi)');
     @file_put_contents($drapeau, gmdate('c'));
 }
 

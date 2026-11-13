@@ -22,7 +22,10 @@ const TYPES_PIECE = ["Carte d'identité", 'Passeport', 'Titre de séjour', 'Perm
 const PREVENIR = ['email', 'whatsapp', 'les-deux'];
 
 
-const CGV_VERSION = '2026-11-10';
+
+
+const CGV_VERSION = '2026-11-13-2';
+const JOURS_COLIS_ATTENDU = 6;
 const LIEN_MINUTES = 10;
 
 function langue_de($x): string
@@ -466,7 +469,35 @@ function envoi_depuis_ligne(array $l): array
         'paye_le' => ($l['paye_le'] ?? null) ?: null, 'montant' => isset($l['montant']) ? (float) $l['montant'] : null,
         'paye_detail' => (string) ($l['paye_detail'] ?? ''), 'bon_redemande_le' => ($l['bon_redemande_le'] ?? null) ?: null,
         'cgv_version' => ($l['cgv_version'] ?? null) ?: null, 'cgv_le' => ($l['cgv_le'] ?? null) ?: null,
+
+        'accord_le' => ($l['accord_le'] ?? null) ?: null, 'accord_par' => (string) ($l['accord_par'] ?? ''),
+        'depot_reponse' => ($l['depot_reponse'] ?? null) ?: null, 'depot_repondu_le' => ($l['depot_repondu_le'] ?? null) ?: null,
+        'retard' => array_filter((array) json_decode((string) ($l['retard'] ?? ''), true), 'is_string'),
     ];
+}
+
+
+
+function colis_en_retard(array $e): bool
+{
+    if (!$e['traite_le'] || ($e['recu_le'] ?? null) || ($e['pese_le'] ?? null) || ($e['paye_le'] ?? null) || $e['bon_numero']) return false;
+    return heures_ouvrees((int) (strtotime((string) $e['traite_le']) * 1000)) >= JOURS_COLIS_ATTENDU * 24;
+}
+
+
+
+function question_depot(array $e): bool
+{
+    if (!colis_en_retard($e) || ($e['depot_reponse'] ?? null) === 'oui') return false;
+    return ($e['depot_reponse'] ?? null) !== 'pas_encore' || (string) $e['depot_repondu_le'] < iso(ms() - 3 * 86400000);
+}
+
+
+function repondre_depot(array $e, string $reponse): ?array
+{
+    if (!in_array($reponse, ['oui', 'pas_encore'], true) || !colis_en_retard($e)) return null;
+    bd()->prepare('UPDATE espace_envois SET depot_reponse = ?, depot_repondu_le = ? WHERE id = ?')->execute([$reponse, iso(), $e['id']]);
+    return lire_envoi($e['id']);
 }
 
 function envois_du(string $compte): array
@@ -491,7 +522,8 @@ function envoi_visible(array $e): array
         'paiement' => $e['paiement'], 'traite_le' => $e['traite_le'], 'prix_kg' => $e['prix_kg'] ?? null, 'garanti_jusqu' => $e['garanti_jusqu'] ?? null,
         'recu_le' => $e['recu_le'] ?? null, 'pese_le' => $e['pese_le'] ?? null, 'poids_brut' => $e['poids_brut'] ?? null,
         'poids_net' => $e['poids_net'] ?? null, 'paye_le' => $e['paye_le'] ?? null, 'montant' => $e['montant'] ?? null,
-        'bon_numero' => $e['bon_numero'] ?? null, 'bon_redemande_le' => $e['bon_redemande_le'] ?? null];
+        'bon_numero' => $e['bon_numero'] ?? null, 'bon_redemande_le' => $e['bon_redemande_le'] ?? null,
+        'accord_le' => $e['accord_le'] ?? null, 'depot_reponse' => $e['depot_reponse'] ?? null, 'depot_question' => question_depot($e)];
 }
 
 
@@ -539,6 +571,8 @@ function archiver_compte(array $c): void
             ->execute(['supprime+' . $c['id'] . '@compte.invalid', iso(), $c['id']]);
         $bd->prepare('DELETE FROM espace_codes WHERE cle = ?')->execute([cle_code('espace', $c['email'])]);
 
+        $bd->prepare('DELETE FROM site_mails WHERE envoi IN (SELECT id FROM espace_envois WHERE compte = ? AND traite_le IS NULL AND recu_le IS NULL AND bon_numero IS NULL AND paye_le IS NULL)')
+            ->execute([$c['id']]);
         $bd->prepare('DELETE FROM espace_envois WHERE compte = ? AND traite_le IS NULL AND recu_le IS NULL AND bon_numero IS NULL AND paye_le IS NULL')
             ->execute([$c['id']]);
     });
@@ -550,6 +584,7 @@ function supprimer_compte(array $c): void
 {
     if (a_vendu($c)) { archiver_compte($c); return; }
     transaction(function (PDO $bd) use ($c) {
+        $bd->prepare('DELETE FROM site_mails WHERE envoi IN (SELECT id FROM espace_envois WHERE compte = ?)')->execute([$c['id']]);
         $bd->prepare('DELETE FROM espace_envois WHERE compte = ?')->execute([$c['id']]);
         $bd->prepare('DELETE FROM espace_codes WHERE cle = ?')->execute([cle_code('espace', $c['email'])]);
         $bd->prepare('DELETE FROM espace_comptes WHERE id = ?')->execute([$c['id']]);
@@ -560,8 +595,51 @@ function supprimer_compte(array $c): void
 
 
 
+const DELAI_ETIQUETTE_H = 24, DELAI_PAIEMENT_H = 48, DELAI_REPONSE_H = 24;
+
+
+
+function retards(): array
+{
+    $r = [];
+    $h = fn (string $iso): float => heures_ouvrees((int) (strtotime($iso) * 1000));
+    foreach (bd()->query('SELECT reference, cree_le, traite_le, accord_le FROM espace_envois WHERE paye_le IS NULL')->fetchAll() as $l) {
+        if (!$l['traite_le'] && $h($l['cree_le']) > DELAI_ETIQUETTE_H) {
+            $r[] = 'Étiquette à envoyer pour ' . $l['reference'] . ' : la demande attend depuis ' . round($h($l['cree_le'])) . ' h (promis : 24 h).';
+        }
+        if ($l['accord_le'] && $h($l['accord_le']) > DELAI_PAIEMENT_H) {
+            $r[] = 'Paiement à faire pour ' . $l['reference'] . ' : le client a donné son accord il y a ' . round($h($l['accord_le'])) . ' h (promis : 48 h).';
+        }
+    }
+    foreach (bd()->query('SELECT sujet, cree_le FROM site_messages WHERE repondu_le IS NULL')->fetchAll() as $l) {
+        if ($h($l['cree_le']) > DELAI_REPONSE_H) {
+            $r[] = 'Message sans réponse depuis ' . round($h($l['cree_le'])) . ' h : « ' . coupe((string) $l['sujet'], 80) . ' » (promis : 24 h).';
+        }
+    }
+    return $r;
+}
+
+
+function rappel_retards(): void
+{
+    $m = new DateTimeImmutable('now', new DateTimeZone('Europe/Paris'));
+    $jour = $m->format('Y-m-d');
+    if ((int) $m->format('G') < 8) return;
+    $f = prive() . '/retards.jour';
+    if (@file_get_contents($f) === $jour) return;
+    @file_put_contents($f, $jour, LOCK_EX);
+    if (!est_ouvre($jour)) return;
+    apres_reponse(function () {
+        $a = (string) reglage('mail_admin', '');
+        $lignes = retards();
+        if ($a === '' || !$lignes) return;
+        mail_resume_mois($a, '⏰ ' . count($lignes) . (count($lignes) > 1 ? ' choses dépassent tes délais' : ' chose dépasse tes délais'), $lignes, adresse_site() . '/gestion/');
+    });
+}
+
 function menage_du_jour(): void
 {
+    rappel_retards();
     $f = prive() . '/menage.jour';
     $jour = aujourdhui();
     if (@file_get_contents($f) === $jour) return;
@@ -610,11 +688,14 @@ function demandes_pour_malik(string $etat): array
     $ordre = $etat === 'toutes' ? 'DESC' : 'ASC';
     $q = bd()->query("SELECT * FROM espace_envois $ou ORDER BY cree_le $ordre LIMIT 300");
     $envois = array_map('envoi_depuis_ligne', $q->fetchAll());
+    $mails = mails_des_envois(array_column($envois, 'id'));
     $comptes = [];
     $r = [];
     foreach ($envois as $e) {
         $comptes[$e['compte']] ??= lire_compte($e['compte']);
-        if ($comptes[$e['compte']]) $r[] = $e + ['client' => client_pour_malik($comptes[$e['compte']])];
+        if ($comptes[$e['compte']]) {
+            $r[] = $e + ['client' => client_pour_malik($comptes[$e['compte']]), 'mails' => $mails[$e['id']] ?? [], 'colis_en_retard' => colis_en_retard($e)];
+        }
     }
     return $r;
 }
@@ -642,11 +723,28 @@ function marquer_envoi(string $id, string $action, string $par, string $numero =
             $e = ['pese_le' => iso(), 'poids_net' => $net, 'poids_brut' => $kg($x['poids_brut'] ?? null), 'recu_le' => ($e['recu_le'] ?? null) ?: iso(),
                 'montant' => $montant] + $e;
             break;
-        case 'sans_pese': $e = ['pese_le' => null, 'poids_net' => null, 'poids_brut' => null] + $e; break;
+        case 'sans_pese': $e = ['pese_le' => null, 'poids_net' => null, 'poids_brut' => null, 'accord_le' => null, 'accord_par' => ''] + $e; break;
+
+
+        case 'accord':
+            if (!($e['pese_le'] ?? null)) return null;
+            $e = ['accord_le' => iso(), 'accord_par' => texte($x['par'] ?? null, 20)] + $e;
+            break;
+        case 'sans_accord': $e = ['accord_le' => null, 'accord_par' => ''] + $e; break;
+
+        case 'retard':
+            $etape = (string) ($x['etape'] ?? '');
+            if (!in_array($etape, ['reclamation', 'prevenu', 'indemnite'], true)) return null;
+            $r = $e['retard'] ?? [];
+            if (($x['fait'] ?? true) === false) unset($r[$etape]);
+            else $r[$etape] = iso();
+            $e = ['retard' => $r] + $e;
+            break;
         case 'paye':
             $m = is_numeric($x['montant'] ?? null) && (float) $x['montant'] > 0 ? round((float) $x['montant'] * 100) / 100
                 : (($e['poids_net'] ?? null) && ($e['prix_kg'] ?? null) ? round($e['poids_net'] * $e['prix_kg'] * 100) / 100 : null);
-            $e = ['paye_le' => iso(), 'montant' => $m, 'paye_detail' => texte($x['detail'] ?? null, 60)] + $e;
+
+            $e = ['paye_le' => iso(), 'montant' => $m, 'paye_detail' => texte($x['detail'] ?? null, 60), 'accord_le' => ($e['accord_le'] ?? null) ?: iso()] + $e;
             break;
         case 'sans_paye': $e = ['paye_le' => null, 'montant' => null, 'paye_detail' => ''] + $e; break;
         case 'bon': $e = ['bon_numero' => coupe($numero, 20), 'bon_le' => iso(), 'traite_le' => $e['traite_le'] ?? iso()] + $e; break;
@@ -654,10 +752,23 @@ function marquer_envoi(string $id, string $action, string $par, string $numero =
         default: return null;
     }
     bd()->prepare('UPDATE espace_envois SET traite_le = ?, traite_par = ?, bon_numero = ?, bon_le = ?, recu_le = ?, pese_le = ?, poids_brut = ?,
-        poids_net = ?, paye_le = ?, montant = ?, paye_detail = ? WHERE id = ?')
+        poids_net = ?, paye_le = ?, montant = ?, paye_detail = ?, accord_le = ?, accord_par = ?, retard = ? WHERE id = ?')
         ->execute([$e['traite_le'], $e['traite_par'], $e['bon_numero'], $e['bon_le'], $e['recu_le'] ?? null, $e['pese_le'] ?? null,
-            $e['poids_brut'] ?? null, $e['poids_net'] ?? null, $e['paye_le'] ?? null, $e['montant'] ?? null, $e['paye_detail'] ?? '', $id]);
+            $e['poids_brut'] ?? null, $e['poids_net'] ?? null, $e['paye_le'] ?? null, $e['montant'] ?? null, $e['paye_detail'] ?? '',
+            $e['accord_le'] ?? null, ($e['accord_par'] ?? '') ?: null, !empty($e['retard']) ? json_encode($e['retard']) : null, $id]);
     return $e;
+}
+
+
+function mails_des_envois(array $ids): array
+{
+    $r = [];
+    foreach (array_chunk(array_values(array_unique($ids)), 200) as $lot) {
+        $q = bd()->prepare('SELECT envoi, le, objet FROM site_mails WHERE envoi IN (' . implode(',', array_fill(0, count($lot), '?')) . ') ORDER BY le');
+        $q->execute($lot);
+        foreach ($q->fetchAll() as $l) $r[$l['envoi']][] = ['le' => $l['le'], 'objet' => $l['objet']];
+    }
+    return $r;
 }
 
 

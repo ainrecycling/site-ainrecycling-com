@@ -17,6 +17,8 @@ try {
     $donnee = (string) ($_SERVER['HTTP_X_CLE_APPLI'] ?? '');
     if (strlen($cle) < 32 || !hash_equals($cle, $donnee)) refus('cle', 401);
 
+    menage_du_jour();
+
     switch ("$methode $chemin") {
 
         case 'GET demandes':

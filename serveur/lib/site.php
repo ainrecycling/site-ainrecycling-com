@@ -14,6 +14,7 @@ require_once __DIR__ . '/mail.php';
 
 
 const PRIX_PAGES = 47.0;
+const ECART_DEPOT = 3.0;
 const PRIX_MIN = 5, PRIX_MAX = 300, PRIX_DOUTE_BAS = 30, PRIX_DOUTE_HAUT = 80;
 const GARANTIE_JOURS = 7;
 const ALERTES_PAR_JOUR = 40, ALERTES_PAR_PASSAGE = 8, CONFIRMATIONS_PAR_JOUR = 20;
@@ -47,6 +48,45 @@ function garanti_jusqu(string $jour): string
 }
 
 
+
+function feries(int $an): array
+{
+    $a = $an % 19; $b = intdiv($an, 100); $c = $an % 100; $d = intdiv($b, 4); $e = $b % 4; $f = intdiv($b + 8, 25);
+    $g = intdiv($b - $f + 1, 3); $h = (19 * $a + $b - $d - $g + 15) % 30; $i = intdiv($c, 4); $k = $c % 4;
+    $l = (32 + 2 * $e + 2 * $i - $h - $k) % 7; $m = intdiv($a + 11 * $h + 22 * $l, 451);
+    $mois = intdiv($h + $l - 7 * $m + 114, 31); $jour = (($h + $l - 7 * $m + 114) % 31) + 1;
+    $paques = new DateTimeImmutable(sprintf('%04d-%02d-%02d 12:00:00', $an, $mois, $jour), new DateTimeZone('Europe/Paris'));
+    $liste = array_map(fn ($x) => "$an-$x", ['01-01', '05-01', '05-08', '07-14', '08-15', '11-01', '11-11', '12-25']);
+    foreach ([1, 39, 50] as $n) $liste[] = $paques->modify("+$n days")->format('Y-m-d');
+    return $liste;
+}
+
+function est_ouvre(string $jour): bool
+{
+    static $f = [];
+    $an = (int) substr($jour, 0, 4);
+    $f[$an] ??= feries($an);
+    $n = (int) (new DateTimeImmutable($jour . ' 12:00:00', new DateTimeZone('Europe/Paris')))->format('N');
+    return $n < 6 && !in_array($jour, $f[$an], true);
+}
+
+
+function heures_ouvrees(int $debutMs, ?int $finMs = null): float
+{
+    $tz = new DateTimeZone('Europe/Paris');
+    $d = (new DateTimeImmutable('@' . intdiv($debutMs, 1000)))->setTimezone($tz);
+    $fin = (new DateTimeImmutable('@' . intdiv($finMs ?? ms(), 1000)))->setTimezone($tz);
+    $h = 0.0;
+    for ($i = 0; $i < 800 && $d < $fin; $i++) {
+        $minuit = $d->setTime(0, 0)->modify('+1 day');
+        $bout = $minuit < $fin ? $minuit : $fin;
+        if (est_ouvre($d->format('Y-m-d'))) $h += ($bout->getTimestamp() - $d->getTimestamp()) / 3600;
+        $d = $minuit;
+    }
+    return $h;
+}
+
+
 function reglage_site(string $cle, $defaut = null)
 {
     $q = bd()->prepare('SELECT valeur FROM site_reglages WHERE cle = ?');
@@ -72,12 +112,27 @@ function ecrire_reglage_site(string $cle, $valeur, string $par = ''): void
 
 function prix_site(): array
 {
+    static $enCours = false;
     $p = reglage_site('prix');
-    if (!is_array($p) || !is_numeric($p['kg'] ?? null)) return ['kg' => PRIX_PAGES, 'depot' => PRIX_PAGES + 3, 'le' => null, 'par' => '', 'historique' => []];
+    if (!is_array($p) || !is_numeric($p['kg'] ?? null)) {
+        return ['kg' => PRIX_PAGES, 'depot' => PRIX_PAGES + ECART_DEPOT, 'le' => null, 'par' => '', 'historique' => [], 'programme' => null];
+    }
+
+    $prog = is_array($p['programme'] ?? null) && jour_valide($p['programme']['jour'] ?? null) && is_numeric($p['programme']['kg'] ?? null) ? $p['programme'] : null;
+    if ($prog && !$enCours && $prog['jour'] <= jour_paris()) {
+        $enCours = true;
+        try {
+            appliquer_prix_programme($prog);
+        } finally {
+            $enCours = false;
+        }
+        return prix_site();
+    }
     $p['kg'] = (float) $p['kg'];
 
-    $p['depot'] = is_numeric($p['depot_regle'] ?? null) ? (float) $p['depot_regle'] : $p['kg'] + 3;
+    $p['depot'] = is_numeric($p['depot_regle'] ?? null) ? (float) $p['depot_regle'] : $p['kg'] + ECART_DEPOT;
     $p['historique'] = is_array($p['historique'] ?? null) ? $p['historique'] : [];
+    $p['programme'] = $prog;
     return $p;
 }
 
@@ -90,17 +145,43 @@ function lire_prix($x): ?float
 }
 
 
-function changer_prix(float $kg, string $par, ?float $depot = null): array
+
+function changer_prix(float $kg, string $par, ?float $depot = null, bool $programme = true): array
 {
-    return transaction(function (PDO $bd) use ($kg, $par, $depot) {
+    return transaction(function (PDO $bd) use ($kg, $par, $depot, $programme) {
         $avant = prix_site();
         $histo = $avant['historique'];
-        array_unshift($histo, ['kg' => $kg, 'le' => iso(), 'par' => coupe($par, 60), 'avant' => $avant['kg']]);
-        $nouveau = ['kg' => $kg, 'depot_regle' => $depot, 'le' => iso(), 'par' => coupe($par, 60), 'historique' => array_slice($histo, 0, 60)];
+        $nouveauDepot = $depot ?? $kg + ECART_DEPOT;
+        if (abs($kg - $avant['kg']) > 0.001 || abs($nouveauDepot - $avant['depot']) > 0.001) {
+            array_unshift($histo, ['kg' => $kg, 'depot' => $nouveauDepot, 'le' => iso(), 'par' => coupe($par, 60), 'avant' => $avant['kg'], 'avant_depot' => $avant['depot']]);
+        }
+        $nouveau = ['kg' => $kg, 'depot_regle' => $depot, 'le' => iso(), 'par' => coupe($par, 60), 'historique' => array_slice($histo, 0, 60),
+            'programme' => $programme ? $avant['programme'] : null];
         ecrire_reglage_site('prix', $nouveau, $par);
-        drapeau_prix((float) $nouveau['kg']);
+        drapeau_prix($kg, $nouveauDepot);
         return [$avant, $nouveau];
     });
+}
+
+
+
+function programmer_prix(?array $prog, string $par): void
+{
+    transaction(function () use ($prog, $par) {
+        $p = prix_site();
+        ecrire_reglage_site('prix', ['kg' => $p['kg'], 'depot_regle' => $p['depot_regle'] ?? null, 'le' => $p['le'], 'par' => $p['par'],
+            'historique' => $p['historique'], 'programme' => $prog ? $prog + ['le' => iso(), 'par' => coupe($par, 60)] : null], $par);
+    });
+}
+
+
+function appliquer_prix_programme(array $prog): void
+{
+    $kg = (float) $prog['kg'];
+    $depot = is_numeric($prog['depot'] ?? null) ? (float) $prog['depot'] : null;
+    [$avant] = changer_prix($kg, (string) ($prog['par'] ?? '') . ' (programmé)', $depot, false);
+    if ($kg > $avant['kg'] + 0.001 && ($prog['prevenir'] ?? true) !== false) programmer_alertes($kg);
+    elseif ($kg < $avant['kg'] - 0.001) annuler_alertes();
 }
 
 
@@ -131,7 +212,8 @@ function lire_annonce(array $b)
     if ((new DateTime($debut))->diff(new DateTime($fin))->days > 62) return 'longue';
     $villes = $type === 'tournee' ? texte($b['villes'] ?? null, 80) : '';
     if ($type === 'tournee' && mb_strlen($villes) < 2) return 'villes';
-    return ['id' => bin2hex(random_bytes(6)), 'type' => $type, 'debut' => $debut, 'fin' => $fin, 'villes' => $villes];
+
+    return ['id' => bin2hex(random_bytes(6)), 'type' => $type, 'debut' => $debut, 'fin' => $fin, 'villes' => $villes, 'tot' => ($b['tot'] ?? false) === true];
 }
 
 function ajouter_annonce(array $a, string $par): array
@@ -164,7 +246,7 @@ function infos_publiques(): array
         'prix' => ['kg' => $p['kg'], 'depot' => $p['depot'], 'depuis' => $p['le'] ? jour_paris((int) strtotime($p['le']) * 1000) : null,
             'garanti_jusqu' => garanti_jusqu($auj)],
         'aujourdhui' => $auj,
-        'annonces' => array_map(fn ($a) => ['type' => $a['type'], 'debut' => $a['debut'], 'fin' => $a['fin'], 'villes' => $a['villes'] ?? ''], array_slice(annonces_actives(), 0, 4)),
+        'annonces' => array_map(fn ($a) => ['type' => $a['type'], 'debut' => $a['debut'], 'fin' => $a['fin'], 'villes' => $a['villes'] ?? '', 'tot' => !empty($a['tot'])], array_slice(annonces_actives(), 0, 4)),
         'google' => !empty((reglage_site('google') ?? [])['client_id']),
     ];
 }
@@ -591,7 +673,7 @@ function resume_du_mois(): void
             . (isset($v['sources']['qr-bac']) ? ' · étiquette de bac (QR code) : ' . $v['sources']['qr-bac'] : '') . '.',
         'Pages les plus lues : ' . (implode(', ', array_map(fn ($p, $n) => ($p === '/' ? 'accueil' : $p) . " ($n)", array_keys(array_slice($v['pages'], 0, 3, true)), array_slice($v['pages'], 0, 3, true))) ?: 'aucune') . '.',
         'Demandes d\'envoi par colis : ' . demandes_du_mois($passe) . ' · abonnés à l\'alerte prix : ' . nombre_abonnes() . '.',
-        'Prix du site : ' . prix_texte(prix_site()['kg']) . ' €/kg.',
+        'Prix du site : ' . prix_texte(prix_site()['depot']) . ' €/kg au dépôt, ' . prix_texte(prix_site()['kg']) . ' €/kg par colis.',
     ];
     $sauve = reglage_site('sauvegarde');
     $le = is_array($sauve) ? (string) ($sauve['le'] ?? '') : '';
@@ -604,9 +686,10 @@ function resume_du_mois(): void
 
 
 
-function drapeau_prix(float $kg): void
+function drapeau_prix(float $kg, ?float $depot = null): void
 {
     $f = dirname(__DIR__, 2) . '/.prix-change';
-    if (abs($kg - PRIX_PAGES) > 0.001) @touch($f);
+
+    if (abs($kg - PRIX_PAGES) > 0.001 || abs(($depot ?? $kg + ECART_DEPOT) - (PRIX_PAGES + ECART_DEPOT)) > 0.001) @touch($f);
     elseif (is_file($f)) @unlink($f);
 }

@@ -7,6 +7,13 @@
 <meta name="referrer" content="no-referrer">
 <title>Gestion – Ain Recycling</title>
 <link rel="icon" href="/favicon.png">
+<link rel="manifest" href="gestion.webmanifest">
+<meta name="theme-color" content="#0e3c8a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gestion">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icone-180.png">
 <link rel="stylesheet" href="gestion.css">
 </head>
 <body>
@@ -51,9 +58,15 @@
 <h1>Bonjour</h1>
 <p class="sous-titre" data-date-du-jour></p>
 <div class="deux">
+<div class="colonne">
 <div class="carte">
 <h2>À faire maintenant</h2>
 <div data-a-faire></div>
+</div>
+<div class="carte">
+<h2>Tes délais, 30 derniers jours</h2>
+<div data-delais></div>
+</div>
 </div>
 <div class="colonne">
 <button type="button" class="carte carte-lien" data-aller="prix"><span class="petit">Prix du jour</span><b class="grand" data-r-prix>…</b><span class="petit" data-r-prix-detail></span></button>
@@ -70,6 +83,11 @@
 <button type="button" data-filtre="en-cours" aria-pressed="true">En cours</button>
 <button type="button" data-filtre="toutes" aria-pressed="false">Toutes</button>
 </div>
+<div class="export">
+<label class="sr" for="x-mois">Mois à télécharger</label>
+<select id="x-mois" data-export-mois></select>
+<button type="button" class="bouton clair petit-b" data-export>Télécharger pour Excel</button>
+</div>
 </div>
 <div class="deux large-gauche">
 <div class="carte sans-marge" data-liste-demandes></div>
@@ -85,21 +103,33 @@
 <h1>Prix du site</h1>
 <div class="deux etroit-gauche">
 <form class="carte" data-form-prix novalidate>
+<label for="p-depot">Au dépôt (€/kg)</label>
+<input id="p-depot" inputmode="decimal" autocomplete="off" required>
 <label for="p-kg">Par colis (€/kg)</label>
-<input id="p-kg" inputmode="decimal" autocomplete="off" required>
-<label for="p-depot">Livré au dépôt (€/kg)</label>
-<input id="p-depot" inputmode="decimal" autocomplete="off">
-<p class="petit">Laisse la case du dépôt vide pour « prix par colis + 3 € ».</p>
+<input id="p-kg" inputmode="decimal" autocomplete="off">
+<p class="petit">Laisse la case du colis vide pour « prix au dépôt − 3 € ».</p>
+<fieldset class="quand">
+<legend>À partir de quand ?</legend>
+<div class="choix" role="group">
+<button type="button" data-quand="maintenant" aria-pressed="true">Tout de suite</button>
+<button type="button" data-quand="premier" aria-pressed="false">Le 1er</button>
+<button type="button" data-quand="autre" aria-pressed="false">Autre date</button>
+</div>
+<div data-quand-date hidden><label for="p-jour">Jour du nouveau prix</label><input id="p-jour" type="date"></div>
+</fieldset>
 <label class="case"><input type="checkbox" data-prevenir checked><span data-prevenir-texte>Prévenir les abonnés à l'alerte prix si le prix monte</span></label>
 <p class="alerte" data-prix-doute hidden></p>
-<button type="submit" class="bouton">Mettre à jour le prix</button>
+<button type="submit" class="bouton" data-prix-bouton>Mettre à jour le prix</button>
 <p class="msg" role="alert" hidden></p>
 <p class="petit">Les demandes déjà faites gardent leur prix garanti.</p>
 </form>
+<div class="colonne">
+<div class="carte" data-programme hidden></div>
 <div class="carte">
-<h2>Ton prix par colis</h2>
+<h2>Ton prix au dépôt</h2>
 <div data-courbe-prix></div>
 <ul class="histo" data-histo-prix></ul>
+</div>
 </div>
 </div>
 </section>
@@ -115,10 +145,14 @@
 <label for="a-fin">Au</label>
 <input id="a-fin" type="date">
 <div data-villes><label for="a-villes">Villes de la tournée</label><input id="a-villes" placeholder="ex. Lyon · Grenoble" maxlength="80"></div>
+<label class="case"><input type="checkbox" id="a-tot"><span>Afficher dès maintenant (sinon : 14 jours avant)</span></label>
 <button type="submit" class="bouton">Ajouter l'annonce</button>
 <p class="msg" role="alert" hidden></p>
 </form>
+<div class="colonne">
+<div class="carte" data-apercu-annonce hidden></div>
 <div class="carte"><h2>En ligne ou à venir</h2><div data-liste-annonces></div></div>
+</div>
 </div>
 </section>
 <section data-vue="visites" hidden>
@@ -162,6 +196,11 @@
 <p class="msg" role="alert" hidden></p>
 <p class="petit">Le fichier contient des pièces d'identité et des IBAN : garde-le sur ton ordinateur, jamais dans un e-mail.</p>
 </form>
+</div>
+<div class="carte haut">
+<h2>Cette page sur ton téléphone</h2>
+<p>Pour l'ouvrir comme une appli, avec son icône à côté de ton appli de bons :</p>
+<p class="petit"><b>iPhone</b> (Safari) : bouton Partager, puis « Sur l'écran d'accueil ».<br><b>Android</b> (Chrome) : menu ⋮, puis « Ajouter à l'écran d'accueil ».</p>
 </div>
 </section>
 </main>

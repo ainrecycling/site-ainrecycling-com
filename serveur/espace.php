@@ -102,6 +102,18 @@ try {
 
 
 
+        case 'POST depot':
+            origine_refusee();
+            $c = compte_connecte();
+            if (!$c) refus('connexion', 401);
+            $b = corps_json() ?? [];
+            $e = envoi_du_compte($c, (string) ($b['reference'] ?? ''));
+            $n = $e ? repondre_depot($e, (string) ($b['reponse'] ?? '')) : null;
+            if (!$n) refus('introuvable', 404);
+            repondre(['envoi' => envoi_visible($n)]);
+
+
+
         case 'DELETE compte':
             origine_refusee();
             $c = compte_connecte();
