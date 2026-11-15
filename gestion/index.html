@@ -69,8 +69,8 @@
 </div>
 </div>
 <div class="colonne">
-<button type="button" class="carte carte-lien" data-aller="prix"><span class="petit">Prix du jour</span><b class="grand" data-r-prix>…</b><span class="petit" data-r-prix-detail></span></button>
-<button type="button" class="carte carte-lien" data-aller="visites"><span class="petit">Pages vues, 30 jours</span><b class="grand" data-r-visites>…</b><span data-r-visites-courbe></span></button>
+<div class="carte tuile" data-tuile="prix"></div>
+<div class="carte tuile" data-tuile="visites"></div>
 <button type="button" class="carte carte-lien" data-aller="annonces"><span class="petit">Annonce en ligne</span><b data-r-annonce>…</b><span class="petit" data-r-annonce-detail></span></button>
 </div>
 </div>
@@ -164,7 +164,6 @@
 </section>
 <section data-vue="reglages" hidden>
 <h1>Réglages</h1>
-<div class="liens-plus"><button type="button" class="bouton clair" data-aller="annonces">Annonces</button><button type="button" class="bouton clair" data-aller="visites">Visites</button></div>
 <div class="deux">
 <div class="colonne">
 <div class="carte">
@@ -205,13 +204,16 @@
 </section>
 </main>
 <nav class="barre-bas" aria-label="Menu">
-<button type="button" data-aller="aujourdhui" aria-current="page">Aujourd'hui<span class="pastille-n" data-n="afaire" hidden></span></button>
-<button type="button" data-aller="demandes">Demandes</button>
-<button type="button" data-aller="messages">Messages<span class="pastille-n" data-n="messages" hidden></span></button>
-<button type="button" data-aller="prix">Prix</button>
-<button type="button" data-aller="reglages">Réglages</button>
+<button type="button" data-aller="aujourdhui" aria-current="page"><svg class="icone" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/><path d="M10 20v-6h4v6"/></svg><span class="nom">Aujourd'hui</span><span class="pastille-n" data-n="afaire" hidden></span></button>
+<button type="button" data-aller="demandes"><svg class="icone" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3 3.5 7.5v9L12 21l8.5-4.5v-9z"/><path d="M3.5 7.5 12 12l8.5-4.5"/><path d="M12 12v9"/></svg><span class="nom">Demandes</span></button>
+<button type="button" data-aller="messages"><svg class="icone" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg><span class="nom">Messages</span><span class="pastille-n" data-n="messages" hidden></span></button>
+<button type="button" data-aller="prix"><svg class="icone" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5a4.5 4.5 0 1 0 0 7"/><path d="M7.5 11h6"/><path d="M7.5 13.5h6"/></svg><span class="nom">Prix</span></button>
+<button type="button" data-aller="annonces"><svg class="icone" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 10v4h3l8 4V6l-8 4z"/><path d="M17.5 9a4 4 0 0 1 0 6"/><path d="M7 14.5V19h3v-3"/></svg><span class="nom">Annonces</span></button>
+<button type="button" data-aller="visites"><svg class="icone" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 4v16h16"/><path d="M8.5 16v-4"/><path d="M12.5 16V8"/><path d="M16.5 16v-6"/></svg><span class="nom">Visites</span></button>
+<button type="button" data-aller="reglages"><svg class="icone" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h10"/><path d="M18 7h2"/><circle cx="16" cy="7" r="2"/><path d="M4 17h2"/><path d="M10 17h10"/><circle cx="8" cy="17" r="2"/></svg><span class="nom">Réglages</span></button>
 </nav>
 </div>
+<div class="aide-bulle" id="aide-bulle" role="tooltip" hidden></div>
 <p class="bulle" data-bulle role="status" hidden></p>
 <dialog id="visionneuse" aria-label="Photo">
 <form method="dialog"><button class="lien">Fermer</button></form>
