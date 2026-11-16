@@ -606,7 +606,7 @@ function visites_resume(): array
 function demandes_du_mois(string $mois): int
 {
 
-    $q = bd()->prepare('SELECT COUNT(*) FROM espace_envois WHERE cree_le LIKE ?');
+    $q = bd()->prepare('SELECT COUNT(*) FROM espace_envois e JOIN espace_comptes c ON c.id = e.compte WHERE e.cree_le LIKE ? AND c.test_le IS NULL');
     $q->execute([$mois . '-%']);
     return (int) $q->fetchColumn();
 }

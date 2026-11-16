@@ -21,9 +21,10 @@ try {
 
     switch ("$methode $chemin") {
 
+
         case 'GET demandes':
             $etat = in_array($_GET['etat'] ?? '', ['a_traiter', 'toutes'], true) ? $_GET['etat'] : 'en_cours';
-            repondre(['envois' => demandes_pour_malik($etat)]);
+            repondre(['envois' => demandes_pour_malik($etat, true)]);
 
 
 

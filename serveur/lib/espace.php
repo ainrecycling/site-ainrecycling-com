@@ -182,7 +182,9 @@ function compte_depuis_ligne(array $l): array
     $c = ['piece' => $piece, 'rib' => $rib, 'langue' => langue_de($l['langue']), 'vendeur_id' => $l['vendeur_id'] ?: null,
         'prevenir' => in_array($l['prevenir'] ?? '', PREVENIR, true) ? (string) $l['prevenir'] : 'email',
         'archive_le' => ($l['archive_le'] ?? null) ?: null, 'rappel_piece' => ($l['rappel_piece'] ?? null) ?: null,
-        'rib_maj_le' => ($l['rib_maj_le'] ?? null) ?: null];
+        'rib_maj_le' => ($l['rib_maj_le'] ?? null) ?: null,
+
+        'test_le' => ($l['test_le'] ?? null) ?: null];
     foreach (['id', 'email', 'cree_le', 'vu_le', 'maj_le', 'profil', 'nom', 'prenom', 'entreprise', 'siret', 'telephone', 'adresse', 'cp', 'ville'] as $k) $c[$k] = (string) $l[$k];
     return $c;
 }
@@ -286,7 +288,15 @@ function compte_visible(array $c): array
         'rib' => $c['rib'] ? ['titulaire' => $c['rib']['titulaire'], 'iban' => substr($iban, 0, 4) . ' •••• ' . substr($iban, -4)] : null,
         'rib_autre' => rib_autre_personne($c),
         'manque' => manques($c), 'prevenir' => $c['prevenir'] ?? 'email', 'cree_le' => $c['cree_le'],
+        'test' => est_test($c),
     ];
+}
+
+
+
+function est_test(array $c): bool
+{
+    return !empty($c['test_le']);
 }
 
 
@@ -519,7 +529,7 @@ function lire_envoi(string $id): ?array
 function envoi_visible(array $e): array
 {
     return ['reference' => $e['reference'], 'cree_le' => $e['cree_le'], 'colis' => $e['colis'], 'total' => $e['total'],
-        'paiement' => $e['paiement'], 'traite_le' => $e['traite_le'], 'prix_kg' => $e['prix_kg'] ?? null, 'garanti_jusqu' => $e['garanti_jusqu'] ?? null,
+        'paiement' => $e['paiement'], 'message' => $e['message'] ?? '', 'traite_le' => $e['traite_le'], 'prix_kg' => $e['prix_kg'] ?? null, 'garanti_jusqu' => $e['garanti_jusqu'] ?? null,
         'recu_le' => $e['recu_le'] ?? null, 'pese_le' => $e['pese_le'] ?? null, 'poids_brut' => $e['poids_brut'] ?? null,
         'poids_net' => $e['poids_net'] ?? null, 'paye_le' => $e['paye_le'] ?? null, 'montant' => $e['montant'] ?? null,
         'bon_numero' => $e['bon_numero'] ?? null, 'bon_redemande_le' => $e['bon_redemande_le'] ?? null,
@@ -551,6 +561,38 @@ function creer_envoi(array $e): void
             $e['reference'] = reference_envoi();
         }
     }
+}
+
+
+function lire_colis($brut): ?array
+{
+    $brut = is_array($brut) ? array_slice(array_values($brut), 0, COLIS_MAX + 1) : [];
+    $colis = array_map(fn ($x) => [
+        'matiere' => is_array($x) && in_array($x['matiere'] ?? null, MATIERES, true) ? $x['matiere'] : '',
+        'poids' => is_array($x) && is_numeric($x['poids'] ?? null) ? round((float) $x['poids'] * 10) / 10 : 0.0,
+    ], $brut);
+    if (!$colis || count($colis) > COLIS_MAX) return null;
+    foreach ($colis as $x) if ($x['matiere'] === '' || !($x['poids'] > 0) || $x['poids'] > KG_PAR_COLIS) return null;
+    return $colis;
+}
+
+
+
+function modifier_envoi(array $e, array $colis, string $paiement, string $message): ?array
+{
+    bd()->prepare('UPDATE espace_envois SET colis = ?, total = ?, paiement = ?, message = ? WHERE id = ?')
+        ->execute([json_encode($colis, JSON_UNESCAPED_UNICODE), round(array_sum(array_column($colis, 'poids')) * 10) / 10,
+            $paiement, $message, $e['id']]);
+    return lire_envoi($e['id']);
+}
+
+
+function supprimer_envoi(array $e): void
+{
+    transaction(function (PDO $bd) use ($e) {
+        $bd->prepare('DELETE FROM site_mails WHERE envoi = ?')->execute([$e['id']]);
+        $bd->prepare('DELETE FROM espace_envois WHERE id = ?')->execute([$e['id']]);
+    });
 }
 
 
@@ -603,7 +645,9 @@ function retards(): array
 {
     $r = [];
     $h = fn (string $iso): float => heures_ouvrees((int) (strtotime($iso) * 1000));
-    foreach (bd()->query('SELECT reference, cree_le, traite_le, accord_le FROM espace_envois WHERE paye_le IS NULL')->fetchAll() as $l) {
+
+    foreach (bd()->query('SELECT e.reference, e.cree_le, e.traite_le, e.accord_le FROM espace_envois e JOIN espace_comptes c ON c.id = e.compte
+        WHERE e.paye_le IS NULL AND c.test_le IS NULL')->fetchAll() as $l) {
         if (!$l['traite_le'] && $h($l['cree_le']) > DELAI_ETIQUETTE_H) {
             $r[] = 'Étiquette à envoyer pour ' . $l['reference'] . ' : la demande attend depuis ' . round($h($l['cree_le'])) . ' h (promis : 24 h).';
         }
@@ -675,6 +719,7 @@ function client_pour_malik(array $c): array
         'entreprise' => $c['entreprise'], 'siret' => $c['siret'], 'telephone' => $c['telephone'], 'adresse' => $c['adresse'],
         'cp' => $c['cp'], 'ville' => $c['ville'], 'rib' => $c['rib'], 'vendeur_id' => $c['vendeur_id'], 'langue' => $c['langue'],
         'rib_maj_le' => $c['rib_maj_le'] ?? null, 'rib_autre' => rib_autre_personne($c), 'cree_le' => $c['cree_le'],
+        'test' => est_test($c),
         'piece' => $p ? ['type' => $p['type'], 'numero' => $p['numero'], 'expiration' => $p['expiration'], 'recto' => (bool) $p['recto'],
             'verso' => (bool) $p['verso'], 'depose_le' => $p['depose_le']] : null,
     ];
@@ -682,7 +727,9 @@ function client_pour_malik(array $c): array
 
 
 
-function demandes_pour_malik(string $etat): array
+
+
+function demandes_pour_malik(string $etat, bool $sans_test = false): array
 {
     $ou = $etat === 'a_traiter' ? 'WHERE traite_le IS NULL' : ($etat === 'en_cours' ? 'WHERE bon_numero IS NULL' : '');
     $ordre = $etat === 'toutes' ? 'DESC' : 'ASC';
@@ -693,11 +740,45 @@ function demandes_pour_malik(string $etat): array
     $r = [];
     foreach ($envois as $e) {
         $comptes[$e['compte']] ??= lire_compte($e['compte']);
-        if ($comptes[$e['compte']]) {
+        if ($comptes[$e['compte']] && !($sans_test && est_test($comptes[$e['compte']]))) {
             $r[] = $e + ['client' => client_pour_malik($comptes[$e['compte']]), 'mails' => $mails[$e['id']] ?? [], 'colis_en_retard' => colis_en_retard($e)];
         }
     }
     return $r;
+}
+
+
+
+
+function comptes_pour_malik(): array
+{
+    $nombres = [];
+    foreach (bd()->query('SELECT compte, COUNT(*) AS n, SUM(CASE WHEN paye_le IS NOT NULL THEN 1 ELSE 0 END) AS payees, MAX(cree_le) AS derniere
+        FROM espace_envois GROUP BY compte')->fetchAll() as $l) $nombres[$l['compte']] = $l;
+    $r = [];
+    foreach (bd()->query('SELECT * FROM espace_comptes ORDER BY cree_le DESC LIMIT 500')->fetchAll() as $l) {
+        $c = compte_depuis_ligne($l);
+        $p = $c['piece'];
+        $n = $nombres[$c['id']] ?? null;
+        $ferme = (bool) $c['archive_le'];
+        $r[] = [
+            'id' => $c['id'], 'email' => $ferme ? '' : $c['email'], 'profil' => $c['profil'], 'nom' => $c['nom'], 'prenom' => $c['prenom'],
+            'entreprise' => $c['entreprise'], 'telephone' => $c['telephone'], 'cp' => $c['cp'], 'ville' => $c['ville'],
+            'cree_le' => $c['cree_le'], 'vu_le' => $c['vu_le'], 'ferme_le' => $c['archive_le'], 'test' => est_test($c),
+            'manque' => $ferme ? [] : manques($c), 'piece' => (bool) $p, 'piece_expiration' => (string) ($p['expiration'] ?? ''),
+            'rib' => (bool) $c['rib'],
+            'demandes' => (int) ($n['n'] ?? 0), 'ventes' => (int) ($n['payees'] ?? 0), 'derniere_demande' => $n['derniere'] ?? null,
+        ];
+    }
+    return $r;
+}
+
+
+function marquer_test(string $id, bool $oui): bool
+{
+    if (!lire_compte($id)) return false;
+    bd()->prepare('UPDATE espace_comptes SET test_le = ? WHERE id = ?')->execute([$oui ? iso() : null, $id]);
+    return true;
 }
 
 const ETAPES_A_PREVENIR = ['traite', 'recu', 'pese', 'paye'];

@@ -175,13 +175,8 @@ try {
             if (manques($c)) refus('incomplet');
             $b = corps_json();
             if (!$b) refus('illisible');
-            $brut = is_array($b['colis'] ?? null) ? array_slice(array_values($b['colis']), 0, COLIS_MAX + 1) : [];
-            $colis = array_map(fn ($x) => [
-                'matiere' => is_array($x) && in_array($x['matiere'] ?? null, MATIERES, true) ? $x['matiere'] : '',
-                'poids' => is_array($x) && is_numeric($x['poids'] ?? null) ? round((float) $x['poids'] * 10) / 10 : 0.0,
-            ], $brut);
-            if (!$colis || count($colis) > COLIS_MAX) refus('colis');
-            foreach ($colis as $x) if ($x['matiere'] === '' || !($x['poids'] > 0) || $x['poids'] > KG_PAR_COLIS) refus('colis');
+            $colis = lire_colis($b['colis'] ?? null);
+            if (!$colis) refus('colis');
             $paiement = ($b['paiement'] ?? '') === 'Chèque' ? 'Chèque' : 'Virement';
             if ($paiement === 'Virement' && !$c['rib']) refus('rib');
             if (($b['attestation'] ?? null) !== true) refus('attestation');
@@ -203,6 +198,36 @@ try {
             apres_reponse(fn () => mail_nouvelle_demande($c, $e));
             apres_reponse(fn () => mail_envoi_recu($c, $e));
             repondre(['envoi' => envoi_visible($e)]);
+
+
+
+        case 'PUT envoi':
+            origine_refusee();
+            $c = compte_connecte();
+            if (!$c) refus('connexion', 401);
+            if (!est_test($c)) refus('reserve', 403);
+            $b = corps_json();
+            if (!$b) refus('illisible');
+            $e = envoi_du_compte($c, (string) ($b['reference'] ?? ''));
+            if (!$e) refus('introuvable', 404);
+            $colis = lire_colis($b['colis'] ?? null);
+            if (!$colis) refus('colis');
+            $paiement = ($b['paiement'] ?? '') === 'Chèque' ? 'Chèque' : 'Virement';
+            if ($paiement === 'Virement' && !$c['rib']) refus('rib');
+            $n = modifier_envoi($e, $colis, $paiement, coupe(trim(is_string($b['message'] ?? null) ? $b['message'] : ''), 600));
+            if (!$n) refus('introuvable', 404);
+            repondre(['envoi' => envoi_visible($n)]);
+
+
+        case 'DELETE envoi':
+            origine_refusee();
+            $c = compte_connecte();
+            if (!$c) refus('connexion', 401);
+            if (!est_test($c)) refus('reserve', 403);
+            $e = envoi_du_compte($c, (string) ($_GET['reference'] ?? ''));
+            if (!$e) refus('introuvable', 404);
+            supprimer_envoi($e);
+            repondre(['ok' => true, 'envois' => array_map('envoi_visible', envois_du($c['id']))]);
 
 
         case 'GET google':

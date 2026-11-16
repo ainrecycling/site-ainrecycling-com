@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 
 
-const SCHEMA_VERSION = 6;
+const SCHEMA_VERSION = 7;
 
 
 function prive(): string
@@ -179,6 +179,10 @@ function migrer(PDO $bd): void
         . ($mysql ? ', INDEX site_mails_envoi (envoi)' : '') . "
     )$fin");
     if (!$mysql) $bd->exec('CREATE INDEX IF NOT EXISTS site_mails_envoi ON site_mails (envoi)');
+
+
+
+    ajouter_colonnes($bd, 'espace_comptes', ['test_le' => 'VARCHAR(30) NULL']);
     @file_put_contents($drapeau, gmdate('c'));
 }
 

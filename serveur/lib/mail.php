@@ -322,11 +322,14 @@ function mail_nouvelle_demande(array $c, array $e): void
         $lignes[] = 'Prix garanti : ' . prix_texte((float) $e['prix_kg']) . " €/kg jusqu'au " . date_longue((string) $e['garanti_jusqu'], 'fr') . '.';
     }
     if ($e['message'] !== '') $lignes[] = 'Message : « ' . $e['message'] . ' »';
+
+    $test = !empty($c['test_le']);
+    if ($test) array_unshift($lignes, 'ESSAI : cette demande vient de ton compte de test. Elle ne compte pas dans tes tâches, tes délais ni ton appli.');
     $lien = adresse_site() . '/gestion/#' . $e['reference'];
     $html = implode('', array_map(fn ($l) => '<p style="margin:0 0 10px">' . echapper($l) . '</p>', $lignes))
         . bouton_mail('Voir la demande', $lien)
         . '<p style="margin:10px 0 0;font-size:14px;color:#475467">Pièce d\'identité, RIB et étiquette : sur ta page des demandes.</p>';
-    envoyer_mail($a, "📦 Demande d'envoi " . $e['reference'] . " : $nom", mail_cadre('fr', $html), implode("\n\n", [...$lignes, "Pièce d'identité, RIB et étiquette : $lien"]));
+    envoyer_mail($a, ($test ? '🧪 ESSAI · ' : '📦 ') . "Demande d'envoi " . $e['reference'] . " : $nom", mail_cadre('fr', $html), implode("\n\n", [...$lignes, "Pièce d'identité, RIB et étiquette : $lien"]));
 }
 
 

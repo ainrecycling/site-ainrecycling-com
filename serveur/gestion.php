@@ -104,6 +104,22 @@ try {
             repondre(['envoi' => $e, 'whatsapp' => prevenir_etape($e, $action)]);
 
 
+        case 'GET comptes':
+            exiger_admin();
+            repondre(['comptes' => comptes_pour_malik()]);
+
+
+
+        case 'POST comptes':
+            origine_refusee();
+            exiger_admin();
+            $b = corps_json() ?? [];
+            $action = (string) ($b['action'] ?? '');
+            if (!in_array($action, ['test', 'sans_test'], true)) refus('action');
+            if (!marquer_test((string) ($b['compte'] ?? ''), $action === 'test')) refus('introuvable', 404);
+            repondre(['comptes' => comptes_pour_malik()]);
+
+
 
         case 'GET reglages':
             exiger_admin();
