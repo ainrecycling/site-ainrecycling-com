@@ -184,13 +184,18 @@ try {
             if (($b['conditions'] ?? null) !== true) refus('conditions');
             $hier = iso(ms() - 86400000);
             if (count(array_filter(envois_du($c['id']), fn ($e) => $e['cree_le'] > $hier)) >= ENVOIS_PAR_JOUR) refus('trop', 429);
+
+
+            $transport = ($b['transport'] ?? '') === 'vendeur' ? 'vendeur' : 'offert';
+            $prix = prix_site();
             $e = [
                 'id' => uuid(), 'reference' => reference_envoi(), 'compte' => $c['id'], 'cree_le' => iso(), 'colis' => $colis,
                 'total' => round(array_sum(array_column($colis, 'poids')) * 10) / 10, 'paiement' => $paiement,
                 'message' => coupe(trim(is_string($b['message'] ?? null) ? $b['message'] : ''), 600),
-                'traite_le' => null, 'traite_par' => '', 'bon_numero' => null, 'bon_le' => null,
+                'traite_le' => $transport === 'vendeur' ? iso() : null, 'traite_par' => $transport === 'vendeur' ? 'transport du vendeur' : '',
+                'bon_numero' => null, 'bon_le' => null, 'transport' => $transport,
 
-                'prix_kg' => prix_site()['kg'], 'garanti_jusqu' => garanti_jusqu(jour_paris()),
+                'prix_kg' => $transport === 'vendeur' ? (float) ($prix['depot'] ?? ($prix['kg'] + 3)) : $prix['kg'], 'garanti_jusqu' => garanti_jusqu(jour_paris()),
                 'cgv_version' => CGV_VERSION, 'cgv_le' => iso(),
             ];
             creer_envoi($e);
@@ -228,6 +233,26 @@ try {
             if (!$e) refus('introuvable', 404);
             supprimer_envoi($e);
             repondre(['ok' => true, 'envois' => array_map('envoi_visible', envois_du($c['id']))]);
+
+
+
+        case 'POST suivi':
+            origine_refusee();
+            $c = compte_connecte();
+            if (!$c) refus('connexion', 401);
+            $b = corps_json();
+            if (!$b) refus('illisible');
+            $e = envoi_du_compte($c, (string) ($b['reference'] ?? ''));
+            if (!$e) refus('introuvable', 404);
+            if ($e['transport'] !== 'vendeur' || ($e['recu_le'] ?? null)) refus('transport', 403);
+            $suivis = lire_suivis($b['suivis'] ?? null, max(1, count($e['colis'])));
+            if ($suivis === null) refus('suivi');
+            if (!sous_la_limite('suivi:' . substr(hash('sha256', $c['id']), 0, 24), SUIVIS_PAR_JOUR)) refus('trop', 429);
+            $premier = !$e['suivis'] && $suivis;
+            $n = noter_suivis($e, $suivis);
+            if (!$n) refus('introuvable', 404);
+            if ($premier && !est_test($c)) apres_reponse(fn () => mail_suivi($c, $n));
+            repondre(['envoi' => envoi_visible($n)]);
 
 
 

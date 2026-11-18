@@ -24,7 +24,9 @@ const PREVENIR = ['email', 'whatsapp', 'les-deux'];
 
 
 
-const CGV_VERSION = '2026-11-13-2';
+
+
+const CGV_VERSION = '2026-11-18';
 const JOURS_COLIS_ATTENDU = 6;
 const LIEN_MINUTES = 10;
 
@@ -484,6 +486,9 @@ function envoi_depuis_ligne(array $l): array
         'depot_reponse' => ($l['depot_reponse'] ?? null) ?: null, 'depot_repondu_le' => ($l['depot_repondu_le'] ?? null) ?: null,
         'retard' => array_filter((array) json_decode((string) ($l['retard'] ?? ''), true), 'is_string'),
         'avis' => avis_de_ligne($l),
+
+        'transport' => ($l['transport'] ?? '') === 'vendeur' ? 'vendeur' : 'offert',
+        'suivis' => array_values(array_filter((array) json_decode((string) ($l['suivis'] ?? ''), true), 'is_string')),
     ];
 }
 
@@ -527,6 +532,31 @@ function noter_avis(array $e, ?array $a): ?array
 {
     bd()->prepare('UPDATE espace_envois SET avis_note = ?, avis_plus = ?, avis_texte = ?, avis_public = ?, avis_le = ?, avis_affiche_le = NULL WHERE id = ?')
         ->execute($a ? [$a['note'], implode(',', $a['plus']), $a['texte'], $a['public'] ? 1 : 0, iso(), $e['id']] : [null, null, null, null, null, $e['id']]);
+    return lire_envoi($e['id']);
+}
+
+
+const SUIVIS_PAR_JOUR = 20;
+
+
+function lire_suivis($x, int $max): ?array
+{
+    if (!is_array($x)) return null;
+    $r = [];
+    foreach ($x as $s) {
+        if (!is_string($s)) return null;
+        $s = strtoupper(trim((string) preg_replace('/\s+/', ' ', $s)));
+        if ($s === '') continue;
+        if (!preg_match('/^[A-Z0-9][A-Z0-9 \-]{4,38}[A-Z0-9]$/', $s)) return null;
+        $r[] = $s;
+    }
+    $r = array_values(array_unique($r));
+    return count($r) > $max ? null : $r;
+}
+
+function noter_suivis(array $e, array $suivis): ?array
+{
+    bd()->prepare('UPDATE espace_envois SET suivis = ? WHERE id = ?')->execute([$suivis ? json_encode($suivis) : null, $e['id']]);
     return lire_envoi($e['id']);
 }
 
@@ -676,7 +706,7 @@ function envoi_visible(array $e): array
         'poids_net' => $e['poids_net'] ?? null, 'paye_le' => $e['paye_le'] ?? null, 'montant' => $e['montant'] ?? null,
         'bon_numero' => $e['bon_numero'] ?? null, 'bon_redemande_le' => $e['bon_redemande_le'] ?? null,
         'accord_le' => $e['accord_le'] ?? null, 'depot_reponse' => $e['depot_reponse'] ?? null, 'depot_question' => question_depot($e),
-        'avis' => $e['avis'] ?? null];
+        'avis' => $e['avis'] ?? null, 'transport' => $e['transport'] ?? 'offert', 'suivis' => $e['suivis'] ?? []];
 }
 
 
@@ -692,11 +722,11 @@ function creer_envoi(array $e): void
 {
     for ($essai = 0; ; $essai++) {
         try {
-            bd()->prepare('INSERT INTO espace_envois (id, reference, compte, cree_le, colis, total, paiement, message, traite_le, traite_par, prix_kg, garanti_jusqu, cgv_version, cgv_le)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, \'\', ?, ?, ?, ?)')
+            bd()->prepare('INSERT INTO espace_envois (id, reference, compte, cree_le, colis, total, paiement, message, traite_le, traite_par, prix_kg, garanti_jusqu, cgv_version, cgv_le, transport)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
                 ->execute([$e['id'], $e['reference'], $e['compte'], $e['cree_le'], json_encode($e['colis'], JSON_UNESCAPED_UNICODE),
-                    $e['total'], $e['paiement'], $e['message'], $e['prix_kg'] ?? null, $e['garanti_jusqu'] ?? null,
-                    $e['cgv_version'] ?? null, $e['cgv_le'] ?? null]);
+                    $e['total'], $e['paiement'], $e['message'], $e['traite_le'] ?? null, $e['traite_par'] ?? '', $e['prix_kg'] ?? null, $e['garanti_jusqu'] ?? null,
+                    $e['cgv_version'] ?? null, $e['cgv_le'] ?? null, ($e['transport'] ?? '') === 'vendeur' ? 'vendeur' : null]);
             return;
         } catch (PDOException $x) {
 

@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 
 
-const SCHEMA_VERSION = 8;
+const SCHEMA_VERSION = 9;
 
 
 function prive(): string
@@ -191,6 +191,11 @@ function migrer(PDO $bd): void
 
     ajouter_colonnes($bd, 'espace_envois', ['avis_note' => 'INTEGER NULL', 'avis_plus' => 'VARCHAR(120) NULL', 'avis_texte' => 'TEXT NULL',
         'avis_public' => 'INTEGER NULL', 'avis_le' => 'VARCHAR(30) NULL', 'avis_affiche_le' => 'VARCHAR(30) NULL']);
+
+
+
+
+    ajouter_colonnes($bd, 'espace_envois', ['transport' => 'VARCHAR(10) NULL', 'suivis' => 'TEXT NULL']);
     @file_put_contents($drapeau, gmdate('c'));
 }
 

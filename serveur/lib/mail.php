@@ -261,10 +261,36 @@ const MAIL_CGV = [
     'es' => 'Con esta solicitud ha aceptado nuestras condiciones de venta (en francés):',
 ];
 
+
+const ADRESSE_ENVOI = 'Ain Recycling, 1 rue des Prairies, 01460 Port';
+const MAIL_ENVOI_VENDEUR = [
+    'fr' => ['etape1' => '{b}Expédiez{/b} votre colis à vos frais à : {adresse}. Livraison en point relais possible : demandez-nous lequel',
+        'etape2' => '{b}Glissez{/b} le bordereau dans le colis, puis notez votre numéro de suivi dans votre compte',
+        'garanti2' => "pour un colis remis au transporteur au plus tard ce jour-là. C'est le prix livré au dépôt : le transport est à vos frais."],
+    'de' => ['etape1' => '{b}Versenden{/b} Sie Ihr Paket auf eigene Kosten an: {adresse}. Lieferung an einen Paketshop möglich: Fragen Sie uns, an welchen',
+        'etape2' => '{b}Legen{/b} Sie den Begleitschein ins Paket und tragen Sie Ihre Sendungsnummer in Ihrem Konto ein',
+        'garanti2' => 'für ein Paket, das spätestens an diesem Tag dem Transporteur übergeben wird. Das ist der Preis „im Lager angeliefert“: Der Transport geht auf Ihre Kosten.'],
+    'en' => ['etape1' => '{b}Ship{/b} your parcel at your own expense to: {adresse}. Delivery to a pick-up point is possible: ask us which one',
+        'etape2' => '{b}Put{/b} the slip inside the parcel, then enter your tracking number in your account',
+        'garanti2' => 'for a parcel handed to the carrier by that day at the latest. This is the “delivered to our depot” price: shipping is at your expense.'],
+    'it' => ['etape1' => '{b}Spedite{/b} il pacco a vostre spese a: {adresse}. Consegna in un punto di ritiro possibile: chiedeteci quale',
+        'etape2' => '{b}Inserite{/b} la distinta nel pacco, poi indicate il numero di tracciamento nel vostro account',
+        'garanti2' => 'per un pacco consegnato al corriere entro quel giorno. È il prezzo «consegnato al deposito»: il trasporto è a vostre spese.'],
+    'es' => ['etape1' => '{b}Envíe{/b} su paquete por su cuenta a: {adresse}. Entrega en un punto de recogida posible: pregúntenos cuál',
+        'etape2' => '{b}Meta{/b} el albarán en el paquete y anote su número de seguimiento en su cuenta',
+        'garanti2' => 'para un paquete entregado al transportista como muy tarde ese día. Es el precio «entregado en el depósito»: el transporte corre por su cuenta.'],
+];
+
 function mail_envoi_recu(array $c, array $e): void
 {
     $l = langue_mail($c['langue'] ?? 'fr');
     $t = MAIL_ENVOI[$l];
+
+    if (($e['transport'] ?? '') === 'vendeur') {
+        $tv = MAIL_ENVOI_VENDEUR[$l] ?? MAIL_ENVOI_VENDEUR['fr'];
+        $t['etapes'] = [remplir($tv['etape1'], ['adresse' => ADRESSE_ENVOI]), $tv['etape2'], $t['etapes'][2], $t['etapes'][3]];
+        $t['garanti2'] = $tv['garanti2'];
+    }
     $paiement = $e['paiement'] === 'Chèque' ? $t['cheque'] : $t['virement'];
     $v = ['ref' => $e['reference'], 'prenom' => $c['prenom'], 'n' => (string) count($e['colis']), 'kg' => kg_texte((float) $e['total'], $l), 'paiement' => $paiement];
     $prix = $e['prix_kg'] ?? null;
@@ -322,6 +348,7 @@ function mail_nouvelle_demande(array $c, array $e): void
         $lignes[] = 'Prix garanti : ' . prix_texte((float) $e['prix_kg']) . " €/kg jusqu'au " . date_longue((string) $e['garanti_jusqu'], 'fr') . '.';
     }
     if ($e['message'] !== '') $lignes[] = 'Message : « ' . $e['message'] . ' »';
+    if (($e['transport'] ?? '') === 'vendeur') $lignes[] = 'TRANSPORT À SES FRAIS : pas d\'étiquette à envoyer. Il expédie lui-même (' . ADRESSE_ENVOI . '), au prix livré au dépôt, et notera son numéro de suivi dans son compte.';
 
     $test = !empty($c['test_le']);
     if ($test) array_unshift($lignes, 'ESSAI : cette demande vient de ton compte de test. Elle ne compte pas dans tes tâches, tes délais ni ton appli.');
@@ -607,6 +634,19 @@ function mail_etape(array $c, array $e, string $etape): void
         $suite = "\n\n" . $m['avis'][1] . ' ' . $m['avis'][0] . ' : ' . $lien_avis;
     }
     envoyer_mail($c['email'], $sujet, mail_cadre($langue, $html), remplir($m['bonjour'], $v) . "\n\n" . $texte . "\n\n" . $m['bouton'] . ' : ' . $lien . $suite . "\n\n" . pied_texte($langue), [], [], [], $e['id'] ?? null);
+}
+
+
+function mail_suivi(array $c, array $e): void
+{
+    $a = (string) reglage('mail_admin', '');
+    if ($a === '' || empty($e['suivis'])) return;
+    $personne = trim($c['prenom'] . ' ' . majuscules($c['nom']));
+    $lignes = [$personne . ' a expédié son colis à ses frais (' . $e['reference'] . ', ' . count($e['colis']) . ' colis, ' . kg_texte((float) $e['total']) . ' kg environ).',
+        'Numéro' . (count($e['suivis']) > 1 ? 's' : '') . ' de suivi : ' . implode(' · ', $e['suivis'])];
+    $lien = adresse_site() . '/gestion/#' . $e['reference'];
+    $html = implode('', array_map(fn ($x) => '<p style="margin:0 0 10px">' . echapper($x) . '</p>', $lignes)) . bouton_mail('Voir la demande', $lien);
+    envoyer_mail($a, '🚚 Colis expédié : ' . $personne . ' (' . $e['reference'] . ')', mail_cadre('fr', $html), implode("\n\n", [...$lignes, "Voir la demande : $lien"]));
 }
 
 
