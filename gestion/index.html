@@ -31,7 +31,11 @@
 </div>
 <div data-etape="code" hidden>
 <label for="g-code">Code reçu sur <span data-email></span></label>
-<input id="g-code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="123 456" required>
+<div class="code-cases">
+<input id="g-code" inputmode="numeric" autocomplete="one-time-code" maxlength="12" spellcheck="false" required aria-describedby="g-code-aide">
+<span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+</div>
+<p class="petit" id="g-code-aide">Tape ou colle les 6 chiffres : la connexion se fait toute seule.</p>
 <button type="submit" class="bouton">Se connecter</button>
 <button type="button" class="lien" data-autre>Autre adresse</button>
 </div>
@@ -171,8 +175,18 @@
 <section data-vue="visites" hidden>
 <h1>Visites</h1>
 <div class="deux large-gauche">
-<div class="carte"><span class="petit">30 derniers jours</span><b class="grand" data-v-total>…</b><div data-v-courbe></div><p class="petit" data-v-visiteurs></p></div>
-<div class="carte"><h2>Pages les plus lues</h2><div data-v-pages></div><h2 class="haut">D'où viennent les gens</h2><div data-v-sources></div></div>
+<div class="carte">
+<div class="tendance-tete">
+<div><span class="petit" data-v-periode>30 derniers jours</span><div class="tendance-total"><b class="grand" data-v-total>…</b><span data-v-ecart></span></div></div>
+<div class="choix" role="group" aria-label="Période affichée" data-v-choix><button type="button" data-jours="7" aria-pressed="false">7 j</button><button type="button" data-jours="14" aria-pressed="false">14 j</button><button type="button" data-jours="30" aria-pressed="true">30 j</button></div>
+</div>
+<div data-v-courbe></div>
+<p class="petit tendance-lu" data-v-lu aria-live="polite"></p>
+<button type="button" class="lien" data-v-tableau aria-expanded="false" aria-controls="v-table">Voir en tableau</button>
+<div class="tendance-table-boite" id="v-table" data-v-table hidden></div>
+<p class="petit" data-v-visiteurs></p>
+</div>
+<div class="carte"><p class="petit">Sur les 30 derniers jours</p><h2>Pages les plus lues</h2><div data-v-pages></div><h2 class="haut">D'où viennent les gens</h2><div data-v-sources></div></div>
 </div>
 </section>
 <section data-vue="reglages" hidden>
