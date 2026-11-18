@@ -483,7 +483,149 @@ function envoi_depuis_ligne(array $l): array
         'accord_le' => ($l['accord_le'] ?? null) ?: null, 'accord_par' => (string) ($l['accord_par'] ?? ''),
         'depot_reponse' => ($l['depot_reponse'] ?? null) ?: null, 'depot_repondu_le' => ($l['depot_repondu_le'] ?? null) ?: null,
         'retard' => array_filter((array) json_decode((string) ($l['retard'] ?? ''), true), 'is_string'),
+        'avis' => avis_de_ligne($l),
     ];
+}
+
+
+
+
+const AVIS_PLUS = ['paiement', 'prix', 'pesee', 'reponse', 'simple'];
+const AVIS_TEXTE_MAX = 600, AVIS_PAR_JOUR = 12;
+
+
+function avis_de_ligne(array $l): ?array
+{
+    $note = (int) ($l['avis_note'] ?? 0);
+    if ($note < 1 || $note > 5) return null;
+    return ['note' => $note, 'plus' => array_values(array_intersect(AVIS_PLUS, explode(',', (string) ($l['avis_plus'] ?? '')))),
+        'texte' => (string) ($l['avis_texte'] ?? ''), 'public' => !empty($l['avis_public']), 'le' => ($l['avis_le'] ?? null) ?: null,
+
+        'affiche_le' => !empty($l['avis_public']) ? (($l['avis_affiche_le'] ?? null) ?: null) : null];
+}
+
+
+
+function lire_avis(array $b): ?array
+{
+    $note = $b['note'] ?? null;
+    if (!is_int($note) || $note < 1 || $note > 5) return null;
+    $plus = is_array($b['plus'] ?? null) ? array_values(array_intersect(AVIS_PLUS, array_filter($b['plus'], 'is_string'))) : [];
+    $texte = is_string($b['texte'] ?? null) ? coupe(trim((string) preg_replace('/\s+/u', ' ', $b['texte'])), AVIS_TEXTE_MAX) : '';
+    return ['note' => $note, 'plus' => $plus, 'texte' => $texte, 'public' => ($b['public'] ?? false) === true];
+}
+
+
+function avis_possible(array $c, array $e): bool
+{
+    return !empty($e['paye_le']) || est_test($c);
+}
+
+
+
+function noter_avis(array $e, ?array $a): ?array
+{
+    bd()->prepare('UPDATE espace_envois SET avis_note = ?, avis_plus = ?, avis_texte = ?, avis_public = ?, avis_le = ?, avis_affiche_le = NULL WHERE id = ?')
+        ->execute($a ? [$a['note'], implode(',', $a['plus']), $a['texte'], $a['public'] ? 1 : 0, iso(), $e['id']] : [null, null, null, null, null, $e['id']]);
+    return lire_envoi($e['id']);
+}
+
+
+
+const AVIS_AFFICHES = 12;
+
+
+function prenom_public(array $c): string
+{
+    $mots = preg_split('/\s+/u', trim((string) $c['prenom']), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+    $p = mb_substr((string) ($mots[0] ?? ''), 0, 24);
+    if ($p === '' || !preg_match('/^[\p{L}\'’-]+$/u', $p)) return '';
+    foreach ([$c['nom'] ?? '', $c['entreprise'] ?? ''] as $interdit) if (mb_strtolower(trim((string) $interdit)) === mb_strtolower($p)) return '';
+    return mb_convert_case(mb_strtolower($p), MB_CASE_TITLE, 'UTF-8');
+}
+
+
+
+function masquer_noms(string $texte, array $c): string
+{
+    $t = (string) preg_replace('/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/u', '…', $texte);
+    $t = (string) preg_replace('~(?:https?://|www\.)\S+~iu', '…', $t);
+    $t = (string) preg_replace('/(?<!\d)\+?\d[\d .\-]{7,}\d(?!\d)/u', '…', $t);
+    foreach ([$c['entreprise'] ?? '', $c['nom'] ?? ''] as $mot) {
+        $mot = trim((string) $mot);
+        if (mb_strlen($mot) < 2) continue;
+        $t = (string) preg_replace('/(?<![\p{L}\p{N}])' . preg_quote($mot, '/') . '(?![\p{L}\p{N}])/iu', '…', $t);
+    }
+    return trim((string) preg_replace('/\s+/u', ' ', $t));
+}
+
+
+
+function avis_affichable(array $c, array $e): bool
+{
+    $a = $e['avis'] ?? null;
+    return $a && $a['public'] && $a['affiche_le'] && !est_test($c) && empty($c['archive_le']);
+}
+
+
+
+function avis_public(array $c, array $e): array
+{
+    $a = $e['avis'];
+    return ['prenom' => prenom_public($c), 'note' => $a['note'], 'plus' => $a['plus'],
+        'texte' => masquer_noms($a['texte'], $c), 'mois' => substr((string) $a['le'], 0, 7)];
+}
+
+
+
+function avis_publics(): array
+{
+    $q = bd()->query('SELECT * FROM espace_envois WHERE avis_note IS NOT NULL ORDER BY avis_le DESC LIMIT 500');
+    $comptes = [];
+    $n = $somme = 0;
+    $liste = [];
+    foreach (array_map('envoi_depuis_ligne', $q->fetchAll()) as $e) {
+        $comptes[$e['compte']] ??= lire_compte($e['compte']);
+        $c = $comptes[$e['compte']];
+        if (!$c || est_test($c) || !$e['avis']) continue;
+        $n++;
+        $somme += $e['avis']['note'];
+        if (count($liste) < AVIS_AFFICHES && avis_affichable($c, $e)) $liste[] = avis_public($c, $e);
+    }
+    return ['n' => $n, 'moyenne' => $n ? round($somme / $n, 1) : null, 'avis' => $liste];
+}
+
+
+function afficher_avis(string $id, bool $oui): ?array
+{
+    $e = lire_envoi($id);
+    if (!$e || !$e['avis'] || ($oui && !$e['avis']['public'])) return null;
+    bd()->prepare('UPDATE espace_envois SET avis_affiche_le = ? WHERE id = ?')->execute([$oui ? iso() : null, $id]);
+    return lire_envoi($id);
+}
+
+
+
+function avis_pour_malik(): array
+{
+    $q = bd()->query('SELECT * FROM espace_envois WHERE avis_note IS NOT NULL ORDER BY avis_le DESC LIMIT 300');
+    $comptes = [];
+    $r = ['n' => 0, 'moyenne' => null, 'derniers' => []];
+    $somme = 0;
+    foreach (array_map('envoi_depuis_ligne', $q->fetchAll()) as $e) {
+        $comptes[$e['compte']] ??= lire_compte($e['compte']);
+        $c = $comptes[$e['compte']];
+        if (!$c || est_test($c) || !$e['avis']) continue;
+        $r['n']++;
+        $somme += $e['avis']['note'];
+        if (count($r['derniers']) < 6) {
+
+            $r['derniers'][] = $e['avis'] + ['envoi' => $e['id'], 'reference' => $e['reference'], 'prenom' => $c['prenom'], 'nom' => $c['nom'], 'ville' => $c['ville'],
+                'apercu' => avis_public($c, $e)];
+        }
+    }
+    if ($r['n']) $r['moyenne'] = round($somme / $r['n'], 1);
+    return $r;
 }
 
 
@@ -533,7 +675,8 @@ function envoi_visible(array $e): array
         'recu_le' => $e['recu_le'] ?? null, 'pese_le' => $e['pese_le'] ?? null, 'poids_brut' => $e['poids_brut'] ?? null,
         'poids_net' => $e['poids_net'] ?? null, 'paye_le' => $e['paye_le'] ?? null, 'montant' => $e['montant'] ?? null,
         'bon_numero' => $e['bon_numero'] ?? null, 'bon_redemande_le' => $e['bon_redemande_le'] ?? null,
-        'accord_le' => $e['accord_le'] ?? null, 'depot_reponse' => $e['depot_reponse'] ?? null, 'depot_question' => question_depot($e)];
+        'accord_le' => $e['accord_le'] ?? null, 'depot_reponse' => $e['depot_reponse'] ?? null, 'depot_question' => question_depot($e),
+        'avis' => $e['avis'] ?? null];
 }
 
 
@@ -616,6 +759,9 @@ function archiver_compte(array $c): void
         $bd->prepare('DELETE FROM site_mails WHERE envoi IN (SELECT id FROM espace_envois WHERE compte = ? AND traite_le IS NULL AND recu_le IS NULL AND bon_numero IS NULL AND paye_le IS NULL)')
             ->execute([$c['id']]);
         $bd->prepare('DELETE FROM espace_envois WHERE compte = ? AND traite_le IS NULL AND recu_le IS NULL AND bon_numero IS NULL AND paye_le IS NULL')
+            ->execute([$c['id']]);
+
+        $bd->prepare('UPDATE espace_envois SET avis_note = NULL, avis_plus = NULL, avis_texte = NULL, avis_public = NULL, avis_le = NULL, avis_affiche_le = NULL WHERE compte = ?')
             ->execute([$c['id']]);
     });
 }
@@ -741,7 +887,9 @@ function demandes_pour_malik(string $etat, bool $sans_test = false): array
     foreach ($envois as $e) {
         $comptes[$e['compte']] ??= lire_compte($e['compte']);
         if ($comptes[$e['compte']] && !($sans_test && est_test($comptes[$e['compte']]))) {
-            $r[] = $e + ['client' => client_pour_malik($comptes[$e['compte']]), 'mails' => $mails[$e['id']] ?? [], 'colis_en_retard' => colis_en_retard($e)];
+            $r[] = $e + ['client' => client_pour_malik($comptes[$e['compte']]), 'mails' => $mails[$e['id']] ?? [], 'colis_en_retard' => colis_en_retard($e),
+
+                'avis_apercu' => $e['avis'] ? avis_public($comptes[$e['compte']], $e) : null];
         }
     }
     return $r;

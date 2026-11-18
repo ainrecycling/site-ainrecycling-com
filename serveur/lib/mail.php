@@ -444,6 +444,8 @@ const MAIL_ETAPE = [
         'brut' => ' (colis fermé : {brut} kg)',
         'paye' => ['Votre paiement de {montant} € est parti ({ref})', 'Votre paiement de {montant} € est parti par {paiement}. Merci pour votre confiance !'],
         'virement' => 'virement', 'cheque' => 'chèque', 'bouton' => 'Voir ma demande',
+
+        'avis' => ['Donner mon avis', "Une fois votre paiement reçu, dites-nous en deux appuis comment s'est passée votre vente."],
         'etapes' => ['Demande', 'Étiquette', 'Dépôt', 'Pesée', 'Paiement'],
         'wa' => [
             'traite' => 'Bonjour {prenom}, ici Ain Recycling : votre étiquette prépayée pour la demande {ref} vous a été envoyée par e-mail. À déposer au plus tard le {date}.',
@@ -462,6 +464,8 @@ const MAIL_ETAPE = [
         'brut' => ' (geschlossenes Paket: {brut} kg)',
         'paye' => ['Ihre Zahlung von {montant} € ist unterwegs ({ref})', 'Ihre Zahlung von {montant} € wurde per {paiement} veranlasst. Vielen Dank für Ihr Vertrauen!'],
         'virement' => 'Überweisung', 'cheque' => 'Scheck', 'bouton' => 'Meine Anfrage ansehen',
+
+        'avis' => ['Meine Bewertung abgeben', 'Sobald Ihre Zahlung eingegangen ist: Sagen Sie uns mit zwei Klicks, wie Ihr Verkauf gelaufen ist.'],
         'etapes' => ['Anfrage', 'Etikett', 'Abgabe', 'Wiegung', 'Zahlung'],
         'wa' => [
             'traite' => 'Guten Tag {prenom}, hier Ain Recycling: Ihr vorausbezahltes Etikett für die Anfrage {ref} wurde Ihnen per E-Mail geschickt. Bitte spätestens am {date} abgeben.',
@@ -480,6 +484,8 @@ const MAIL_ETAPE = [
         'brut' => ' (closed parcel: {brut} kg)',
         'paye' => ['Your payment of {montant} € has been sent ({ref})', 'Your payment of {montant} € has been sent by {paiement}. Thank you for your trust!'],
         'virement' => 'bank transfer', 'cheque' => 'cheque', 'bouton' => 'View my request',
+
+        'avis' => ['Give my feedback', 'Once your payment has arrived, tell us in two taps how your sale went.'],
         'etapes' => ['Request', 'Label', 'Drop-off', 'Weighing', 'Payment'],
         'wa' => [
             'traite' => 'Hello {prenom}, this is Ain Recycling: your prepaid label for request {ref} has been emailed to you. Please drop the parcel off by {date}.',
@@ -498,6 +504,8 @@ const MAIL_ETAPE = [
         'brut' => ' (pacco chiuso: {brut} kg)',
         'paye' => ['Il vostro pagamento di {montant} € è partito ({ref})', 'Il vostro pagamento di {montant} € è partito tramite {paiement}. Grazie per la fiducia!'],
         'virement' => 'bonifico', 'cheque' => 'assegno', 'bouton' => 'Vedere la mia richiesta',
+
+        'avis' => ['Lasciare il mio parere', "Appena ricevuto il pagamento, diteci in due clic com'è andata la vendita."],
         'etapes' => ['Richiesta', 'Etichetta', 'Consegna', 'Pesatura', 'Pagamento'],
         'wa' => [
             'traite' => "Buongiorno {prenom}, qui Ain Recycling: l'etichetta prepagata per la richiesta {ref} vi è stata inviata per e-mail. Da consegnare entro il {date}.",
@@ -516,6 +524,8 @@ const MAIL_ETAPE = [
         'brut' => ' (paquete cerrado: {brut} kg)',
         'paye' => ['Su pago de {montant} € ya está enviado ({ref})', 'Su pago de {montant} € se ha enviado por {paiement}. ¡Gracias por su confianza!'],
         'virement' => 'transferencia', 'cheque' => 'cheque', 'bouton' => 'Ver mi solicitud',
+
+        'avis' => ['Dar mi opinión', 'Cuando reciba el pago, díganos en dos clics cómo ha ido su venta.'],
         'etapes' => ['Solicitud', 'Etiqueta', 'Entrega', 'Pesaje', 'Pago'],
         'wa' => [
             'traite' => 'Hola {prenom}, le escribe Ain Recycling: le hemos enviado por correo electrónico la etiqueta prepagada de la solicitud {ref}. Entréguela a más tardar el {date}.',
@@ -588,7 +598,43 @@ function mail_etape(array $c, array $e, string $etape): void
     $lien = lien_page($langue, 'espace-client.html') . '#demandes';
     $html = '<p style="margin:0 0 10px">' . echapper(remplir($m['bonjour'], $v)) . '</p>'
         . '<p style="margin:0 0 4px">' . echapper($texte) . '</p>' . suivi_mail($faites, $langue) . bouton_mail($m['bouton'], $lien);
-    envoyer_mail($c['email'], $sujet, mail_cadre($langue, $html), remplir($m['bonjour'], $v) . "\n\n" . $texte . "\n\n" . $m['bouton'] . ' : ' . $lien . "\n\n" . pied_texte($langue), [], [], [], $e['id'] ?? null);
+    $suite = '';
+
+    if ($etape === 'paye' && isset($m['avis'])) {
+        $lien_avis = lien_avis($langue, (string) $e['reference']);
+        $html .= '<p style="margin:16px 0 0;font-size:15px;color:#475467">' . echapper($m['avis'][1]) . ' <a href="' . echapper($lien_avis)
+            . '" style="color:#0e3c8a;font-weight:bold">' . echapper($m['avis'][0]) . '</a></p>';
+        $suite = "\n\n" . $m['avis'][1] . ' ' . $m['avis'][0] . ' : ' . $lien_avis;
+    }
+    envoyer_mail($c['email'], $sujet, mail_cadre($langue, $html), remplir($m['bonjour'], $v) . "\n\n" . $texte . "\n\n" . $m['bouton'] . ' : ' . $lien . $suite . "\n\n" . pied_texte($langue), [], [], [], $e['id'] ?? null);
+}
+
+
+function lien_avis(string $langue, string $reference): string
+{
+    return lien_page($langue, 'espace-client.html') . '#avis-' . rawurlencode($reference);
+}
+
+const AVIS_PLUS_FR = ['paiement' => 'paiement rapide', 'prix' => 'prix clair', 'pesee' => 'pesée transparente', 'reponse' => 'réponse rapide', 'simple' => 'envoi simple'];
+
+
+
+function mail_avis(array $c, array $e): void
+{
+    $a = (string) reglage('mail_admin', '');
+    $avis = $e['avis'] ?? null;
+    if ($a === '' || !$avis) return;
+    $personne = trim($c['prenom'] . ' ' . majuscules($c['nom']));
+    $etoiles = str_repeat('★', (int) $avis['note']) . str_repeat('☆', 5 - (int) $avis['note']);
+    $lignes = [$personne . ($c['ville'] !== '' ? ' (' . $c['ville'] . ')' : '') . ' a donné son avis sur sa vente ' . $e['reference'] . " : $etoiles (" . $avis['note'] . ' sur 5).'];
+    if ($avis['plus']) $lignes[] = 'Ce qui lui a plu : ' . implode(', ', array_map(fn ($k) => AVIS_PLUS_FR[$k] ?? $k, $avis['plus'])) . '.';
+    if ($avis['texte'] !== '') $lignes[] = 'Son mot : « ' . $avis['texte'] . ' »';
+    $lignes[] = $avis['public'] ? "Accord donné pour l'afficher sur le site, avec son prénom seulement (jamais son nom ni sa société). "
+        . "Rien ne s'affiche tout seul : ouvre la vente et appuie sur « Afficher sur le site »."
+        : "Pas d'accord pour l'afficher : cet avis est pour toi seul.";
+    $lien = adresse_site() . '/gestion/#' . $e['reference'];
+    $html = implode('', array_map(fn ($l) => '<p style="margin:0 0 10px">' . echapper($l) . '</p>', $lignes)) . bouton_mail('Voir la vente', $lien);
+    envoyer_mail($a, '⭐ Avis ' . $avis['note'] . '/5 : ' . $personne . ' (' . $e['reference'] . ')', mail_cadre('fr', $html), implode("\n\n", [...$lignes, "Voir la vente : $lien"]));
 }
 
 

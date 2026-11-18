@@ -230,6 +230,38 @@ try {
             repondre(['ok' => true, 'envois' => array_map('envoi_visible', envois_du($c['id']))]);
 
 
+
+
+        case 'POST avis':
+            origine_refusee();
+            $c = compte_connecte();
+            if (!$c) refus('connexion', 401);
+            $b = corps_json();
+            if (!$b) refus('illisible');
+            $e = envoi_du_compte($c, (string) ($b['reference'] ?? ''));
+            if (!$e) refus('introuvable', 404);
+            if (!avis_possible($c, $e)) refus('pas_paye', 403);
+            $a = lire_avis($b);
+            if (!$a) refus('note');
+            if (!sous_la_limite('avis:' . substr(hash('sha256', $c['id']), 0, 24), AVIS_PAR_JOUR)) refus('trop', 429);
+            $premier = !$e['avis'];
+            $n = noter_avis($e, $a);
+            if (!$n) refus('introuvable', 404);
+            if ($premier && !est_test($c)) apres_reponse(fn () => mail_avis($c, $n));
+            repondre(['envoi' => envoi_visible($n)]);
+
+
+        case 'DELETE avis':
+            origine_refusee();
+            $c = compte_connecte();
+            if (!$c) refus('connexion', 401);
+            $e = envoi_du_compte($c, (string) ($_GET['reference'] ?? ''));
+            if (!$e) refus('introuvable', 404);
+            $n = noter_avis($e, null);
+            if (!$n) refus('introuvable', 404);
+            repondre(['envoi' => envoi_visible($n)]);
+
+
         case 'GET google':
             google_depart(langue_de($_GET['langue'] ?? null));
 

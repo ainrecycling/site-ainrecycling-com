@@ -22,6 +22,7 @@ function reglages_pour_malik(): array
         'annonces' => annonces_actives(),
         'abonnes' => nombre_abonnes(), 'alertes_en_attente' => alertes_en_attente(),
         'visites' => visites_resume(),
+        'avis' => avis_pour_malik(),
         'sauvegarde' => reglage_site('sauvegarde'), 'sauvegarde_zip' => zip_chiffre_possible(),
 
         'connexions' => array_values((array) (reglage_site('connexions') ?? [])), 'messages_a_repondre' => messages_a_repondre(),
@@ -229,6 +230,17 @@ try {
         case 'GET visites':
             exiger_admin();
             repondre(visites_detail());
+
+
+
+        case 'POST avis':
+            origine_refusee();
+            exiger_admin();
+            $b = corps_json() ?? [];
+            $action = (string) ($b['action'] ?? '');
+            if (!in_array($action, ['afficher', 'retirer'], true)) refus('action');
+            if (!afficher_avis((string) ($b['envoi'] ?? ''), $action === 'afficher')) refus('introuvable', 404);
+            repondre(['avis' => avis_pour_malik()]);
 
 
         case 'POST deconnecter-tout':

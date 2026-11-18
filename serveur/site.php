@@ -31,6 +31,11 @@ try {
             repondre(infos_publiques());
 
 
+
+        case 'GET avis':
+            repondre(avis_publics());
+
+
         case 'POST contact':
             origine_refusee();
             recevoir_contact();
