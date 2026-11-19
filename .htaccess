@@ -41,7 +41,7 @@ Header always set tdm-reservation "1"
 Header always set Referrer-Policy "strict-origin-when-cross-origin"
 Header always set X-Frame-Options "SAMEORIGIN"
 Header always set Strict-Transport-Security "max-age=31536000"
-Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-Du+OJKJSbdUgz5nrHeWWINvez6XKDDU/tyj/5c2uvwo=' 'sha256-59Jv0D8l/mrFTCQ2y4C2ljXaNMlkywdbMkQn2Buq5Oo=' 'sha256-IFPr5mKO4iDhqA5WlzGbCHgo1B5z5iQoubSHvfY74wo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; media-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-Du+OJKJSbdUgz5nrHeWWINvez6XKDDU/tyj/5c2uvwo=' 'sha256-59Jv0D8l/mrFTCQ2y4C2ljXaNMlkywdbMkQn2Buq5Oo=' 'sha256-IFPr5mKO4iDhqA5WlzGbCHgo1B5z5iQoubSHvfY74wo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://data.geopf.fr; media-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
 Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
 Header always set Cross-Origin-Opener-Policy "same-origin"
 <FilesMatch "\.woff2$">
