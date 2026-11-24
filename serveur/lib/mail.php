@@ -348,6 +348,8 @@ function mail_nouvelle_demande(array $c, array $e): void
         $lignes[] = 'Prix garanti : ' . prix_texte((float) $e['prix_kg']) . " €/kg jusqu'au " . date_longue((string) $e['garanti_jusqu'], 'fr') . '.';
     }
     if ($e['message'] !== '') $lignes[] = 'Message : « ' . $e['message'] . ' »';
+
+    if (isset(CONNU[$e['connu'] ?? ''])) $lignes[] = 'Nous a connus par : ' . CONNU[$e['connu']];
     if (($e['transport'] ?? '') === 'vendeur') $lignes[] = 'TRANSPORT À SES FRAIS : pas d\'étiquette à envoyer. Il expédie lui-même (' . ADRESSE_ENVOI . '), au prix livré au dépôt, et notera son numéro de suivi dans son compte.';
 
     $test = !empty($c['test_le']);

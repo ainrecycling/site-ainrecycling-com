@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/base.php';
 require_once __DIR__ . '/mail.php';
 require_once __DIR__ . '/site.php';
+require_once __DIR__ . '/notifications.php';
 
 
 
@@ -489,6 +490,8 @@ function envoi_depuis_ligne(array $l): array
 
         'transport' => ($l['transport'] ?? '') === 'vendeur' ? 'vendeur' : 'offert',
         'suivis' => array_values(array_filter((array) json_decode((string) ($l['suivis'] ?? ''), true), 'is_string')),
+
+        'connu' => lire_connu($l['connu'] ?? null),
     ];
 }
 
@@ -722,11 +725,11 @@ function creer_envoi(array $e): void
 {
     for ($essai = 0; ; $essai++) {
         try {
-            bd()->prepare('INSERT INTO espace_envois (id, reference, compte, cree_le, colis, total, paiement, message, traite_le, traite_par, prix_kg, garanti_jusqu, cgv_version, cgv_le, transport)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+            bd()->prepare('INSERT INTO espace_envois (id, reference, compte, cree_le, colis, total, paiement, message, traite_le, traite_par, prix_kg, garanti_jusqu, cgv_version, cgv_le, transport, connu)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
                 ->execute([$e['id'], $e['reference'], $e['compte'], $e['cree_le'], json_encode($e['colis'], JSON_UNESCAPED_UNICODE),
                     $e['total'], $e['paiement'], $e['message'], $e['traite_le'] ?? null, $e['traite_par'] ?? '', $e['prix_kg'] ?? null, $e['garanti_jusqu'] ?? null,
-                    $e['cgv_version'] ?? null, $e['cgv_le'] ?? null, ($e['transport'] ?? '') === 'vendeur' ? 'vendeur' : null]);
+                    $e['cgv_version'] ?? null, $e['cgv_le'] ?? null, ($e['transport'] ?? '') === 'vendeur' ? 'vendeur' : null, lire_connu($e['connu'] ?? null)]);
             return;
         } catch (PDOException $x) {
 
@@ -860,6 +863,7 @@ function rappel_retards(): void
 function menage_du_jour(): void
 {
     rappel_retards();
+    if (nuit_a_paris()) return;
     $f = prive() . '/menage.jour';
     $jour = aujourdhui();
     if (@file_get_contents($f) === $jour) return;

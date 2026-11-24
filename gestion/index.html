@@ -190,6 +190,15 @@
 </div>
 <div class="carte"><p class="petit">Sur les 30 derniers jours</p><h2>Pages les plus lues</h2><div data-v-pages></div><h2 class="haut">D'où viennent les gens</h2><div data-v-sources></div></div>
 </div>
+<div class="carte haut connus" data-connus hidden>
+<div class="connus-gauche">
+<h2>Comment ils nous ont connus</h2>
+<p class="petit">Leur réponse à la question facultative des formulaires : demandes d'envoi et messages.</p>
+<div class="choix" role="group" aria-label="Mois affiché" data-connus-choix></div>
+<div aria-live="polite"><p class="connus-resume" data-connus-resume></p><p class="petit connus-sans" data-connus-sans hidden></p></div>
+</div>
+<div class="connus-droite" data-connus-liste></div>
+</div>
 </section>
 <section data-vue="reglages" hidden>
 <h1>Réglages</h1>
@@ -229,6 +238,28 @@
 <h2>Cette page sur ton téléphone</h2>
 <p>Pour l'ouvrir comme une appli, avec son icône à côté de ton appli de bons :</p>
 <p class="petit"><b>iPhone</b> (Safari) : bouton Partager, puis « Sur l'écran d'accueil ».<br><b>Android</b> (Chrome) : menu ⋮, puis « Ajouter à l'écran d'accueil ».</p>
+</div>
+<div class="carte haut notifs" data-notifs>
+<h2 data-notifs-titre>Notifications sur ce téléphone</h2>
+<p>Dès qu'une demande d'envoi ou un message arrive sur le site, une notification sonne sur cet appareil. Un appui l'ouvre dans la gestion. Les <span class="insecable">e-mails</span> continuent comme avant.</p>
+<p class="notifs-etat" role="status"><span class="notifs-rond" aria-hidden="true"></span><span data-notifs-phrase>Vérification…</span></p>
+<div class="suite">
+<button type="button" class="bouton petit-b" data-notifs-activer hidden>Activer les notifications</button>
+<button type="button" class="bouton clair petit-b" data-notifs-essai hidden>Envoyer une notification d'essai</button>
+<button type="button" class="bouton danger petit-b" data-notifs-couper hidden>Couper les notifications</button>
+</div>
+<p class="msg" role="alert" hidden></p>
+<ul class="notifs-appareils" data-notifs-appareils hidden></ul>
+<details class="notifs-iphone" data-notifs-iphone>
+<summary>Sur iPhone&nbsp;: comment faire</summary>
+<ol>
+<li>Ouvre la gestion dans Safari, touche le bouton Partager, puis «&nbsp;Sur l'écran d'accueil&nbsp;».</li>
+<li>Ouvre la gestion avec cette nouvelle icône, puis connecte-toi (code reçu par <span class="insecable">e-mail</span>).</li>
+<li>Dans Réglages, touche «&nbsp;Activer les notifications&nbsp;», puis «&nbsp;Autoriser&nbsp;».</li>
+</ol>
+<p class="petit">Il faut iOS&nbsp;16.4 ou plus récent.</p>
+</details>
+<p class="petit">Ta connexion à la gestion dure 30&nbsp;jours. Quand elle a expiré, la notification dit seulement «&nbsp;Nouvelle demande sur le site&nbsp;»&nbsp;: reconnecte-toi pour retrouver le détail.</p>
 </div>
 </section>
 </main>

@@ -279,17 +279,32 @@ function recevoir_contact(): void
             $pieces[] = ['filename' => 'photo-' . (count($pieces) + 1) . image_type_to_extension($info[2]), 'content' => base64_encode($brutes[count($brutes) - 1])];
         }
     }
-    $html = '<p style="margin:0;white-space:pre-line">' . echapper($corps) . '</p>';
+
+
+
+    $connu = lire_connu($_POST['connu'] ?? null);
+    $langue = langue_de($_POST['langue'] ?? null);
+    $infos = [];
+    if ($connu !== null) $infos[] = 'Nous a connus par : ' . CONNU[$connu];
+    if ($langue !== 'fr') $infos[] = 'Écrit depuis le site en ' . LANGUES_EN_FRANCAIS[$langue] . ' : dans ta page de gestion, « Traduire en français » et tes réponses prêtes dans sa langue.';
+    $html = '<p style="margin:0;white-space:pre-line">' . echapper($corps) . '</p>'
+        . ($infos ? '<p style="margin:14px 0 0;padding-top:10px;border-top:1px solid #e4e7ec;font-size:14px;color:#475467">' . implode('<br>', array_map('echapper', $infos)) . '</p>' : '');
     $entetes = filter_var($retour, FILTER_VALIDATE_EMAIL) ? ['Reply-To' => $retour] : [];
 
+    $id = '';
     try {
-        garder_message($sujet, $corps, $retour, $brutes);
+        $id = garder_message($sujet, $corps, $retour, $brutes, $connu, $langue);
     } catch (Throwable $e) {
         journaliser('message non gardé : ' . resume_erreur($e));
     }
-    envoyer_mail((string) reglage('mail_admin', ''), '[Site] ' . $sujet, mail_cadre('fr', $html), $corps, [], $entetes, $pieces);
+
+    apres_reponse(fn () => notifier('message', $id));
+    envoyer_mail((string) reglage('mail_admin', ''), '[Site] ' . $sujet, mail_cadre('fr', $html), $corps . ($infos ? "\n\n" . implode("\n", $infos) : ''), [], $entetes, $pieces);
     repondre(['ok' => true]);
 }
+
+
+const LANGUES_EN_FRANCAIS = ['fr' => 'français', 'de' => 'allemand', 'en' => 'anglais', 'it' => 'italien', 'es' => 'espagnol'];
 
 
 
@@ -301,7 +316,9 @@ function dossier_messages(): string
 }
 
 
-function garder_message(string $sujet, string $texte, string $retour, array $photos): void
+
+
+function garder_message(string $sujet, string $texte, string $retour, array $photos, ?string $connu = null, string $langue = 'fr'): string
 {
     $id = uuid();
     $noms = [];
@@ -309,8 +326,9 @@ function garder_message(string $sujet, string $texte, string $retour, array $pho
         $nom = $id . '-' . ($i + 1) . '.bin';
         if (@file_put_contents(dossier_messages() . '/' . $nom, chiffrer_octets($octets), LOCK_EX) !== false) $noms[] = $nom;
     }
-    bd()->prepare('INSERT INTO site_messages (id, cree_le, sujet, texte, retour, photos) VALUES (?, ?, ?, ?, ?, ?)')
-        ->execute([$id, iso(), coupe($sujet, 160), $texte, coupe($retour, 120), json_encode($noms)]);
+    bd()->prepare('INSERT INTO site_messages (id, cree_le, sujet, texte, retour, photos, connu, langue) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+        ->execute([$id, iso(), coupe($sujet, 160), $texte, coupe($retour, 120), json_encode($noms), lire_connu($connu), langue_de($langue)]);
+    return $id;
 }
 
 function messages_pour_malik(): array
@@ -318,7 +336,9 @@ function messages_pour_malik(): array
     $r = [];
     foreach (bd()->query('SELECT * FROM site_messages ORDER BY cree_le DESC LIMIT 100')->fetchAll() as $l) {
         $r[] = ['id' => $l['id'], 'cree_le' => $l['cree_le'], 'sujet' => $l['sujet'], 'texte' => $l['texte'], 'retour' => $l['retour'],
-            'photos' => count((array) json_decode((string) $l['photos'], true)), 'repondu_le' => $l['repondu_le'] ?: null];
+            'photos' => count((array) json_decode((string) $l['photos'], true)), 'repondu_le' => $l['repondu_le'] ?: null,
+
+            'connu' => lire_connu($l['connu'] ?? null), 'langue' => langue_de($l['langue'] ?? null)];
     }
     return $r;
 }
@@ -452,6 +472,7 @@ function annuler_alertes(): void
 
 function envoyer_alertes_en_attente(): void
 {
+    if (nuit_a_paris()) return;
     $f = prive() . '/alertes.passage';
     $dernier = (int) @file_get_contents($f);
     if (time() - $dernier < 120) return;
@@ -614,6 +635,25 @@ function demandes_du_mois(string $mois): int
 
 
 
+
+function connus_du_mois(string $mois): array
+{
+    $zero = array_fill_keys([...array_keys(CONNU), 'sans'], 0);
+    $r = ['demandes' => $zero, 'messages' => $zero];
+    $q = bd()->prepare('SELECT e.connu AS connu, COUNT(*) AS n FROM espace_envois e JOIN espace_comptes c ON c.id = e.compte
+        WHERE e.cree_le LIKE ? AND c.test_le IS NULL GROUP BY e.connu');
+    $q->execute([$mois . '-%']);
+    foreach ($q->fetchAll() as $l) $r['demandes'][lire_connu($l['connu']) ?? 'sans'] += (int) $l['n'];
+    $q = bd()->prepare("SELECT m.connu AS connu, COUNT(*) AS n FROM site_messages m WHERE m.cree_le LIKE ?
+        AND LOWER(m.retour) NOT IN (SELECT LOWER(c.email) FROM espace_comptes c WHERE c.test_le IS NOT NULL AND c.email <> '') GROUP BY m.connu");
+    $q->execute([$mois . '-%']);
+    foreach ($q->fetchAll() as $l) $r['messages'][lire_connu($l['connu']) ?? 'sans'] += (int) $l['n'];
+    return $r;
+}
+
+
+
+
 function visites_detail(): array
 {
     $depuis = plus_jours(jour_paris(), -29);
@@ -635,8 +675,18 @@ function visites_detail(): array
     }
     arsort($pages);
     arsort($sources);
+
+
+
+    $mois = substr(jour_paris(), 0, 7);
+    try {
+        $connus = ['ce_mois' => ['mois' => $mois] + connus_du_mois($mois), 'mois_dernier' => ['mois' => mois_avant($mois)] + connus_du_mois(mois_avant($mois))];
+    } catch (Throwable $e) {
+        journaliser('« Comment ils nous ont connus » : ' . resume_erreur($e));
+        $connus = null;
+    }
     return ['jours' => $jours, 'total' => array_sum($jours), 'pages' => array_slice($pages, 0, 8, true),
-        'sources' => array_slice($sources, 0, 8, true), 'visiteurs' => $visiteurs];
+        'sources' => array_slice($sources, 0, 8, true), 'visiteurs' => $visiteurs, 'connus' => $connus];
 }
 
 function menage_site(): void

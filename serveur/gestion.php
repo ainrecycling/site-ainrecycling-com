@@ -243,10 +243,55 @@ try {
             repondre(['avis' => avis_pour_malik()]);
 
 
+
+        case 'GET notifications':
+            exiger_admin();
+            repondre(notifs_pour_malik());
+
+
+
+        case 'POST notifications':
+            origine_refusee();
+            $email = exiger_admin();
+            $b = corps_json() ?? [];
+            $action = (string) ($b['action'] ?? '');
+            if ($action === 'activer') {
+                $abo = $b['abonnement'] ?? null;
+                $err = notif_abonner($abo, $email);
+                if ($err !== null) refus($err);
+                repondre(notifs_pour_malik(trim((string) $abo['endpoint'])));
+            }
+            $endpoint = (string) ($b['endpoint'] ?? '');
+            if ($action === 'couper') {
+                $l = notif_ligne($endpoint);
+                if ($l) notif_effacer((string) $l['id']);
+                repondre(notifs_pour_malik());
+            }
+            if ($action === 'essai') {
+                if (!sous_la_limite('notif-essai', NOTIF_ESSAIS_PAR_JOUR)) refus('trop', 429);
+                $r = notif_essai($endpoint);
+                if ($r === 'perdu') refus('perdu', 404);
+                if ($r === 'push') refus('push', 502);
+                repondre(notifs_pour_malik($endpoint));
+            }
+            refus('action');
+
+
+
+        case 'POST notifications/detail':
+            origine_refusee();
+            exiger_admin();
+            $b = corps_json() ?? [];
+            repondre(['notifications' => notif_detail((string) ($b['endpoint'] ?? ''))]);
+
+
         case 'POST deconnecter-tout':
             origine_refusee();
             $email = exiger_admin();
             ecrire_reglage_site('gestion_epoch', ms(), $email);
+
+            $b = corps_json() ?? [];
+            notif_garder_seulement(is_string($b['endpoint'] ?? null) ? $b['endpoint'] : '');
             usleep(3000);
             repondre(['ok' => true], 200, cookie_gestion($email));
 

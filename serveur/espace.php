@@ -197,11 +197,15 @@ try {
 
                 'prix_kg' => $transport === 'vendeur' ? (float) ($prix['depot'] ?? ($prix['kg'] + 3)) : $prix['kg'], 'garanti_jusqu' => garanti_jusqu(jour_paris()),
                 'cgv_version' => CGV_VERSION, 'cgv_le' => iso(),
+
+                'connu' => lire_connu($b['connu'] ?? null),
             ];
             creer_envoi($e);
             $e = lire_envoi($e['id']) ?? $e;
             apres_reponse(fn () => mail_nouvelle_demande($c, $e));
             apres_reponse(fn () => mail_envoi_recu($c, $e));
+
+            if (!est_test($c)) apres_reponse(fn () => notifier('demande', $e['reference']));
             repondre(['envoi' => envoi_visible($e)]);
 
 

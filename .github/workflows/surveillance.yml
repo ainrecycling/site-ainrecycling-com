@@ -1,0 +1,145 @@
+# Surveillance du site https://ainrecycling.com (24 novembre 2026).
+# Toutes les heures (à la minute 17) et à la main (« Run workflow »), GitHub ouvre l'accueil, le prix du jour et
+# « Mon compte ». Si l'une de ces adresses ne répond pas comme il faut, il réessaie 5 minutes plus tard ; si c'est
+# encore raté, ce contrôle échoue et GitHub envoie un e-mail (« Run failed: Surveillance du site »).
+# Seulement curl : aucune action d'un autre auteur, rien à installer, gratuit (dépôt public). Le prix du jour est lu
+# sans « p » ni « v » : aucune visite n'est comptée.
+# Ce fichier est écrit sur l'ordinateur d'Ain Recycling et recopié ici à chaque publication : ne pas le modifier sur
+# GitHub (la publication suivante serait refusée).
+name: Surveillance du site
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+    inputs:
+      essai_email:
+        description: "Essai de l'e-mail : faire échouer ce contrôle exprès, même si le site répond (rien n'est touché)"
+        type: boolean
+        default: false
+
+permissions: {}
+
+jobs:
+  controle:
+    name: Contrôle du site
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: "Ouvrir l'accueil, le prix du jour et « Mon compte »"
+        shell: bash
+        env:
+          SITE: 'https://ainrecycling.com'
+          ATTENTE: '300'
+          ESSAI_EMAIL: ${{ inputs.essai_email }}
+        run: |
+          set +e
+          SITE="${SITE%/}"
+          HOTE="${SITE#*://}"
+          AGENT='AinRecycling-monitor/1.0 (curl; GitHub Actions)'
+          DOSSIER="$(mktemp -d)"
+          trap 'rm -rf "$DOSSIER"' EXIT
+
+          # L'heure de Paris, heure d'été comprise (règle écrite en entier : juste même sans la liste des fuseaux)
+          heure() { TZ='CET-1CEST,M3.5.0,M10.5.0/3' date "+$1"; }
+
+          # Ce qui ne va pas, en mots simples ($1 : code de sortie de curl, $2 : réponse du serveur)
+          raison() {
+            case "$1" in
+              0) echo "erreur $2" ;;
+              6) echo "adresse introuvable" ;;
+              7) echo "serveur injoignable" ;;
+              28) echo "pas de réponse en 30 secondes" ;;
+              35|51|53|54|58|59|60|64|66|77|80|82|83|90|91|98) echo "problème de cadenas https" ;;
+              47) echo "trop de renvois vers une autre adresse" ;;
+              *) echo "erreur réseau $1" ;;
+            esac
+          }
+
+          # ouvrir ADRESSE : la réponse va dans $DOSSIER/page ; RAISON est vide si le serveur a répondu 200 (30 s au plus)
+          ouvrir() {
+            local sortie detail
+            rm -f "$DOSSIER/page"
+            CODE="$(curl -sS -L --max-redirs 3 --max-time 30 -A "$AGENT" -H 'Cache-Control: no-cache' \
+              -o "$DOSSIER/page" -w '%{http_code} %{content_type}' "$1" 2>"$DOSSIER/erreur")"
+            sortie=$?
+            TYPE="${CODE#* }"
+            CODE="${CODE%% *}"
+            RAISON=''
+            if [ "$sortie" -ne 0 ] || [ "$CODE" != 200 ]; then
+              RAISON="$(raison "$sortie" "$CODE")"
+              detail="$(head -c 200 "$DOSSIER/erreur" | tr -d '\r\n')"
+              echo "  $1 : $RAISON${detail:+ ($detail)}"
+            else
+              echo "  $1 : 200"
+            fi
+          }
+
+          # Le prix du jour : du JSON avec le prix par colis et le prix au dépôt ({"prix":{"kg":47,"depot":50,…},…})
+          prix_lisible() {
+            case "$TYPE" in application/json*) ;; *) return 1 ;; esac
+            [ "$(head -c 1 "$DOSSIER/page")" = '{' ] &&
+              grep -Eq '"prix"[[:space:]]*:[[:space:]]*\{[^}]*"kg"[[:space:]]*:[[:space:]]*[1-9]' "$DOSSIER/page" &&
+              grep -Eq '"prix"[[:space:]]*:[[:space:]]*\{[^}]*"depot"[[:space:]]*:[[:space:]]*[1-9]' "$DOSSIER/page"
+          }
+
+          # Un tour des 3 adresses : PANNES = ce qui ne va pas (vide si tout va bien)
+          tour() {
+            PANNES=()
+            echo "Contrôle de $SITE, le $(heure '%d/%m à %-H h %M') :"
+            ouvrir "$SITE/"
+            if [ -n "$RAISON" ]; then PANNES+=("l'accueil ne s'ouvre pas ($RAISON)")
+            elif ! grep -q 'Ain Recycling' "$DOSSIER/page"; then PANNES+=("l'accueil s'ouvre, mais sans le nom Ain Recycling")
+            fi
+            ouvrir "$SITE/api/site/infos"
+            if [ -n "$RAISON" ]; then PANNES+=("le prix du jour ne répond pas ($RAISON)")
+            elif ! prix_lisible; then PANNES+=("le prix du jour répond, mais sans le prix")
+            fi
+            ouvrir "$SITE/espace-client.html"
+            if [ -n "$RAISON" ]; then PANNES+=("« Mon compte » ne s'ouvre pas ($RAISON)"); fi
+          }
+
+          liste() { local x; printf -v x '%s ; ' "${PANNES[@]}"; echo "${x% ; }"; }
+
+          PREMIER="$(heure '%d/%m à %-H h %M')"
+          SECOND=''
+          tour
+          if [ "${#PANNES[@]}" -gt 0 ]; then
+            echo "Premier essai raté : $(liste)."
+            if [ "$ATTENTE" -ge 60 ]; then echo "Nouvel essai dans $((ATTENTE / 60)) minutes."; else echo "Nouvel essai dans $ATTENTE secondes."; fi
+            sleep "$ATTENTE"
+            SECOND="$(heure '%-H h %M')"
+            tour
+          fi
+
+          if [ "${#PANNES[@]}" -eq 0 ]; then
+            if [ -n "$SECOND" ]; then BILAN="Ton site répond de nouveau (à $SECOND) : accueil, prix du jour et « Mon compte »."
+            else BILAN="Ton site répond (le $PREMIER) : accueil, prix du jour et « Mon compte »."; fi
+            echo "$BILAN"
+            [ "$ESSAI_EMAIL" = true ] || exit 0
+            TITRE="Essai de l'e-mail : ce n'est pas une panne"
+            MESSAGE="Essai de l'e-mail, lancé à la main : ce n'est pas une panne. $BILAN Si tu as reçu cet e-mail, l'alerte marche."
+          else
+            TITRE='Ton site ne répond pas'
+            CONSEIL="Ouvre $HOTE sur ton téléphone. S'il ne s'ouvre pas, regarde la page « Incidents » d'OVH (https://web-cloud.status-ovhcloud.com : ton site est sur le Cluster129), ou demande-moi."
+            MESSAGE="Ton site ne répond pas : $(liste). Essayé le $PREMIER, puis à $SECOND. $CONSEIL"
+          fi
+
+          # Le message en français : en rouge sur la page du contrôle (le lien « View workflow run » de l'e-mail y mène)
+          echo "::error::${MESSAGE//\%/%25}"
+          if [ -n "$GITHUB_STEP_SUMMARY" ]; then
+            {
+              echo "## $TITRE"
+              echo
+              if [ "${#PANNES[@]}" -gt 0 ]; then
+                for p in "${PANNES[@]}"; do echo "- $p"; done
+                echo
+                echo "Essayé le $PREMIER, puis à $SECOND, sur $SITE."
+                echo
+                echo "$CONSEIL"
+              else
+                echo "$MESSAGE"
+              fi
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit 1

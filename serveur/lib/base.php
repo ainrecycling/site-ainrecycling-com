@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 
 
-const SCHEMA_VERSION = 9;
+const SCHEMA_VERSION = 11;
 
 
 function prive(): string
@@ -196,6 +196,21 @@ function migrer(PDO $bd): void
 
 
     ajouter_colonnes($bd, 'espace_envois', ['transport' => 'VARCHAR(10) NULL', 'suivis' => 'TEXT NULL']);
+
+
+
+
+    $bd->exec("CREATE TABLE IF NOT EXISTS gestion_notifs (
+        id CHAR(64) NOT NULL PRIMARY KEY, endpoint TEXT NOT NULL, email VARCHAR(160) NOT NULL,
+        appareil VARCHAR(60) NOT NULL DEFAULT '', cree_le VARCHAR(30) NOT NULL, maj_le VARCHAR(30) NOT NULL,
+        envoye_le VARCHAR(30) NULL, echecs INTEGER NOT NULL DEFAULT 0, attente TEXT NULL
+    )$fin");
+
+
+
+
+    ajouter_colonnes($bd, 'espace_envois', ['connu' => 'VARCHAR(12) NULL']);
+    ajouter_colonnes($bd, 'site_messages', ['connu' => 'VARCHAR(12) NULL', 'langue' => 'VARCHAR(2) NULL']);
     @file_put_contents($drapeau, gmdate('c'));
 }
 
@@ -313,6 +328,14 @@ function aujourdhui(): string
 
 
 
+
+function nuit_a_paris(): bool
+{
+    return (int) (new DateTimeImmutable('now', new DateTimeZone('Europe/Paris')))->format('G') < 7;
+}
+
+
+
 function texte($x, int $max = 120): string
 {
     if (!is_string($x)) return '';
@@ -324,6 +347,19 @@ function coupe(string $s, int $max): string
 {
     if (!preg_match('/^.{0,' . $max . '}/su', $s, $m)) return substr($s, 0, $max);
     return $m[0];
+}
+
+
+
+
+
+const CONNU = ['google' => 'Google', 'leboncoin' => 'Leboncoin', 'bouche' => 'Bouche-à-oreille', 'whatsapp' => 'WhatsApp',
+    'carte' => 'Carte de visite', 'autre' => 'Autre'];
+
+
+function lire_connu($x): ?string
+{
+    return is_string($x) && isset(CONNU[$x]) ? $x : null;
 }
 
 function majuscules(string $s): string
