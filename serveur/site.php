@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 
 
+
 require __DIR__ . '/lib/espace.php';
 
 $chemin = trim((string) ($_GET['chemin'] ?? ''), '/');

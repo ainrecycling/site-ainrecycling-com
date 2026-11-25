@@ -34,11 +34,13 @@
 <label for="g-code">Code reçu sur <span data-email></span></label>
 <div class="code-cases">
 <input id="g-code" inputmode="numeric" autocomplete="one-time-code" maxlength="12" spellcheck="false" required aria-describedby="g-code-aide">
-<span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+<span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+<span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
 </div>
-<p class="petit" id="g-code-aide">Tape ou colle les 6 chiffres : la connexion se fait toute seule.</p>
+<p class="petit" id="g-code-aide">Tape ou colle les 8 chiffres : la connexion se fait toute seule.</p>
 <button type="submit" class="bouton">Se connecter</button>
 <button type="button" class="lien" data-autre>Autre adresse</button>
+<a class="bouton clair" href="/api/espace/google?langue=fr" data-google-code hidden>Continuer avec Google</a>
 </div>
 <p class="msg" role="alert" hidden></p>
 </form>
@@ -99,7 +101,7 @@
 </div>
 <div class="deux large-gauche">
 <div class="carte sans-marge" data-liste-demandes></div>
-<div class="carte" data-detail hidden></div>
+<div class="carte" data-detail data-calme hidden></div>
 </div>
 </section>
 <section data-vue="comptes" hidden>
@@ -115,8 +117,8 @@
 </section>
 <section data-vue="messages" hidden>
 <h1>Messages</h1>
-<p class="sous-titre">Les demandes envoyées par les formulaires Contact et Devis. Elles arrivent aussi dans ta boîte mail.</p>
-<div data-liste-messages class="pile"></div>
+<p class="sous-titre">Les demandes envoyées par les formulaires Contact et Devis. La plupart arrivent aussi dans ta boîte mail&nbsp;; au-delà du plafond du jour, elles ne sont qu'ici.</p>
+<div data-liste-messages data-calme class="pile"></div>
 </section>
 <section data-vue="prix" hidden>
 <h1>Prix du site</h1>
@@ -223,12 +225,19 @@
 </form>
 </details>
 </div>
+<div class="carte">
+<h2>Place sur l'hébergement</h2>
+<p data-place>…</p>
+<p class="petit" data-place-detail hidden></p>
+<p class="alerte" data-place-alerte hidden></p>
+</div>
 </div>
 <form class="carte" data-form-sauvegarde novalidate>
 <h2>Sauvegarde des comptes clients</h2>
 <p data-sauvegarde-etat></p>
-<label for="s-mdp">Mot de passe du fichier (10 caractères au moins)</label>
-<input id="s-mdp" type="password" autocomplete="new-password" minlength="10">
+<label for="s-mdp">Phrase de passe du fichier (16 caractères au moins)</label>
+<input id="s-mdp" type="password" autocomplete="new-password" minlength="16" aria-describedby="s-mdp-aide">
+<p class="petit" id="s-mdp-aide">Choisis 3 ou 4 mots sans rapport entre eux : facile à retenir, long à deviner. Sans elle, le fichier ne s'ouvre pas.</p>
 <button type="submit" class="bouton">Télécharger la sauvegarde</button>
 <p class="msg" role="alert" hidden></p>
 <p class="petit">Le fichier contient des pièces d'identité et des IBAN : garde-le sur ton ordinateur, jamais dans un e-mail.</p>
@@ -242,6 +251,8 @@
 <div class="carte haut notifs" data-notifs>
 <h2 data-notifs-titre>Notifications sur ce téléphone</h2>
 <p>Dès qu'une demande d'envoi ou un message arrive sur le site, une notification sonne sur cet appareil. Un appui l'ouvre dans la gestion. Les <span class="insecable">e-mails</span> continuent comme avant.</p>
+<p class="petit">Elle se lit sur l'écran verrouillé&nbsp;: elle ne dit que ce qui arrive et un prénom, jamais le message, une adresse, un numéro ni un montant.</p>
+<p class="petit">Elle te prévient aussi d'un souci du site, une fois par jour au plus&nbsp;: un plafond du jour atteint (codes, messages, <span class="insecable">e-mails</span>), ou des codes faux répétés pour ta gestion.</p>
 <p class="notifs-etat" role="status"><span class="notifs-rond" aria-hidden="true"></span><span data-notifs-phrase>Vérification…</span></p>
 <div class="suite">
 <button type="button" class="bouton petit-b" data-notifs-activer hidden>Activer les notifications</button>
@@ -259,7 +270,7 @@
 </ol>
 <p class="petit">Il faut iOS&nbsp;16.4 ou plus récent.</p>
 </details>
-<p class="petit">Ta connexion à la gestion dure 30&nbsp;jours. Quand elle a expiré, la notification dit seulement «&nbsp;Nouvelle demande sur le site&nbsp;»&nbsp;: reconnecte-toi pour retrouver le détail.</p>
+<p class="petit">Ta connexion à la gestion dure 30&nbsp;jours. Quand elle a expiré, la notification dit seulement «&nbsp;Du nouveau sur le site&nbsp;»&nbsp;: reconnecte-toi pour retrouver le détail.</p>
 </div>
 </section>
 </main>

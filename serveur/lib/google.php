@@ -45,7 +45,9 @@ function google_aller(string $ou, ?string $cookie = null): void
 function google_depart(string $langue): void
 {
     $k = google_cle();
-    if (!$k) google_aller(lien_page($langue, 'espace-client.html') . '?google=indisponible');
+
+
+    if (!$k || mode_essai()) google_aller(lien_page($langue, 'espace-client.html') . '?google=indisponible');
     $etat = bin2hex(random_bytes(16));
     $verif = google_b64(random_bytes(32));
     $charge = b64url((string) json_encode(['s' => $etat, 'v' => $verif, 'l' => $langue, 'exp' => ms() + 600000]));
@@ -60,6 +62,8 @@ function google_depart(string $langue): void
 
 function google_http(string $url, ?array $post = null): ?array
 {
+
+    if (mode_essai()) return null;
     $ch = curl_init($url);
     $o = [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 10, CURLOPT_CONNECTTIMEOUT => 5];
     if ($post !== null) { $o[CURLOPT_POST] = true; $o[CURLOPT_POSTFIELDS] = http_build_query($post); }
@@ -96,6 +100,7 @@ function google_arrivee(): void
     }
     $c = appliquer_creation(compte_par_email($email, $langue), ['prenom' => texte($id['given_name'] ?? null, 80), 'nom' => texte($id['family_name'] ?? null, 80),
         'profil' => 'particulier', 'entreprise' => '', 'siret' => '']);
+    fermer_connexions_en_attente($email);
     header('Set-Cookie: ' . $efface, false);
     google_aller(lien_page($langue, 'espace-client.html') . '#accueil', cookie_session($c['id']));
 }

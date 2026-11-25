@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 
 
-const SCHEMA_VERSION = 11;
+const SCHEMA_VERSION = 12;
 
 
 function prive(): string
@@ -211,6 +211,10 @@ function migrer(PDO $bd): void
 
     ajouter_colonnes($bd, 'espace_envois', ['connu' => 'VARCHAR(12) NULL']);
     ajouter_colonnes($bd, 'site_messages', ['connu' => 'VARCHAR(12) NULL', 'langue' => 'VARCHAR(2) NULL']);
+
+
+
+    ajouter_colonnes($bd, 'espace_comptes', ['sessions_depuis' => 'BIGINT NULL']);
     @file_put_contents($drapeau, gmdate('c'));
 }
 
@@ -261,17 +265,28 @@ function refus(string $code, int $status = 400): void
 
 function apres_reponse(callable $f): void
 {
+
+
+    static $inscrit = false;
+    if (!$inscrit) {
+        register_shutdown_function('faire_apres');
+        $inscrit = true;
+    }
     $GLOBALS['ain_apres'][] = $f;
 }
 
-function terminer(): void
+
+
+function faire_apres(): void
 {
-    $apres = $GLOBALS['ain_apres'] ?? [];
-    $GLOBALS['ain_apres'] = [];
-    if ($apres) {
-        ignore_user_abort(true);
-        if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
-        else flush();
+    for ($tour = 0; $tour < 10 && !empty($GLOBALS['ain_apres']); $tour++) {
+        $apres = $GLOBALS['ain_apres'];
+        $GLOBALS['ain_apres'] = [];
+        if ($tour === 0) {
+            ignore_user_abort(true);
+            if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+            else flush();
+        }
         foreach ($apres as $f) {
             try {
                 $f();
@@ -280,6 +295,15 @@ function terminer(): void
             }
         }
     }
+    if (!empty($GLOBALS['ain_apres'])) {
+        journaliser('après la réponse : ' . count($GLOBALS['ain_apres']) . ' tâche(s) laissée(s) après 10 tours');
+        $GLOBALS['ain_apres'] = [];
+    }
+}
+
+function terminer(): void
+{
+    faire_apres();
     exit;
 }
 
@@ -339,14 +363,37 @@ function nuit_a_paris(): bool
 function texte($x, int $max = 120): string
 {
     if (!is_string($x)) return '';
-    $s = trim((string) preg_replace('/\s+/u', ' ', $x));
+
+
+    $s = trim((string) preg_replace('/\s+/u', ' ', utf8_valable($x)));
     return coupe($s, $max);
 }
 
+
+
+
+
 function coupe(string $s, int $max): string
 {
-    if (!preg_match('/^.{0,' . $max . '}/su', $s, $m)) return substr($s, 0, $max);
-    return $m[0];
+    $s = utf8_valable($s);
+    return preg_match('/^.{0,' . $max . '}/su', $s, $m) ? $m[0] : mb_substr($s, 0, $max, 'UTF-8');
+}
+
+
+
+
+function utf8_valable(string $s): string
+{
+    if (preg_match('//u', $s)) return $s;
+    $avant = mb_substitute_character();
+    mb_substitute_character(0xFFFD);
+    try {
+        $r = (string) mb_scrub($s, 'UTF-8');
+    } finally {
+        mb_substitute_character($avant);
+    }
+
+    return preg_match('//u', $r) ? $r : (string) preg_replace('/[\x80-\xFF]/', '?', $s);
 }
 
 
@@ -365,6 +412,29 @@ function lire_connu($x): ?string
 function majuscules(string $s): string
 {
     return function_exists('mb_strtoupper') ? mb_strtoupper($s, 'UTF-8') : strtoupper($s);
+}
+
+
+
+
+
+
+function centimes(float $euros): int
+{
+    return (int) round(round($euros * 100, 6));
+}
+
+
+function montant_centimes(float $kg, float $prix_kg): int
+{
+    $g = (int) round(round($kg * 1000, 6));
+    return intdiv($g * centimes($prix_kg) + 500, 1000);
+}
+
+
+function montant_pesee(float $kg, float $prix_kg): float
+{
+    return montant_centimes($kg, $prix_kg) / 100;
 }
 
 function uuid(): string
@@ -428,6 +498,61 @@ function dechiffrer(?string $s): ?string
     if ($s === null || strncmp($s, 'v1:', 3) !== 0) return null;
     $b = base64_decode(substr($s, 3), true);
     return is_string($b) ? dechiffrer_octets($b) : null;
+}
+
+
+
+
+
+
+function dossier_tmp(): string
+{
+    $d = prive() . '/tmp';
+    if (!is_dir($d) && !@mkdir($d, 0700, true) && !is_dir($d)) throw new RuntimeException('dossier temporaire impossible à créer');
+    return $d;
+}
+
+
+function dossier_tmp_nouveau(string $prefixe): string
+{
+    $d = dossier_tmp() . '/' . $prefixe . '-' . bin2hex(random_bytes(8));
+    if (!@mkdir($d, 0700)) throw new RuntimeException('dossier temporaire impossible à créer');
+    return $d;
+}
+
+
+function effacer_dossier_tmp(string $d): void
+{
+    if (dirname($d) !== prive() . '/tmp' || !preg_match('/^[a-z]+-[0-9a-f]{16}$/', basename($d)) || !is_dir($d) || is_link($d)) return;
+    foreach (scandir($d) ?: [] as $f) {
+        if ($f !== '.' && $f !== '..' && !is_dir("$d/$f")) @unlink("$d/$f");
+    }
+    @rmdir($d);
+}
+
+
+
+function nettoyer_tmp(int $secondes = 3600): int
+{
+    $d = prive() . '/tmp';
+    if (!is_dir($d)) return 0;
+    $limite = time() - $secondes;
+    $n = 0;
+    foreach (scandir($d) ?: [] as $nom) {
+        $f = "$d/$nom";
+        if ($nom === '.' || $nom === '..' || is_link($f)) continue;
+        $quand = @filemtime($f);
+        if ($quand === false || $quand > $limite) continue;
+        if (is_dir($f)) {
+            foreach (scandir($f) ?: [] as $x) {
+                if ($x !== '.' && $x !== '..' && is_file("$f/$x") && !is_link("$f/$x") && @unlink("$f/$x")) $n++;
+            }
+            if (@rmdir($f)) $n++;
+        } elseif (@unlink($f)) {
+            $n++;
+        }
+    }
+    return $n;
 }
 
 

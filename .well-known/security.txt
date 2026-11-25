@@ -1,0 +1,5 @@
+# Pour nous signaler une faille de sécurité sur ce site (RFC 9116). Date « Expires » à repousser chaque année.
+Contact: mailto:contact@ainrecycling.com
+Expires: 2027-11-24T00:00:00.000Z
+Preferred-Languages: fr, en
+Canonical: https://ainrecycling.com/.well-known/security.txt

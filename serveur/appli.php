@@ -37,9 +37,13 @@ try {
             if (!in_array($action, $connues, true)) refus('action', 404);
 
             $e = marquer_envoi((string) ($b['envoi'] ?? ''), $action, texte($b['par'] ?? 'appli', 40) ?: 'appli', $numero,
-                is_array($b['valeurs'] ?? null) ? $b['valeurs'] : []);
+                is_array($b['valeurs'] ?? null) ? $b['valeurs'] : [], true, $issue);
+
+
+
+            if ($issue === 'change') refus('change', 409);
             if (!$e) refus($action === 'pese' ? 'poids' : 'introuvable', $action === 'pese' ? 400 : 404);
-            prevenir_etape($e, $action);
+            if ($issue === 'fait') prevenir_etape($e, $action);
             repondre(['envoi' => $e]);
 
 

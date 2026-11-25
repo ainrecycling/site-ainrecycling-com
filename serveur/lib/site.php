@@ -17,7 +17,11 @@ const PRIX_PAGES = 47.0;
 const ECART_DEPOT = 3.0;
 const PRIX_MIN = 5, PRIX_MAX = 300, PRIX_DOUTE_BAS = 30, PRIX_DOUTE_HAUT = 80;
 const GARANTIE_JOURS = 7;
-const ALERTES_PAR_JOUR = 40, ALERTES_PAR_PASSAGE = 8, CONFIRMATIONS_PAR_JOUR = 20;
+
+const ALERTES_PAR_JOUR = 40, ALERTES_PAR_PASSAGE = 8, CONFIRMATIONS_PAR_JOUR = 5;
+
+
+const CONFIRMATIONS_PAR_APPAREIL = 2;
 const TYPES_ANNONCE = ['conges', 'fermeture', 'tournee'];
 
 
@@ -167,6 +171,10 @@ function changer_prix(float $kg, string $par, ?float $depot = null, bool $progra
 
 function programmer_prix(?array $prog, string $par): void
 {
+
+
+
+    prix_site();
     transaction(function () use ($prog, $par) {
         $p = prix_site();
         ecrire_reglage_site('prix', ['kg' => $p['kg'], 'depot_regle' => $p['depot_regle'] ?? null, 'le' => $p['le'], 'par' => $p['par'],
@@ -220,6 +228,11 @@ function ajouter_annonce(array $a, string $par): array
 {
     return transaction(function () use ($a, $par) {
         $toutes = array_values(array_filter(annonces(), fn ($x) => ($x['fin'] ?? '') >= jour_paris()));
+
+        foreach ($toutes as $x) {
+            if (($x['type'] ?? '') === $a['type'] && ($x['debut'] ?? '') === $a['debut'] && ($x['fin'] ?? '') === $a['fin']
+                && ($x['villes'] ?? '') === $a['villes'] && !empty($x['tot']) === $a['tot']) return $toutes;
+        }
         $toutes[] = $a + ['le' => iso(), 'par' => coupe($par, 60)];
         ecrire_reglage_site('annonces', array_slice($toutes, -20), $par);
         return $toutes;
@@ -255,29 +268,121 @@ function infos_publiques(): array
 function empreinte_ip(): string
 {
     $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+
+
+
+    $bin = @inet_pton($ip);
+    if (is_string($bin) && strlen($bin) === 16) {
+        $ip = substr($bin, 0, 12) === "\0\0\0\0\0\0\0\0\0\0\xff\xff" ? (string) inet_ntop(substr($bin, 12)) : 'v6:' . bin2hex(substr($bin, 0, 8));
+    }
     return substr(hash_hmac('sha256', $ip . '|' . aujourdhui(), cle_binaire('secret')), 0, 16);
 }
 
 
+
+
+
+
+
+
+const CONTACT_MAILS_PAR_JOUR = 8, CONTACT_MESSAGES_PAR_JOUR = 120, CONTACT_PHOTOS_PAR_JOUR = 40;
+
+
+
+
+
+
+const CONTACT_MAILS_PAR_APPAREIL = 3, CONTACT_MESSAGES_PAR_APPAREIL = 8, CONTACT_SECOURS_PAR_JOUR = 4;
+
+
+
+
+
+
+
+const CONTACT_PLACE_TEXTES = 25 * 1024 * 1024;
+
+
+
+const CONTACT_SANS_DUREE_JUSQU = '2026-12-08';
+
+
+
+const CONTACT_PHOTO_OCTETS = 1536 * 1024, CONTACT_PLACE_PHOTOS = 150 * 1024 * 1024;
+
+
+function champ_contact(string $nom): string
+{
+    $v = $_POST[$nom] ?? null;
+    return is_string($v) ? utf8_valable($v) : '';
+}
+
+
+
+
+function robot_contact(?string $jour = null): bool
+{
+    $pot = $_POST['site'] ?? '';
+    if (!is_string($pot) || trim($pot) !== '') return true;
+    if (!array_key_exists('duree', $_POST)) return ($jour ?? jour_paris()) > CONTACT_SANS_DUREE_JUSQU;
+    return !(is_numeric($_POST['duree']) && (float) $_POST['duree'] >= 2000);
+}
+
+
+function phrase_messages_en_attente(): string
+{
+    $n = messages_a_repondre();
+    return $n > 1 ? "$n messages y attendent ta réponse." : ($n === 1 ? '1 message y attend ta réponse.' : '');
+}
+
+
+
 function recevoir_contact(): void
 {
-    if (trim((string) ($_POST['site'] ?? '')) !== '') repondre(['ok' => true]);
-    $sujet = coupe(trim(preg_replace('/[\r\n]+/', ' ', (string) ($_POST['sujet'] ?? '')) ?? ''), 150);
-    $corps = trim(str_replace("\r", '', (string) ($_POST['texte'] ?? '')));
+
+    if (robot_contact()) repondre(['ok' => true]);
+
+
+    $sujet = coupe(trim((string) preg_replace('/[\r\n]+/', ' ', champ_contact('sujet'))), 150);
+    $corps = trim(str_replace("\r", '', champ_contact('texte')));
     $corps = mb_substr((string) preg_replace('/[^\P{C}\n\t]/u', '', $corps), 0, 4000);
-    $retour = coupe(trim((string) ($_POST['retour'] ?? '')), 120);
+    $retour = coupe(trim(champ_contact('retour')), 120);
     if ($corps === '' || $sujet === '') refus('vide');
-    if (!sous_la_limite('contact:' . empreinte_ip(), 8) || !sous_la_limite('contact:tous', 40)) refus('trop', 429);
+
+    if (!sous_la_limite('contact:' . empreinte_ip(), CONTACT_MESSAGES_PAR_APPAREIL)) refus('trop_jour', 429);
+    if (!sous_la_limite('contact:tous', CONTACT_MESSAGES_PAR_JOUR)) {
+        alerter_malik('plafond-messages', 'Formulaire de contact : plafond du jour atteint',
+            fn () => trim('Il refuse les messages jusqu\'à demain : beaucoup d\'envois aujourd\'hui, peut-être un robot. Les messages déjà reçus sont dans ta page de gestion. '
+                . phrase_messages_en_attente()));
+        refus('trop_jour', 429);
+    }
     $pieces = $brutes = [];
     $f = $_FILES['photos'] ?? null;
+    if ($f && is_array($f['tmp_name']) && $f['tmp_name'] && !sous_la_limite('contact-photos', CONTACT_PHOTOS_PAR_JOUR)) {
+        $f = null;
+        $corps .= "\n\n(Photos non gardées : trop de messages avec photos aujourd'hui. Demande-les à la personne.)";
+        alerter_malik('plafond-photos', 'Messages du site : photos plus gardées aujourd\'hui',
+            'Beaucoup de messages avec photos aujourd\'hui : les suivants sont gardés sans leurs photos jusqu\'à demain.');
+    }
+    $lourdes = 0;
     if ($f && is_array($f['tmp_name'])) {
         foreach (array_slice($f['tmp_name'], 0, 3, true) as $i => $tmp) {
-            if (($f['error'][$i] ?? 1) !== UPLOAD_ERR_OK || !is_uploaded_file($tmp) || ($f['size'][$i] ?? 0) > 6 * 1024 * 1024) continue;
+            if (($f['error'][$i] ?? 1) !== UPLOAD_ERR_OK || !is_uploaded_file($tmp)) continue;
+            if (($f['size'][$i] ?? 0) > CONTACT_PHOTO_OCTETS || (int) @filesize($tmp) > CONTACT_PHOTO_OCTETS) { $lourdes++; continue; }
             $info = @getimagesize($tmp);
             if (!$info || !in_array($info[2], [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_WEBP], true)) continue;
             $brutes[] = (string) file_get_contents($tmp);
             $pieces[] = ['filename' => 'photo-' . (count($pieces) + 1) . image_type_to_extension($info[2]), 'content' => base64_encode($brutes[count($brutes) - 1])];
         }
+    }
+    if ($lourdes) $corps .= "\n\n(" . ($lourdes > 1 ? "$lourdes photos non gardées : trop lourdes. Demande-les" : 'Une photo non gardée : trop lourde. Demande-la') . ' à la personne.)';
+
+
+    $garder = $brutes;
+    if ($brutes && place_photos_messages() + array_sum(array_map('strlen', $brutes)) > CONTACT_PLACE_PHOTOS) {
+        $garder = [];
+        alerter_malik('place-photos', 'Messages du site : plus de place pour les photos',
+            'Les photos des nouveaux messages ne sont plus gardées dans ta page de gestion : leur place (environ 150 Mo) est pleine. Supprime d\'anciens messages avec photos pour en refaire.');
     }
 
 
@@ -287,19 +392,76 @@ function recevoir_contact(): void
     $infos = [];
     if ($connu !== null) $infos[] = 'Nous a connus par : ' . CONNU[$connu];
     if ($langue !== 'fr') $infos[] = 'Écrit depuis le site en ' . LANGUES_EN_FRANCAIS[$langue] . ' : dans ta page de gestion, « Traduire en français » et tes réponses prêtes dans sa langue.';
-    $html = '<p style="margin:0;white-space:pre-line">' . echapper($corps) . '</p>'
+
+
+
+
+
+    $parAppareil = sous_la_limite('contact-mails:' . empreinte_ip(), CONTACT_MAILS_PAR_APPAREIL);
+    $mail = $parAppareil && sous_la_limite('contact-mails', CONTACT_MAILS_PAR_JOUR);
+
+
+    $plein = false;
+    try {
+        $plein = place_textes_messages() + strlen($sujet) + strlen($corps) + strlen($retour) > CONTACT_PLACE_TEXTES;
+    } catch (Throwable $e) {
+        journaliser('place des textes des messages : ' . resume_erreur($e));
+    }
+    if ($plein) {
+        alerter_malik('place-messages', 'Messages du site : plus de place dans la base',
+            'Les nouveaux messages ne sont plus gardés dans ta page de gestion : leurs textes y prennent toute leur place (25 Mo), peut-être à cause d\'un robot. Ceux qui partent par e-mail t\'arrivent encore, les autres sont refusés. Supprime les messages inutiles pour en refaire.');
+        if (!$mail) refus('trop_jour', 429);
+    }
+    $sansPlace = $brutes && !$garder;
+    $corpsMail = $corps . ($plein ? "\n\n(Message pas gardé dans ta page de gestion : la place des messages y est pleine. Il n'est que dans cet e-mail.)"
+        : ($sansPlace ? "\n\n(Photos jointes à cet e-mail seulement : plus de place sur le serveur pour les garder dans ta page de gestion.)" : ''));
+    $html = '<p style="margin:0;white-space:pre-line">' . echapper($corpsMail) . '</p>'
         . ($infos ? '<p style="margin:14px 0 0;padding-top:10px;border-top:1px solid #e4e7ec;font-size:14px;color:#475467">' . implode('<br>', array_map('echapper', $infos)) . '</p>' : '');
     $entetes = filter_var($retour, FILTER_VALIDATE_EMAIL) ? ['Reply-To' => $retour] : [];
 
     $id = '';
-    try {
-        $id = garder_message($sujet, $corps, $retour, $brutes, $connu, $langue);
-    } catch (Throwable $e) {
-        journaliser('message non gardé : ' . resume_erreur($e));
+    if (!$plein) {
+        try {
+            $id = garder_message($sujet, $corps . ($sansPlace ? "\n\n(Photos non gardées : plus de place sur le serveur. "
+                . ($mail ? 'Elles sont jointes à l\'e-mail de ce message.)' : 'Demande-les à la personne.)') : ''), $retour, $garder, $connu, $langue);
+        } catch (Throwable $e) {
+            journaliser('message non gardé : ' . resume_erreur($e));
+        }
+    }
+    if ($id === '' && !$mail) {
+
+
+
+        if (!sous_la_limite('contact-secours', CONTACT_SECOURS_PAR_JOUR)) {
+            alerter_malik('contact-panne', 'Formulaire de contact en panne',
+                'La base du site refuse les messages et la réserve d\'e-mails du jour est vide : les visiteurs lisent « L\'envoi n\'a pas abouti ». Le détail est dans le journal du site.');
+            refus('serveur', 503);
+        }
+        $mail = true;
+    }
+    if (!$mail) {
+
+
+        if (!$parAppareil) {
+            alerter_malik('appareil-contact', 'Messages du site : un même appareil a écrit plus de ' . CONTACT_MAILS_PAR_APPAREIL . ' fois',
+                fn () => trim('Ses messages suivants arrivent dans ta page de gestion, sans e-mail ni notification, jusqu\'à demain. ' . phrase_messages_en_attente()));
+        } else {
+            alerter_malik('plafond-contact', 'Messages du site : plafond d\'e-mails atteint',
+                fn () => trim('Les messages suivants arrivent dans ta page de gestion, sans e-mail ni notification, jusqu\'à demain. ' . phrase_messages_en_attente()));
+        }
+        repondre(['ok' => true]);
     }
 
     apres_reponse(fn () => notifier('message', $id));
-    envoyer_mail((string) reglage('mail_admin', ''), '[Site] ' . $sujet, mail_cadre('fr', $html), $corps . ($infos ? "\n\n" . implode("\n", $infos) : ''), [], $entetes, $pieces);
+    try {
+        envoyer_mail((string) reglage('mail_admin', ''), '[Site] ' . $sujet, mail_cadre('fr', $html), $corpsMail . ($infos ? "\n\n" . implode("\n", $infos) : ''), [], $entetes, $pieces);
+    } catch (Throwable $e) {
+
+
+
+        if ($id === '') throw $e;
+        journaliser('e-mail d\'un message pas parti (le message est dans la page de gestion) : ' . resume_erreur($e));
+    }
     repondre(['ok' => true]);
 }
 
@@ -307,12 +469,31 @@ function recevoir_contact(): void
 const LANGUES_EN_FRANCAIS = ['fr' => 'français', 'de' => 'allemand', 'en' => 'anglais', 'it' => 'italien', 'es' => 'espagnol'];
 
 
-
 function dossier_messages(): string
 {
     $d = prive() . '/messages';
     if (!is_dir($d)) @mkdir($d, 0700, true);
     return $d;
+}
+
+
+
+function place_photos_messages(): int
+{
+    $total = 0;
+    foreach (glob(dossier_messages() . '/*.bin') ?: [] as $f) $total += (int) @filesize($f);
+    return $total;
+}
+
+
+
+
+function place_textes_messages(): int
+{
+    $bd = bd();
+    $octets = est_sqlite($bd) ? 'LENGTH(CAST(sujet AS BLOB)) + LENGTH(CAST(texte AS BLOB)) + LENGTH(CAST(retour AS BLOB))'
+        : 'LENGTH(sujet) + LENGTH(texte) + LENGTH(retour)';
+    return (int) $bd->query("SELECT COALESCE(SUM($octets), 0) FROM site_messages")->fetchColumn();
 }
 
 
@@ -326,15 +507,33 @@ function garder_message(string $sujet, string $texte, string $retour, array $pho
         $nom = $id . '-' . ($i + 1) . '.bin';
         if (@file_put_contents(dossier_messages() . '/' . $nom, chiffrer_octets($octets), LOCK_EX) !== false) $noms[] = $nom;
     }
-    bd()->prepare('INSERT INTO site_messages (id, cree_le, sujet, texte, retour, photos, connu, langue) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-        ->execute([$id, iso(), coupe($sujet, 160), $texte, coupe($retour, 120), json_encode($noms), lire_connu($connu), langue_de($langue)]);
+    try {
+        bd()->prepare('INSERT INTO site_messages (id, cree_le, sujet, texte, retour, photos, connu, langue) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+            ->execute([$id, iso(), coupe($sujet, 160), $texte, coupe($retour, 120), json_encode($noms), lire_connu($connu), langue_de($langue)]);
+    } catch (Throwable $e) {
+
+
+        foreach ($noms as $nom) @unlink(dossier_messages() . '/' . $nom);
+        throw $e;
+    }
     return $id;
 }
 
+
+
+
+const MESSAGES_A_REPONDRE_MONTRES = 300, MESSAGES_REPONDUS_MONTRES = 100;
+
+
+
 function messages_pour_malik(): array
 {
+    $lignes = array_merge(
+        bd()->query('SELECT * FROM site_messages WHERE repondu_le IS NULL ORDER BY cree_le DESC, id DESC LIMIT ' . MESSAGES_A_REPONDRE_MONTRES)->fetchAll(),
+        bd()->query('SELECT * FROM site_messages WHERE repondu_le IS NOT NULL ORDER BY cree_le DESC, id DESC LIMIT ' . MESSAGES_REPONDUS_MONTRES)->fetchAll());
+    usort($lignes, fn ($a, $b) => strcmp((string) $b['cree_le'], (string) $a['cree_le']) ?: strcmp((string) $b['id'], (string) $a['id']));
     $r = [];
-    foreach (bd()->query('SELECT * FROM site_messages ORDER BY cree_le DESC LIMIT 100')->fetchAll() as $l) {
+    foreach ($lignes as $l) {
         $r[] = ['id' => $l['id'], 'cree_le' => $l['cree_le'], 'sujet' => $l['sujet'], 'texte' => $l['texte'], 'retour' => $l['retour'],
             'photos' => count((array) json_decode((string) $l['photos'], true)), 'repondu_le' => $l['repondu_le'] ?: null,
 
@@ -346,6 +545,18 @@ function messages_pour_malik(): array
 function messages_a_repondre(): int
 {
     return (int) bd()->query('SELECT COUNT(*) FROM site_messages WHERE repondu_le IS NULL')->fetchColumn();
+}
+
+
+
+
+function messages_nombres(): array
+{
+    $l = bd()->query('SELECT COUNT(*) AS tous, COALESCE(SUM(CASE WHEN repondu_le IS NULL THEN 1 ELSE 0 END), 0) AS a_repondre FROM site_messages')->fetch();
+    $tous = (int) ($l['tous'] ?? 0);
+    $a = (int) ($l['a_repondre'] ?? 0);
+    return ['a_repondre' => $a, 'repondus' => $tous - $a, 'montres_a_repondre' => min($a, MESSAGES_A_REPONDRE_MONTRES),
+        'montres_repondus' => min($tous - $a, MESSAGES_REPONDUS_MONTRES)];
 }
 
 
@@ -385,19 +596,54 @@ function servir_image(string $octets): void
     exit;
 }
 
+
 function sous_la_limite(string $nom, int $max): bool
 {
+    return compter_si_possible($nom, $max) !== null;
+}
+
+
+
+function compter_du_jour(string $nom): int
+{
+    return (int) compter_si_possible($nom, null);
+}
+
+
+
+
+
+
+
+
+function compter_si_possible(string $nom, ?int $max): ?int
+{
     $jour = aujourdhui();
-    return (bool) transaction(function (PDO $bd) use ($nom, $max, $jour) {
-        $q = $bd->prepare('SELECT jour, n FROM espace_compteurs WHERE nom = ?' . pour_maj());
-        $q->execute([$nom]);
-        $t = $q->fetch();
-        $n = $t && $t['jour'] === $jour ? (int) $t['n'] : 0;
-        if ($n >= $max) return false;
-        if ($t) $bd->prepare('UPDATE espace_compteurs SET jour = ?, n = ? WHERE nom = ?')->execute([$jour, $n + 1, $nom]);
-        else $bd->prepare('INSERT INTO espace_compteurs (jour, n, nom) VALUES (?, ?, ?)')->execute([$jour, 1, $nom]);
-        return true;
-    });
+    for ($essai = 1; ; $essai++) {
+        try {
+            return transaction(function (PDO $bd) use ($nom, $max, $jour) {
+                $bd->prepare(est_sqlite($bd)
+                    ? 'INSERT INTO espace_compteurs (nom, jour, n) VALUES (?, ?, 0) ON CONFLICT(nom) DO NOTHING'
+                    : 'INSERT INTO espace_compteurs (nom, jour, n) VALUES (?, ?, 0) ON DUPLICATE KEY UPDATE nom = nom')->execute([$nom, $jour]);
+                $q = $bd->prepare('SELECT jour, n FROM espace_compteurs WHERE nom = ?' . pour_maj());
+                $q->execute([$nom]);
+                $t = $q->fetch();
+                $n = $t && $t['jour'] === $jour ? (int) $t['n'] : 0;
+                if ($max !== null && $n >= $max) return null;
+                $bd->prepare('UPDATE espace_compteurs SET jour = ?, n = ? WHERE nom = ?')->execute([$jour, $n + 1, $nom]);
+                return $n + 1;
+            });
+        } catch (PDOException $e) {
+            if ($essai >= 2 || (string) $e->getCode() !== '40001') throw $e;
+        }
+    }
+}
+
+
+
+function decompter(string $nom): void
+{
+    bd()->prepare('UPDATE espace_compteurs SET n = n - 1 WHERE nom = ? AND jour = ? AND n > 0')->execute([$nom, aujourdhui()]);
 }
 
 
@@ -410,8 +656,11 @@ function inscrire_alerte(string $email, string $langue): string
     $l = $q->fetch();
     if ($l && $l['confirme_le']) return 'ok';
     if ($l && $l['demande_le'] > iso(ms() - 86400000)) return 'ok';
-    if (!sous_la_limite('al:' . empreinte_ip(), 5)) return 'trop';
-    if (!sous_la_limite('alertes-confirmations', CONFIRMATIONS_PAR_JOUR)) return 'trop';
+    if (!sous_la_limite('al:' . empreinte_ip(), CONFIRMATIONS_PAR_APPAREIL)) return 'trop';
+    if (!sous_la_limite('alertes-confirmations', CONFIRMATIONS_PAR_JOUR)) {
+        alerter_malik('plafond-alertes', 'Alerte prix : plafond du jour atteint', 'Plus d\'inscription à l\'alerte prix jusqu\'à demain : beaucoup de demandes aujourd\'hui.');
+        return 'trop';
+    }
     $jeton = $l['jeton'] ?? bin2hex(random_bytes(16));
     if ($l) bd()->prepare('UPDATE site_alertes SET langue = ?, demande_le = ? WHERE email = ?')->execute([$langue, iso(), $email]);
     else bd()->prepare('INSERT INTO site_alertes (email, jeton, langue, cree_le, demande_le) VALUES (?, ?, ?, ?, ?)')
@@ -489,12 +738,30 @@ function envoyer_alertes_en_attente(): void
                 continue;
             }
             if (!sous_la_limite('alertes-envoyees', ALERTES_PAR_JOUR)) return;
+
+
+
+
+            try {
+                mail_alerte_prix($l['email'], $l['langue'], $l['jeton'], $prix);
+            } catch (Throwable $e) {
+                decompter('alertes-envoyees');
+                journaliser('alerte prix pas partie (elle repartira au passage suivant) : ' . resume_erreur($e));
+                return;
+            }
             bd()->prepare('UPDATE site_alertes SET prevenir = NULL, prevenu_le = ? WHERE email = ?')->execute([iso(), $l['email']]);
-            mail_alerte_prix($l['email'], $l['langue'], $l['jeton'], $prix);
         }
     });
 }
 
+
+
+
+const ENTREPRISES_ESSAI = [
+    ['nom' => 'ESSAI DECOLLETAGE (site d\'essai)', 'siret' => '00000000100011', 'adresse' => '1 Rue des Essais', 'cp' => '01000', 'ville' => 'Bourg-en-Bresse'],
+    ['nom' => 'ESSAI TOURNAGE (site d\'essai)', 'siret' => '00000000200012', 'adresse' => '2 Avenue des Essais', 'cp' => '74300', 'ville' => 'Cluses'],
+    ['nom' => 'ESSAI OUTILLAGE (site d\'essai)', 'siret' => '00000000300013', 'adresse' => '', 'cp' => '69001', 'ville' => 'Lyon'],
+];
 
 
 function en_casse(string $s): string
@@ -511,6 +778,9 @@ function en_casse(string $s): string
 
 function chercher_entreprises(string $q): array
 {
+
+
+    if (mode_essai()) return ENTREPRISES_ESSAI;
     $chiffres = (string) preg_replace('/\s/', '', $q);
     $texte = preg_match('/^\d{9}(\d{5})?$/', $chiffres) ? $chiffres : $q;
     $url = 'https://recherche-entreprises.api.gouv.fr/search?q=' . rawurlencode(coupe($texte, 100))
@@ -558,11 +828,50 @@ function compter_visite(string $page, string $source): void
 }
 
 
+
 function page_visitee($x): ?string
 {
     $p = is_string($x) ? (string) parse_url($x, PHP_URL_PATH) : '';
     $p = (string) preg_replace('#/index\.html$#', '/', $p);
-    return preg_match('#^/((de|en|it|es)/)?([a-z0-9-]+\.html)?$#', $p) ? $p : null;
+    if (!preg_match('#^/((de|en|it|es)/)?([a-z0-9-]+\.html)?$#', $p)) return null;
+
+    return is_file(dirname(__DIR__, 2) . (substr($p, -1) === '/' ? $p . 'index.html' : $p)) ? $p : null;
+}
+
+
+
+
+function retirer_visites_inventees(): void
+{
+    $fait = prive() . '/visites-inventees.ok';
+    if (is_file($fait)) return;
+
+    $racine = dirname(__DIR__, 2);
+    $vraies = [];
+    foreach (['', 'de/', 'en/', 'it/', 'es/'] as $l) {
+        foreach (glob($racine . '/' . $l . '*.html') ?: [] as $f) {
+            $nom = basename($f);
+            if (preg_match('/^[a-z0-9-]+\.html$/', $nom)) $vraies[] = '/' . $l . ($nom === 'index.html' ? '' : $nom);
+        }
+    }
+    if (!in_array('/', $vraies, true)) throw new RuntimeException('pages du site introuvables');
+    $bd = bd();
+    $sql = 'DELETE FROM site_visites WHERE page <> ? AND page NOT IN (' . implode(', ', array_fill(0, count($vraies), '?')) . ')';
+    $n = 0;
+    if (est_sqlite($bd)) {
+        $q = $bd->prepare($sql);
+        $q->execute(['(visiteurs)', ...$vraies]);
+        $n = $q->rowCount();
+    } else {
+
+        $q = $bd->prepare($sql . ' LIMIT 2000');
+        do {
+            $q->execute(['(visiteurs)', ...$vraies]);
+            $n += $k = $q->rowCount();
+        } while ($k === 2000);
+    }
+    journaliser("ménage (une seule fois) : $n ligne(s) de pages vues effacée(s) (pages qui n'existent pas sur le site)");
+    @file_put_contents($fait, gmdate('c'));
 }
 
 
@@ -589,22 +898,27 @@ function est_robot(): bool
 }
 
 
+function sommes_visites(string $sql, array $params): array
+{
+    $q = bd()->prepare($sql);
+    $q->execute($params);
+    return array_map('intval', $q->fetchAll(PDO::FETCH_KEY_PAIR));
+}
+
+
+
 function visites_du_mois(string $mois): array
 {
-    $q = bd()->prepare("SELECT page, source, SUM(n) AS n FROM site_visites WHERE jour LIKE ? AND page <> '(visiteurs)' GROUP BY page, source");
-    $q->execute([$mois . '-%']);
-    $pages = $sources = [];
-    $total = 0;
-    foreach ($q->fetchAll() as $l) {
-        if ($l['source'] === 'interne') $l['source'] = 'dans le site';
-        $n = (int) $l['n'];
-        $total += $n;
-        $pages[$l['page']] = ($pages[$l['page']] ?? 0) + $n;
-        $sources[$l['source']] = ($sources[$l['source']] ?? 0) + $n;
+    $p = [$mois . '-%'];
+    $q = bd()->prepare("SELECT COALESCE(SUM(n), 0) FROM site_visites WHERE jour LIKE ? AND page <> '(visiteurs)'");
+    $q->execute($p);
+    $total = (int) $q->fetchColumn();
+    $pages = sommes_visites("SELECT page, SUM(n) AS total FROM site_visites WHERE jour LIKE ? AND page <> '(visiteurs)' GROUP BY page ORDER BY total DESC, page LIMIT 8", $p);
+    $sources = [];
+    foreach (sommes_visites("SELECT source, SUM(n) AS total FROM site_visites WHERE jour LIKE ? AND page <> '(visiteurs)' GROUP BY source ORDER BY total DESC, source", $p) as $s => $n) {
+        $sources[$s === 'interne' ? 'dans le site' : $s] = $n;
     }
-    arsort($pages);
-    arsort($sources);
-    return ['mois' => $mois, 'total' => $total, 'pages' => array_slice($pages, 0, 8, true), 'sources' => $sources];
+    return ['mois' => $mois, 'total' => $total, 'pages' => $pages, 'sources' => $sources];
 }
 
 function mois_avant(string $mois, int $n = 1): string
@@ -659,22 +973,19 @@ function visites_detail(): array
     $depuis = plus_jours(jour_paris(), -29);
     $jours = [];
     for ($i = 0; $i < 30; $i++) $jours[plus_jours($depuis, $i)] = 0;
-    $q = bd()->prepare('SELECT jour, page, source, n FROM site_visites WHERE jour >= ?');
-    $q->execute([$depuis]);
-    $pages = $sources = [];
-    $visiteurs = ['nouveau' => 0, 'revenu' => 0];
-    foreach ($q->fetchAll() as $l) {
-        $n = (int) $l['n'];
-        if ($l['page'] === '(visiteurs)') {
-            if (isset($visiteurs[$l['source']])) $visiteurs[$l['source']] += $n;
-            continue;
-        }
-        if (isset($jours[$l['jour']])) $jours[$l['jour']] += $n;
-        $pages[$l['page']] = ($pages[$l['page']] ?? 0) + $n;
-        if ($l['source'] !== 'interne') $sources[$l['source']] = ($sources[$l['source']] ?? 0) + $n;
+
+
+    $p = [$depuis];
+    foreach (sommes_visites("SELECT jour, SUM(n) FROM site_visites WHERE jour >= ? AND page <> '(visiteurs)' GROUP BY jour", $p) as $j => $n) {
+        if (isset($jours[$j])) $jours[$j] += $n;
     }
-    arsort($pages);
-    arsort($sources);
+    $pages = sommes_visites("SELECT page, SUM(n) AS total FROM site_visites WHERE jour >= ? AND page <> '(visiteurs)' GROUP BY page ORDER BY total DESC, page LIMIT 8", $p);
+    $sources = sommes_visites("SELECT source, SUM(n) AS total FROM site_visites WHERE jour >= ? AND page <> '(visiteurs)' AND source <> 'interne'
+        GROUP BY source ORDER BY total DESC, source LIMIT 8", $p);
+    $visiteurs = ['nouveau' => 0, 'revenu' => 0];
+    foreach (sommes_visites("SELECT source, SUM(n) FROM site_visites WHERE jour >= ? AND page = '(visiteurs)' GROUP BY source", $p) as $s => $n) {
+        if (isset($visiteurs[$s])) $visiteurs[$s] += $n;
+    }
 
 
 
@@ -700,6 +1011,10 @@ function menage_site(): void
     bd()->prepare('DELETE FROM site_alertes WHERE confirme_le IS NULL AND cree_le < ?')->execute([iso(ms() - 7 * 86400000)]);
     bd()->prepare('DELETE FROM site_alertes WHERE confirme_le IS NOT NULL AND confirme_le < ?')->execute([iso(ms() - (int) (3 * 365.25 * 86400000))]);
     bd()->prepare('DELETE FROM site_visites WHERE jour < ?')->execute([mois_avant(substr(jour_paris(), 0, 7), 25) . '-01']);
+
+
+    $n = nettoyer_tmp();
+    if ($n) journaliser("ménage : $n fichier(s) ou dossier(s) temporaire(s) d'une sauvegarde interrompue effacé(s)");
     resume_du_mois();
 }
 
@@ -710,7 +1025,6 @@ function resume_du_mois(): void
     $mois = substr(jour_paris(), 0, 7);
     $f = prive() . '/resume.mois';
     if ($a === '' || @file_get_contents($f) === $mois) return;
-    @file_put_contents($f, $mois, LOCK_EX);
     $passe = mois_avant($mois);
     $v = visites_du_mois($passe);
     $avant = visites_du_mois(mois_avant($passe));
@@ -732,6 +1046,9 @@ function resume_du_mois(): void
         : 'Pense à la sauvegarde des comptes clients (bouton « Sauvegarder » de ta page).';
     $lignes[] = 'Ce que les gens tapent dans Google pour te trouver : Google Search Console, rubrique « Performances ».';
     mail_resume_mois($a, "Le site en $nomMois", $lignes, adresse_site() . '/gestion/');
+
+
+    @file_put_contents($f, $mois, LOCK_EX);
 }
 
 

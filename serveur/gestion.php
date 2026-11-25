@@ -27,6 +27,9 @@ function reglages_pour_malik(): array
 
         'connexions' => array_values((array) (reglage_site('connexions') ?? [])), 'messages_a_repondre' => messages_a_repondre(),
         'google' => ['pret' => google_cle() !== null, 'client_id' => (string) ((reglage_site('google') ?? [])['client_id'] ?? ''), 'retour' => google_retour()],
+
+
+        'place' => place_pour_malik(),
     ];
 }
 
@@ -40,6 +43,32 @@ function lire_deux_prix(array $b): array
     $kg = $k === null || $k === '' ? lire_prix($depot - ECART_DEPOT) : lire_prix($k);
     if ($kg === null) refus('prix');
     return [$kg, $depot];
+}
+
+
+
+
+function prix_douteux(float $kg, float $depot, array $p0): bool
+{
+    $loin = fn (float $n, float $avant) => abs($n - $avant) / max($avant, 1) > 0.25;
+    return $kg < PRIX_DOUTE_BAS || $kg > PRIX_DOUTE_HAUT || $loin($kg, (float) $p0['kg'])
+        || $depot < PRIX_DOUTE_BAS + ECART_DEPOT || $depot > PRIX_DOUTE_HAUT + ECART_DEPOT || $loin($depot, (float) $p0['depot']);
+}
+
+
+
+
+
+const GESTION_ESSAIS_PAR_APPAREIL = 20, GESTION_ECHECS_ALERTE = CODE_ESSAIS;
+
+
+
+
+function alerte_echecs_gestion(int $echecs, bool $admin): void
+{
+    if (!$admin || $echecs < GESTION_ECHECS_ALERTE) return;
+    apres_reponse(fn () => alerter_malik('echecs-gestion', 'Gestion : connexion par code fermée jusqu\'à demain',
+        GESTION_ECHECS_ALERTE . ' codes faux aujourd\'hui pour ton adresse : la connexion par code à ta page de gestion est fermée jusqu\'à demain. Si ce n\'est pas toi, quelqu\'un essaie peut-être d\'entrer : ne donne ton code à personne. Google te laisse toujours entrer.'));
 }
 
 
@@ -60,6 +89,9 @@ try {
     menage_du_jour();
     switch ("$methode $chemin") {
 
+
+
+
         case 'POST code':
             origine_refusee();
             $b = corps_json();
@@ -67,18 +99,29 @@ try {
             if (robot($b)) repondre(['ok' => true]);
             $email = email_valide($b['email'] ?? null);
             if (!$email) refus('email');
-            if (!sous_la_limite('codeg:' . empreinte_ip(), 12)) refus('trop', 429);
-            if (in_array($email, admins(), true) && envoyer_code($email, 'fr', 'gestion') === 'trop') refus('trop', 429);
+            if (!sous_la_limite('codeg:' . empreinte_ip(), 12)) refus('trop_jour', 429);
+            $r = envoyer_code_gestion($email, in_array($email, admins(), true));
+            if ($r !== 'ok') refus($r, 429);
             repondre(['ok' => true]);
+
+
+
+
+
+
 
         case 'POST connexion':
             origine_refusee();
             $b = corps_json();
             $email = email_valide($b['email'] ?? null);
             if (!$b || !$email) refus('email');
-            if (!in_array($email, admins(), true)) refus('code_expire');
-            $r = verifier_code($email, (string) preg_replace('/\s/', '', (string) ($b['code'] ?? '')), 'gestion');
-            if ($r !== 'ok') refus($r, $r === 'bloque' ? 429 : 400);
+            $code = (string) preg_replace('/\s/', '', (string) ($b['code'] ?? ''));
+            if (preg_match('/^\d{6}$/', $code)) refus('recharger');
+            if (!sous_la_limite('cxg:' . empreinte_ip(), GESTION_ESSAIS_PAR_APPAREIL)) refus('trop_jour', 429);
+            $admin = in_array($email, admins(), true);
+            [$r, $echecs] = verifier_code_gestion($email, $code, $admin);
+            alerte_echecs_gestion($echecs, $admin);
+            if ($r !== 'ok') refus($r, $r === 'code_faux' ? 400 : 429);
             noter_connexion_gestion($email);
             repondre(['email' => $email], 200, cookie_gestion($email));
 
@@ -100,9 +143,12 @@ try {
             $action = (string) ($b['action'] ?? '');
 
             if (!in_array($action, ['traite', 'remettre', 'recu', 'sans_recu', 'pese', 'sans_pese', 'accord', 'sans_accord', 'paye', 'sans_paye', 'retard'], true)) refus('action');
-            $e = marquer_envoi((string) ($b['envoi'] ?? ''), $action, 'Malik (site)', '', is_array($b['valeurs'] ?? null) ? $b['valeurs'] : []);
+            $e = marquer_envoi((string) ($b['envoi'] ?? ''), $action, 'Malik (site)', '', is_array($b['valeurs'] ?? null) ? $b['valeurs'] : [], false, $issue);
+
+
+            if ($issue === 'change') refus('change', 409);
             if (!$e) refus($action === 'pese' ? 'poids' : 'introuvable', $action === 'pese' ? 400 : 404);
-            repondre(['envoi' => $e, 'whatsapp' => prevenir_etape($e, $action)]);
+            repondre(['envoi' => $e, 'whatsapp' => $issue === 'fait' ? prevenir_etape($e, $action) : null]);
 
 
         case 'GET comptes':
@@ -137,8 +183,7 @@ try {
             $p0 = prix_site();
             $avant = $p0['kg'];
             if (abs($kg - $avant) < 0.001 && abs($depot - $p0['depot']) < 0.001) refus('meme_prix');
-            $doute = $kg < PRIX_DOUTE_BAS || $kg > PRIX_DOUTE_HAUT || abs($kg - $avant) / max($avant, 1) > 0.25;
-            if ($doute && ($b['confirme'] ?? null) !== true) refus('confirmer', 409);
+            if (prix_douteux($kg, $depot, $p0) && ($b['confirme'] ?? null) !== true) refus('confirmer', 409);
             [$ancien] = changer_prix($kg, $email, $depot);
             $prevenus = 0;
             if ($kg > $ancien['kg'] && ($b['prevenir'] ?? true) !== false) $prevenus = programmer_alertes($kg);
@@ -152,12 +197,17 @@ try {
             $email = exiger_admin();
             $b = corps_json() ?? [];
             if (($b['action'] ?? '') === 'annuler') {
+
+
+                if (!prix_site()['programme']) refus('plus_programme', 409);
                 programmer_prix(null, $email);
                 repondre(reglages_pour_malik());
             }
             [$kg, $depot] = lire_deux_prix($b);
             $jour = jour_valide($b['jour'] ?? null);
             if (!$jour || $jour <= jour_paris() || $jour > plus_jours(jour_paris(), 366)) refus('jour');
+
+            if (prix_douteux($kg, $depot, prix_site()) && ($b['confirme'] ?? null) !== true) refus('confirmer', 409);
             programmer_prix(['kg' => $kg, 'depot' => $depot, 'jour' => $jour, 'prevenir' => ($b['prevenir'] ?? true) !== false], $email);
             repondre(reglages_pour_malik());
 
@@ -189,12 +239,14 @@ try {
             repondre(['google' => ['pret' => true, 'client_id' => $id, 'retour' => google_retour()]]);
 
 
+
+
         case 'POST sauvegarde':
             origine_refusee();
             $email = exiger_admin();
             $b = corps_json() ?? [];
             $mdp = (string) ($b['mot_de_passe'] ?? '');
-            if (mb_strlen($mdp) < 10 || mb_strlen($mdp) > 200) refus('mot_de_passe');
+            if (mb_strlen($mdp) < 16 || mb_strlen($mdp) > 200) refus('mot_de_passe');
             servir_sauvegarde($mdp, $email);
 
 

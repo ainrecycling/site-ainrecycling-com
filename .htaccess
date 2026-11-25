@@ -1,6 +1,7 @@
 Options -Indexes
 DirectoryIndex index.html index.php
 ErrorDocument 404 /404.html
+ErrorDocument 403 /404.html
 AddType text/vcard .vcf
 
 AddType font/woff2 .woff2
@@ -14,7 +15,14 @@ RewriteCond %{HTTP_HOST} ^www\.ainrecycling\.com$ [NC,OR]
 RewriteCond %{SERVER_PORT} ^80$
 RewriteCond %{HTTP_HOST} (^|\.)ainrecycling\.com$ [NC]
 RewriteRule ^(.*)$ https://ainrecycling.com/$1 [R=301,L]
+RewriteCond %{REQUEST_URI} !^/\.well-known/
+RewriteCond %{HTTP_HOST} !^(www\.)?ainrecycling\.com(:[0-9]+)?$ [NC]
+RewriteRule ^(.*)$ https://ainrecycling.com/$1 [R=301,L]
 RewriteRule (^|/)\.(?!well-known/) - [R=404,L]
+RewriteRule (^|/)((README|LICENSE)(\.md|\.txt)?|tournees\.json)$ - [R=404,L]
+RewriteCond %{ENV:REDIRECT_STATUS} ^$
+RewriteCond %{THE_REQUEST} \s/+serveur[/?\s]
+RewriteRule ^/?serveur(/|$) - [R=404,L]
 RewriteCond %{THE_REQUEST} !\s/+api/
 RewriteCond %{HTTP_USER_AGENT} (HTTrack|WebCopier|WebZIP|WebReaper|WebStripper|SiteSnagger|SiteSucker|Teleport|Offline\ Explorer|Cyotek|wget|Scrapy|python-requests|python-urllib|Go-http-client|libwww-perl|zgrab) [NC]
 RewriteRule ^ - [F,L]

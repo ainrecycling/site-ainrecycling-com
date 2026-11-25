@@ -150,6 +150,12 @@ function notif_requete(string $endpoint, array $cles, ?int $maintenant = null): 
 
 function notif_poster(array $req): int
 {
+
+
+    if (mode_essai()) {
+        journaliser('essai : notification pas envoyée (mode essai) vers ' . (parse_url((string) $req['url'], PHP_URL_HOST) ?: '?'));
+        return 0;
+    }
     $ch = curl_init($req['url']);
     curl_setopt_array($ch, [
         CURLOPT_POST => true,
@@ -275,11 +281,38 @@ function notif_essai(string $endpoint): string
 
 
 
-function notifier(string $type, string $ref): void
+
+
+
+
+
+
+
+function alerter_malik(string $cle, string $titre, string|Closure $texte): bool
+{
+    if (!preg_match('/^[a-z0-9-]{1,32}$/', $cle)) return false;
+    if (!sous_la_limite('alerte:' . $cle, 1)) return false;
+    if ($texte instanceof Closure) $texte = (string) $texte();
+    $ev = ['titre' => coupe($titre, 120), 'texte' => coupe($texte, 300)];
+    apres_reponse(function () use ($cle, $ev) {
+        try {
+            notifier('alerte', $cle, $ev);
+        } catch (Throwable $e) {
+            journaliser('alerte non envoyée : ' . resume_erreur($e));
+        }
+    });
+    return true;
+}
+
+
+
+
+
+function notifier(string $type, string $ref, array $plus = []): void
 {
     $lignes = bd()->query('SELECT id, endpoint, appareil FROM gestion_notifs')->fetchAll();
     if (!$lignes) return;
-    $ev = ['t' => $type, 'r' => $ref, 'le' => iso()];
+    $ev = ['t' => $type, 'r' => $ref, 'le' => iso()] + array_intersect_key($plus, ['titre' => 1, 'texte' => 1]);
     $cles = notif_cles();
     foreach ($lignes as $l) {
         try {
@@ -315,7 +348,7 @@ function notif_en_attente(string $id, array $ev): void
 function notif_recents(array $liste): array
 {
     $limite = iso(ms() - NOTIF_GARDE_MS);
-    return array_values(array_filter($liste, fn ($e) => is_array($e) && in_array($e['t'] ?? '', ['demande', 'message', 'essai'], true)
+    return array_values(array_filter($liste, fn ($e) => is_array($e) && in_array($e['t'] ?? '', ['demande', 'message', 'essai', 'alerte'], true)
         && is_string($e['r'] ?? null) && is_string($e['le'] ?? null) && $e['le'] >= $limite));
 }
 
@@ -345,6 +378,8 @@ function notif_detail(string $endpoint): array
 
 
 
+
+
 function notif_texte(array $ev): ?array
 {
     $n = notif_texte_brut($ev);
@@ -366,6 +401,10 @@ function notif_texte_brut(array $ev): ?array
         case 'essai':
             return ['titre' => 'Notification d\'essai', 'texte' => 'C\'est bon : cet appareil sonnera ainsi à chaque nouvelle demande et à chaque nouveau message.',
                 'url' => '/gestion/', 'tag' => 'essai'];
+
+        case 'alerte':
+            return ['titre' => coupe((string) ($ev['titre'] ?? 'Alerte du site'), 120), 'texte' => coupe((string) ($ev['texte'] ?? ''), 300),
+                'url' => '/gestion/', 'tag' => 'alerte-' . $ref];
         case 'demande':
             $q = bd()->prepare('SELECT * FROM espace_envois WHERE reference = ?');
             $q->execute([$ref]);
@@ -373,63 +412,41 @@ function notif_texte_brut(array $ev): ?array
             if (!$l) return null;
             $e = envoi_depuis_ligne($l);
             $c = lire_compte($e['compte']);
-            $lieu = $c ? notif_lieu((string) $c['ville'], (string) $c['cp']) : '';
-            return ['titre' => 'Nouvelle demande · ' . $e['reference'],
-                'texte' => ($e['transport'] === 'vendeur' ? 'Par colis, à ses frais' : 'Par colis') . ' · ' . kg_texte((float) $e['total']) . ' kg'
-                    . ($lieu !== '' ? ' · ' . $lieu : '') . '. Touchez pour l\'ouvrir.',
+
+            $prenom = $c ? notif_prenom((string) $c['prenom']) : '';
+            return ['titre' => 'Nouvelle demande' . ($prenom !== '' ? ' · ' . $prenom : ''),
+                'texte' => ($e['transport'] === 'vendeur' ? 'Envoi par colis, à ses frais' : 'Envoi par colis') . '. Touchez pour l\'ouvrir.',
                 'url' => '/gestion/#' . $e['reference'], 'tag' => 'demande-' . $e['reference']];
         case 'message':
 
             if ($ref === '') return ['titre' => 'Nouveau message sur le site', 'texte' => 'Il est dans ta boîte mail.', 'url' => '/gestion/', 'tag' => 'message'];
-            $q = bd()->prepare('SELECT sujet, texte FROM site_messages WHERE id = ?');
+            $q = bd()->prepare('SELECT sujet FROM site_messages WHERE id = ?');
             $q->execute([$ref]);
             $l = $q->fetch();
             if (!$l) return null;
 
 
+
             $morceaux = explode(' – ', (string) $l['sujet'], 2);
-            $quoi = trim($morceaux[0]);
-            $qui = trim($morceaux[1] ?? '');
-            $devis = (bool) preg_match('/devis|angebot|quote|preventivo|presupuesto/i', $quoi);
-            $nom = $devis ? notif_court($qui, 32) : (string) (preg_split('/\s+/u', $qui)[0] ?? '');
-            $extrait = notif_extrait((string) $l['texte']);
-            $kg = preg_match('/(\d+(?:[.,]\d+)?)\s?kg\b/iu', (string) $l['texte'], $m) ? $m[1] . ' kg' : '';
-            return ['titre' => 'Nouveau message' . ($nom !== '' ? ' · ' . $nom : ''),
-                'texte' => $extrait !== '' ? '« ' . notif_court($extrait, 110) . ' »' : ($quoi . ($kg !== '' ? ' · ' . $kg : '')),
+            $devis = (bool) preg_match('/devis|angebot|quote|preventivo|presupuesto/i', trim($morceaux[0]));
+            $prenom = $devis ? '' : notif_prenom(trim($morceaux[1] ?? ''), true);
+            return ['titre' => ($devis ? 'Nouvelle demande de devis' : 'Nouveau message') . ($prenom !== '' ? ' · ' . $prenom : ''),
+                'texte' => ($devis ? 'Formulaire des professionnels' : 'Formulaire de contact') . '. Touchez pour le lire.',
                 'url' => '/gestion/#message-' . $ref, 'tag' => 'message-' . $ref];
     }
     return null;
 }
 
 
-function notif_lieu(string $ville, string $cp): string
+
+
+
+function notif_prenom(string $nom, bool $libre = false): string
 {
-    $ville = trim($ville);
-    if ($ville === '') return '';
-    $cp = trim($cp);
-    $dep = preg_match('/^\d{5}$/', $cp) ? substr($cp, 0, in_array(substr($cp, 0, 2), ['97', '98'], true) ? 3 : 2) : '';
-    return $ville . ($dep !== '' ? " ($dep)" : '');
-}
-
-
-function notif_court(string $s, int $max): string
-{
-    $s = trim((string) preg_replace('/\s+/u', ' ', $s));
-    return mb_strlen($s) > $max ? rtrim(coupe($s, $max - 1)) . '…' : $s;
-}
-
-
-
-function notif_extrait(string $texte): string
-{
-    $blocs = array_values(array_filter(array_map('trim', preg_split('/\n\s*\n/u', str_replace("\r", '', $texte)) ?: [])));
-    $libres = [];
-    foreach (array_slice($blocs, 2) as $b) {
-        $champs = true;
-        foreach (preg_split('/\n/u', $b) ?: [] as $ligne) {
-            if (!preg_match('/^[^:\n]{1,40}?\s?:\s/u', trim($ligne))) { $champs = false; break; }
-        }
-        if (!$champs) $libres[] = $b;
-    }
-    return trim((string) preg_replace('/\s+/u', ' ', implode(' ', $libres)));
+    $mots = preg_split('/\s+/u', trim($nom)) ?: [];
+    $m = (string) ($mots[0] ?? '');
+    if (!preg_match('/^\p{L}[\p{L}\'’-]{0,19}$/u', $m)) return '';
+    if ($libre && (count($mots) < 2 || mb_strtoupper($m, 'UTF-8') === $m
+        || preg_match('/^(m|mr|mrs|ms|mme|mlle|monsieur|madame|mademoiselle|herr|frau|sig|sigra|signor|signora|sr|sra|senor|señor|senora|señora|don|dona|doña|dr)$/iu', $m))) return '';
+    return $m;
 }
